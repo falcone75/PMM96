@@ -1,0 +1,354 @@
+*** be_list2.wfm
+
+parameter Formularnummer, liste
+
+
+** END HEADER -- Diese Zeile nicht lîschen*
+* Erstellt am 15.04.1996
+*
+
+* public  -> be_list0.wfm
+Formular&Formularnummer = new FAELLIGKEITSLISTE_AUSGABE()
+Formular&Formularnummer..open()
+
+CLASS FAELLIGKEITSLISTE_AUSGABE OF BERICHTSAUSGABE from basis.cfm
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "FÑlligkeitsliste"
+   this.Text = liste
+   this.OnOpen = class::FORMULAR_OnOpen
+
+   
+  Procedure FORMULAR_OnOpen
+         
+   sele bericht
+   go 1  && datensatz mit angaben zum empfÑnger, absender, ...
+
+   local lcLogik, lcFeldStempelung
+   lcLogik = rtrim(klassi)
+   lcFeldStempelung = rtrim(message)
+   
+
+   set printer off
+   set device to file (this.Berichtsdatei)  && set printer to... <-> lÑ·t nur 31 zeichen fÅr pfad und dateiname zu
+   
+   @  1,63 say dmy(date())
+   
+   if liste = "FÑlligkeitsliste"
+    @ 3,26 say "F é L L I G K E I T S L I S T E"
+   else
+    @ 3,33 say "M A H N L I S T E"
+   endif
+   
+   @  4,38 say "* * *"
+   @  5,((84-len(nutzer.mand_bez))/2) say nutzer.mand_bez
+   @  6,12 say repl(chr(95),60)
+   @  9,23 say "EmpfÑnger : " + hst
+   
+   if liste = "FÑlligkeitsliste"
+    @ 11, 5 say " Folgende PrÅfmittel sind bis spÑtestens " + dtoc(erst_eins) + " in sauberem Zustand"
+    @ 12, 5 say "zum öberprÅfen anzuliefern."
+   else
+    @ 11, 5 say " Sie werden wiederholt aufgefordert, bis spÑtestens " + dtoc(erst_eins) + " folgende"
+    @ 12, 5 say "PrÅfmittel in sauberem Zustand zum öberprÅfen anzuliefern."
+   endif
+   
+   local lcEigentÅmer, lnZeile, lcZeile, lnSpalte, lcAnzeige, lcIndexDatei
+
+   lcEigentÅmer = "<><><><><><><><><><>"
+   lnZeile  = 13
+
+   
+   lcIndexDatei = substr(dbf(),3,len(dbf())-6) + ".NDX"  && dbf() schreibt an den anfang das laufwerk
+   
+   index on  bes + ben + str(lfdnr,5) + spezinr  to  (lcIndexDatei)   
+   
+   set order to 1
+   
+   scan all for recno() > 1
+
+    lnSpalte = 9
+
+    if .not. bes == lcEigentÅmer
+     lnZeile = lnZeile + 1
+     @ lnZeile,10 say "EigentÅmer : " + bes
+     lcEigentÅmer = bes
+     lnZeile = lnZeile + 1
+    endif
+ 
+    lcZeile = "[] " + rtrim(ben)
+ 
+    if empty(merkmale)
+     lcZeile = lcZeile + " ( --- ) "
+    else 
+     lcZeile = lcZeile + " ( " + rtrim(merkmale) + " ) "
+    endif
+    
+    lcZeile = lcZeile + rtrim(codewort) + "/"
+    
+    if lfdnr > 0
+     lcZeile = lcZeile + ltrim(str(lfdnr))
+    else
+     lcZeile = lcZeile + spezinr
+    endif
+    
+    if len(lcZeile) > 78
+     local lcNummer
+     lcNummer = rtrim(codewort) + "/"
+     if lfdnr > 0
+      lcNummer = lcNummer + ltrim(str(lfdnr))
+     else
+      lcNummer = lcNummer + spezinr
+     endif
+     lcZeile = "[] " + rtrim(ben) + " ( " + left(rtrim(merkmale),66-len(rtrim(ben)+lcNummer)) + ".. ) " + lcNummer
+    endif    
+ 
+    lnZeile = lnZeile + 1
+    @ lnZeile,5say lcZeile
+  
+    if substr(lcLogik,1,1) = "1"
+     lcZeile = "Standort : " + pb_ort + space(3)
+    else
+     lcZeile = ""
+    endif 
+    
+    if substr(lcLogik,2,1) = "1"
+     lcAnzeige = "FÑlligkeitsdatum : " + dtoc(pb_datum) + space(3)
+     if len(lcZeile+lcAnzeige) > 70
+      lnZeile  = lnZeile + 1
+      @ lnZeile,9 say lcZeile
+      lcZeile = lcAnzeige
+     else
+      lcZeile = lcZeile + lcAnzeige
+     endif 
+    endif 
+    
+    if substr(lcLogik,3,1) = "1"
+     lcAnzeige = "GerÑte-Nummer : "
+     if empty(geraete_nr)
+      lcAnzeige = lcAnzeige + "?" + space(17)
+     else
+      lcAnzeige = lcAnzeige + geraete_nr + space(3)
+     endif
+     if len(lcZeile+lcAnzeige) > 70
+      lnZeile  = lnZeile + 1
+      @ lnZeile,9 say lcZeile
+      lcZeile = lcAnzeige
+     else
+      lcZeile = lcZeile + lcAnzeige
+     endif 
+    endif 
+    
+    if substr(lcLogik,4,1) = "1"
+     local ldDatumKalibrierung, lcDatumStempelung, lcAnzeigeStempelung
+     ldDatumKalibrierung = ctod(left(lcFeldStempelung,10)) + kfr
+     do case
+      case cdow(ldDatumKalibrierung) = "Samstag"
+       ldDatumKalibrierung = ldDatumKalibrierung + 2
+      case cdow(ldDatumKalibrierung) = "Sonntag"
+       ldDatumKalibrierung = ldDatumKalibrierung + 1
+     endcase
+     do case
+      case "Tag" $ lcFeldStempelung
+       if "vierstellig" $ lcFeldStempelung
+        lcDatumStempelung = DTOC(ldDatumKalibrierung)
+       else
+        set century off
+        lcDatumStempelung = DTOC(ldDatumKalibrierung)
+        set century on
+       endif 
+      case "Woche" $ lcFeldStempelung
+       privat pnKalenderwoche
+       pnKalenderwoche = 0
+       class::BerechnungWoche(ldDatumKalibrierung)
+       local lcJahr
+       if "vierstellig" $ lcFeldStempelung
+        lcJahr = str(year(ldDatumKalibrierung),4)
+       else
+        lcJahr = right(str(year(ldDatumKalibrierung),4),2)
+       endif
+       lcDatumStempelung = ltrim(str(pnKalenderwoche)) + "/" + lcJahr
+      case "Monat" $ lcFeldStempelung
+       local lcJahr
+       if "vierstellig" $ lcFeldStempelung
+        lcJahr = str(year(ldDatumKalibrierung),4)
+       else
+        lcJahr = right(str(year(ldDatumKalibrierung),4),2)
+       endif
+       lcDatumStempelung = ltrim(str(month(ldDatumKalibrierung),2)) + "/" + lcJahr
+     endcase
+     
+     
+     lcAnzeige = "Ausgabe " + left(lcFeldStempelung,10) + " -> Stempelung " + lcDatumStempelung + space(3)
+     
+     if len(lcZeile+lcAnzeige) > 70
+      lnZeile  = lnZeile + 1
+      @ lnZeile,9 say lcZeile
+      lcZeile = lcAnzeige
+     else
+      lcZeile = lcZeile + lcAnzeige
+     endif 
+     
+    endif
+    
+    if .not. empty(lcZeile)
+     lnZeile = lnZeile + 1
+     @ lnZeile,9 say lcZeile
+    endif
+    
+    lnZeile = lnZeile + 1   
+    
+   endscan
+
+   go top
+   
+   lnZeile = lnZeile + 3
+   @ lnZeile,10 say "......................"
+   @ lnZeile,(37-len(rtrim(sonstiges)))/2 say sonstiges
+
+   if substr(lcLogik,5,1) = "1"
+    do AufnFilt.prg with Filter&Formularnummer, lnZeile + 3   && -> archiv_p.prg
+   endif 
+    
+   set device to screen
+   
+   use   && lîscht mit nosave in be_list0.wfm angelegte datei  
+   dele file (lcIndexdatei)
+   
+   form.ausgabe.datalink = "file " + form.Berichtsdatei
+   
+
+
+
+  Procedure BerechnungWoche(TagDat)
+  
+   * procedure aus ->  Zeitschrift: Der Entwickler 5/96, S.63 ff
+   
+   do case 
+    case mod(year(TagDat),100) = 0
+     if mod(val(left(str(year(TagDat),4),2)),4) = 0
+      SchaltJahr = "JA"
+     else
+      SchaltJahr = "NEIN"
+     endif
+    case mod(year(TagDat),4) = 0
+     SchaltJahr = "Ja"
+    otherwise 
+     SchaltJahr = "NEIN"
+   endcase
+   
+   if SchaltJahr = "JA"
+    ZZGL = 1
+   else
+    ZZGL = 0
+   endif
+   
+   TgLfdMonat = day(TagDat)
+   
+   do case
+    case mod(year(TagDat-(365+ZZGL)),1000) = 0
+     SchaltJahr1 = "JA"
+    case mod(year(TagDat-(365+ZZGL)),100) = 0
+     SchaltJahr1 = "NEIN"
+    case mod(year(TagDat-(365+ZZGL)),4) = 0
+     SchaltJahr1 = "JA"
+    otherwise
+     SchaltJahr1 = "NEIN"
+   endcase
+   
+   do case
+    case month(TagDat) = 12
+     AnzTage = 334 + ZZGL + TgLfdMonat
+    case month(TagDat) = 11
+     AnzTage = 304 + ZZGL + TgLfdMonat 
+    case month(TagDat) = 10
+     AnzTage = 273 + ZZGL + TgLfdMonat
+    case month(TagDat) = 9
+     AnzTage = 243 + ZZGL + TgLfdMonat 
+    case month(TagDat) = 8
+     AnzTage = 212 + ZZGL + TgLfdMonat
+    case month(TagDat) = 7
+     AnzTage = 181 + ZZGL + TgLfdMonat 
+    case month(TagDat) = 6
+     AnzTage = 151 + ZZGL + TgLfdMonat 
+    case month(TagDat) = 5
+     AnzTage = 120 + ZZGL + TgLfdMonat 
+    case month(TagDat) = 4
+     AnzTage = 90 + ZZGL + TgLfdMonat
+    case month(TagDat) = 3
+     AnzTage = 59 + ZZGL + TgLfdMonat 
+    case month(TagDat) = 2
+     AnzTage = 31 + ZZGL + TgLfdMonat 
+    case month(TagDat) = 1
+     AnzTage = TgLfdMonat 
+   endcase  
+   
+   ErsterTag = ctod("01.01."+str(year(TagDat),4))
+   
+   if TagDat = ErsterTag
+    
+    do case 
+     case cdow(ErsterTag) = "Sonntag"
+      KW = 52
+     case cdow(ErsterTag) = "Samstag"
+      if SchaltJahr1 = "JA"
+       KW = 53
+      else
+       KW = 52
+      endif
+     case cdow(ErsterTag) = "Freitag"
+      KW = 53
+     otherwise
+      KW = 1
+    endcase  
+     
+   else
+   
+    if AnzTage > 3
+     do case
+      case cdow(ErsterTag) = "Montag"
+       AnzTage = AnzTage 
+      case cdow(ErsterTag) = "Dienstag"
+       AnzTage = AnzTage + 1
+      case cdow(ErsterTag) = "Mittwoch"
+       AnzTage = AnzTage + 2
+      case cdow(ErsterTag) = "Donnerstag"
+       AnzTage = AnzTage + 3
+      case cdow(ErsterTag) = "Freitag"
+       AnzTage = AnzTage - 3
+      case cdow(ErsterTag) = "Samstag"
+       AnzTage = AnzTage - 2
+      case cdow(ErsterTag) = "Sonntag"
+       AnzTage = AnzTage - 1
+     endcase
+    endif
+    
+    do case
+     case AnzTage = 3
+      if cdow(ErsterTag) = "Freitag"
+       KW = 53
+      else
+       KW = 1
+      endif 
+     case AnzTage = 2
+      do case
+       case cdow(ErsterTag) = "Freitag"
+        KW = 53
+       case cdow(ErsterTag) = "Samstag"  
+        if SchaltJahr = "JA"
+         KW = 53
+        else
+         KW = 52
+        endif
+       otherwise
+        KW = 1
+      endcase
+     otherwise
+      KW = round((AnzTage/7)+0.49,0)
+    endcase
+     
+   endif
+     
+   pnKalenderwoche = KW  
+
+
+ENDCLASS

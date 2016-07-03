@@ -1,0 +1,224 @@
+** nutzer.wfm ( nutzeranmeldung )
+
+create session
+
+use paszwort index paszwort.ix1
+
+
+** END HEADER -- Diese Zeile nicht lîschen*
+* Erstellt am 17.02.1996
+*
+
+privat plNeuerNutzer
+plNeuerNutzer = .f.
+
+local f
+f = new NUTZERFORM()
+f.mdi = .f.
+f.ReadModal()
+
+if plNeuerNutzer
+ hauptform.setfocus()
+endif
+
+use in 1
+use in 2
+
+
+CLASS NUTZERFORM OF FORM
+   set procedure to PASSWORD.CC additive
+   this.Width = 51
+   this.Sizeable = .F.
+   this.Text = "Nutzeranmeldung"
+   this.SysMenu = .F.
+   this.EscExit = .F.
+   this.Left = 27
+   this.Top = 7
+   this.Maximize = .F.
+   this.Minimize = .F.
+   this.Height = 5
+   
+
+   DEFINE TEXT TEXT1 OF THIS;
+       PROPERTY; 
+         Width 10.5,;
+         Text "Pa·wort",;
+         Left 13.5,;
+         Top 1,;
+         FontSize 10,;
+         Height 0.9395
+
+   DEFINE PASSWORDENTRY PASSWORDENTRY1 OF THIS;
+       PROPERTY; 
+         Width 13,;
+         Left 24,;
+         Value "",;
+         MaxLength 10,;
+         Top 1,;
+         FontSize 12,;
+         Height 1
+
+   DEFINE PUSHBUTTON OKFELD OF THIS;
+       PROPERTY; 
+         Width 14,;
+         Group .T.,;
+         Text "OK",;
+         UpBitmap "RESOURCE #20",;
+         Left 29,;
+         OnClick CLASS::OKFELD_OnClick,;
+         Top 3,;
+         Default .T.,;
+         Height 1.4
+         
+   DEFINE PUSHBUTTON ABBRUCHFELD OF THIS;
+       PROPERTY; 
+         Width 14,;
+         Group .T.,;
+         OnClick {; form.close()},;
+         Text "Abbruch",;
+         UpBitmap "RESOURCE #28",;
+         Left 7.666,;
+         Top 3,;
+         Height 1.4
+
+
+
+   Procedure OKFELD_OnClick
+
+    if empty(form.passwordentry1.EnteredPassword)
+    
+     class::FensterSchlieszen()
+            
+     do SetLog with "00000000000000000"
+     _app.FrameWin.text = "PrÅfmittel - Manager 96  [ Kein Nutzer ]"
+     
+     form.close()
+    
+    else
+    
+     privat pcPaszwort
+     pcPaszwort = ""
+     
+     do ManiPW with form.passwordentry1.EnteredPassword
+    
+     sele paszwort
+     set order to 1
+     set exact on
+     seek pcPaszwort
+     set exact off
+     
+     if .not. found()
+   
+      msgbox("  Fehler: Das Pa·wort ist nicht vorhanden.","Achtung",48)
+      form.passwordentry1.EnteredPassword = ""
+      form.passwordentry1.setfocus()
+    
+     else 
+
+      do SetLog with logik
+      
+      public Nutzer
+      Nutzer = new object()     
+      Nutzer.name  = rtrim(name)
+      Nutzer.logik = rtrim(logik)
+      sele 2
+      use mandant
+      set filter to mand_nr $ paszwort->mandanten
+      local lnz
+      count all to lnz
+      if lnz > 1
+       local f
+       f = new mandantenform()
+       f.readmodal()
+      else
+       go top
+      endif
+      Nutzer.mand_nr  = mand_nr
+      Nutzer.mandant  = rtrim(mandant)
+      Nutzer.mand_bez = rtrim(mand_bez)
+ 
+      local lcFormularText
+      lcFormularText = "PrÅfmittel - Manager 96  [ " + Nutzer.name + " / "
+      
+      if len(Nutzer.mand_bez) <= 25
+       lcFormularText = lcFormularText + Nutzer.mand_bez
+      else
+       lcFormularText = lcFormularText + left(Nutzer.mand_bez,25) + ".."
+      endif 
+      lcFormularText = lcFormularText + " ]"
+      
+      class::FensterSchlieszen()
+     
+      _app.FrameWin.text = lcFormularText
+      
+      form.close()
+      
+     endif
+     
+    endif 
+    
+    
+    
+  Procedure FensterSchlieszen
+  
+    local llZeiger
+    llZeiger = .t.
+    
+    privat pcZahl
+    for i=1 to gnFormularZaehler
+     pcZahl = ltrim(str(i))
+     if type ("Formular&pcZahl") = "O"    &&  -> formular offen ( variable wird sonst beim verlassen eines formulars gelîscht )
+      if llZeiger
+       llZeiger = .f.
+       msgbox("Es werden alle offenen Fenster im Programm geschlossen.","Hinweis",64)
+      endif 
+      Formular&pcZahl..Release()
+     endif
+    next 
+      
+    gnFormularZaehler =  0
+
+    plNeuerNutzer = .t.
+
+   
+
+ENDCLASS
+
+
+
+CLASS MANDANTENFORM OF FORM
+   this.EscExit = .t.
+   this.Width = 48
+   this.Maximize = .F.
+   this.Minimize = .F.
+   this.Text = "Mandanten"
+   this.Left = 28.5
+   this.Top = 11
+   this.MDI = .F.
+   this.Height = 8
+
+   
+   DEFINE LISTBOX LISTENFELD1 OF THIS;
+       PROPERTY; 
+         ID 100,;
+         Width 46,;
+         OnLeftMouseDown class::LISTENFELD1_OnLeftMouseDown,;
+         Left 1,;
+         DataSource "FIELD MANDANT->MAND_BEZ",;
+         Top 0.5,;
+         ColorHighLight "HighLightText/HighLight",;
+         Height 7
+
+
+   Procedure LISTENFELD1_OnLeftMouseDown
+
+    sele mandant
+    set index to mandant
+    set exact on
+    seek listselected(this)   &&  value  -> leere zeichenfolge ?!
+    set exact off   
+    
+    form.close()
+   
+
+ENDCLASS

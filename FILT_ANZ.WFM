@@ -1,0 +1,126 @@
+*** anzeige des aktuellen filters
+
+** korrekte Åbergabe der formularnummer :
+parameter Nummer
+privat Formularnummer
+Formularnummer = Nummer
+rele Nummer
+
+
+privat f
+
+f = new FilterAnzeigeForm()
+  
+local lnIndex
+lnIndex = 1
+
+privat pcIndex
+pcIndex = "1"    
+
+do while type("Filter&Formularnummer..zeile&pcIndex") <> "U" .and. lnIndex <= 8
+ if len(Filter&Formularnummer..zeile&pcIndex)-10 > f.width
+  f.width = len(Filter&Formularnummer..zeile&pcIndex)-10 + 2
+ endif
+ lnIndex = lnIndex + 1
+ pcIndex = ltrim(str(lnIndex))
+enddo
+
+lnIndex = lnIndex - 1
+
+if f.width > 105
+ f.width = 105
+endif
+f.left = (105-f.width)/2
+
+if rtrim(left(Filter&Formularnummer..zeile1,10)) == ""
+ f.height = 2.6 * lnIndex + 1.5
+else 
+ f.height = 2.6 * lnIndex + 2.8
+endif 
+
+f.top = 13 - f.height/2
+
+lnIndex = 1
+pcIndex = "1"    
+
+do while type("Filter&Formularnummer..zeile&pcIndex") <> "U" .and. lnIndex <= 8
+     
+   DEFINE TEXT logik&pcIndex OF f;
+       PROPERTY; 
+         Text "",;
+         ColorNormal "RG/BtnFace",;
+         Alignment 4,;
+         Left 0.5,;
+         Height 1.18,;
+         Width f.width - 1
+
+   DEFINE TEXT ausdruck&pcIndex OF f;
+       PROPERTY; 
+         Text "",;
+         Alignment 4,;
+         Left 0.5,;
+         Height 1.18,;
+         Width f.width - 1
+         
+   
+   poRefLogik    = f.logik&pcIndex
+   poRefAusdruck = f.ausdruck&pcIndex   
+   
+   if empty(Filter&Formularnummer..zeile1)
+    poRefAusdruck.text   = "Kein Filter festgelegt."
+    poRefAusdruck.top    = 0.6
+    poRefLogik.top = poRefAusdruck.top
+   else
+    poRefLogik.text  = rtrim(left(Filter&Formularnummer..zeile&pcIndex,10))
+    poRefAusdruck.text  = right(Filter&Formularnummer..zeile&pcIndex,len(Filter&Formularnummer..zeile&pcIndex)-10)
+    poRefAusdruck.width = poRefLogik.width
+    if lnIndex = 1
+     local lnPos
+     lnPos = 0.6
+     poRefLogik.top = lnPos
+     if left(Filter&Formularnummer..zeile1,10) == ""
+      poRefAusdruck.top = poRefLogik.top
+      lnPos = lnPos + 1.3
+     else
+      poRefAusdruck.top = lnPos + 1.3
+      lnPos = lnPos + 2.6
+     endif 
+    else 
+     poRefLogik.top    = lnPos
+     poRefAusdruck.top = lnPos + 1.3
+     lnPos = lnPos + 2.6
+    endif
+   endif 
+
+   lnIndex = lnIndex + 1
+   pcIndex = ltrim(str(lnIndex))
+  
+enddo
+
+f.okfeld1.top  = f.height - 1.8
+f.okfeld1.left = f.width/2 - 6.5
+f.okfeld1.setfocus()
+  
+f.mdi = .f.
+f.readmodal()
+
+
+CLASS FILTERANZEIGEFORM OF FORM
+   this.Width = 50
+   this.Text = "Aktueller Filter"
+   this.Left = 21.5
+   this.Top = 0.3525
+   this.Height = 20.4697
+
+   DEFINE PUSHBUTTON OKFELD1 OF THIS;
+       PROPERTY; 
+         Width 13,;
+         Group .T.,;
+         Text "OK",;
+         UpBitmap "RESOURCE #20",;
+         OnClick {;form.close()},;
+         Left 25,;
+         Top 20.5,;
+         Height 1.4
+
+ENDCLASS

@@ -1,0 +1,73 @@
+*** be_numm2.wfm
+
+parameter Formularnummer
+
+
+** END HEADER -- Diese Zeile nicht lîschen*
+* Erstellt am 15.04.1996
+*
+
+* public  -> be_numm0.wfm
+Formular&Formularnummer = new FREIE_NUMMERN_AUSGABE()
+Formular&Formularnummer..open()
+
+CLASS FREIE_NUMMERN_AUSGABE OF BERICHTSAUSGABE from basis.cfm
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "Freie PrÅfmittelnummern"
+   this.Text = "Freie Nummern"
+   this.OnOpen = class::FORMULAR_OnOpen
+
+   
+  Procedure FORMULAR_OnOpen
+         
+   set printer off
+   set device to file (this.Berichtsdatei)  && set printer to... <-> lÑ·t nur 31 zeichen fÅr pfad und dateiname zu
+   
+   @ 1,63 say dmy(date())
+   @ 3,30 say "F R E I E  N U M M E R N"
+   @ 4,38 say "* * *"
+   @ 5,((84-len(nutzer.mand_bez))/2) say nutzer.mand_bez
+   @ 6,12 say repl(chr(95),60)
+
+   sele bericht
+   go top
+   
+   @ 10,(84-len(rtrim(ben))-16)/2 say "PrÅfmittelart : " + rtrim(ben)
+   @ 13,10 say "NÑchste freie Nummern  ->  " + rtrim(codewort) + " /"
+
+   local lnZeile, lnSpalte, lcAnzeige, lcFreieNummer, lcStringFreieNummern
+   lnZeile = 13
+   lnSpalte = len(rtrim(codewort)) + 40
+   lcAnzeige = ""
+   lcStringFreieNummern = rtrim(not_konv)
+   lnPos = 1
+
+   do while .t.
+   
+    lcFreieNummer = ltrim(str(val(substr(lcStringFreieNummern,lnPos,5))))
+   
+    do case
+     case lnPos > len(lcStringFreieNummern)
+      @ lnZeile, lnSpalte say left(lcAnzeige,len(lcAnzeige)-2)
+      exit
+     case lnSpalte + len(lcAnzeige+lcFreieNummer) > 76
+      @ lnZeile, lnSpalte say lcAnzeige
+      lcAnzeige = lcFreieNummer + ", "
+      lnZeile = lnZeile + 1
+     otherwise 
+      lcAnzeige = lcAnzeige + lcFreieNummer + ", "
+    endcase
+    
+    lnPos = lnPos + 6
+   
+   enddo
+
+    
+   set device to screen
+   
+   use   && lîscht mit nosave in be_numm0.wfm angelegte datei  
+   
+   form.ausgabe.datalink = "file " + form.Berichtsdatei
+   
+
+ENDCLASS

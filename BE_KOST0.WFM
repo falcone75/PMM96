@@ -1,0 +1,129 @@
+*** be_kost0.wfm
+
+create session
+
+sele 100
+use (Nutzer.Mandant) index (Nutzer.Mandant) alias kartei
+
+sele 1
+
+
+gnFormularZaehler = gnFormularZaehler + 1
+
+private pcZahl
+pcZahl = ltrim(str(gnFormularZaehler))
+
+
+
+** END HEADER -- Diese Zeile nicht l”schen*
+* Erstellt am 03.05.1996
+*
+
+privat plBerichtErstellen, pcTextTipsUndTricks
+plBerichtErstellen = .f.
+pcTextTipsUndTricks = "In den Bericht werden nur Prfmittel geschrieben, deren Neuwert oberhalb der Grenze fr geringwertige Prfmittel liegt. Weitere Hilfe mit Taste F1..."
+
+public Formular&pcZahl
+Formular&pcZahl = new KOSTENRECHNUNG_EINGABE()
+Formular&pcZahl..ReadModal()
+
+if plBerichtErstellen
+ do be_kost2.wfm with pcZahl
+endif 
+
+CLASS KOSTENRECHNUNG_EINGABE OF BERICHTSEINGABE From "BASIS.CFM"
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "Kostenrechnung"
+   this.Text = "Bericht [ Kostenrechnung ]"
+   
+   form.schalter_bericht.onclick = class::SCHALTER_BERICHT_OnClick
+   form.schalter_abbruch.onclick = {; form.close()}
+
+
+   DEFINE RECTANGLE RECHTECK1 OF THIS;
+       PROPERTY; 
+         Width 63.833,;
+         Text "  Angaben zum Bericht  ",;
+         Left 7.833,;
+         Top 3.0697,;
+         Height 6.7646
+
+   DEFINE TEXT TEXT1 OF THIS;
+       PROPERTY; 
+         Width 38.833,;
+         Text "Grenze fr geringwertige Prfmittel [DM]",;
+         Left 13.5,;
+         Top 5.1879,;
+         Height 1.1172
+
+   DEFINE SPINBOX GRENZE OF THIS;
+       PROPERTY; 
+         Width 13,;
+         ValidErrorMsg "Ungltige Eingabe",;
+         Left 52.666,;
+         Value 800,;
+         Step 100,;
+         Top 5.1111,;
+         Rangemin 0,;
+         Rangemax 10000,;
+         RangeRequired .T.,;
+         Height 1.1768
+
+   DEFINE CHECKBOX LOG_FILTER OF THIS;
+       PROPERTY; 
+         Group .T.,;
+         Width 44,;
+         Text "Filter an das Ende des Berichtes schreiben",;
+         Left 17.833,;
+         Value .T.,;
+         Top 7.2465,;
+         Height 1.3535
+         
+         
+
+   Procedure SCHALTER_BERICHT_OnClick
+   
+    plBerichtErstellen = .t.
+    
+    sele kartei
+    
+    local lcDateiname
+    lcDateiname = funique("$????")
+    copy structure to (lcDateiname)
+   
+    sele 10
+    use (lcDateiname) nosave alias bericht exclusive
+    append blank
+    
+    repl message with ltrim(str(form.grenze.value))
+    
+    if form.log_filter.value
+     repl ben with "Filterausgabe"
+    endif 
+
+    poRefFilter = Filter&pcZahl  && ggf. neue zuweisung ( Filter&pcZahl = filter0 ) in filter.wfm
+       
+    if .not. "neuwert" $ lower(poRefFilter.SuchMakro)
+      poRefFilter.SuchMakro = "neuwert>" + ltrim(str(form.grenze.value)) + ".and." + poRefFilter.SuchMakro
+      if empty(poRefFilter.Zeile1)  && kein filter eingegeben
+       poRefFilter.Zeile1 = "          Neuwert gr”áer " + ltrim(str(form.grenze.value)) + " DM"
+      else
+       local lnIndex
+       lnIndex = 2
+       privat pcIndex
+       pcIndex = "2"
+       do while type("poRefFilter.Zeile&pcIndex") <> "U"
+        lnIndex = lnIndex + 1
+        pcIndex = ltrim(str(lnIndex))
+       enddo
+       FilterZeile  = "poRefFilter.Zeile&pcIndex"
+       &FilterZeile = "UND       Neuwert gr”áer " + ltrim(str(form.grenze.value)) + " DM"
+      endif
+    endif
+
+    do suchen with form, form.formularnummer, "Gesamtsuche", "SuchArrayNein", "be_kost1.prg"
+   
+    form.close()   
+   
+   
+ENDCLASS

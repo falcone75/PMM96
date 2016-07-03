@@ -1,0 +1,229 @@
+*** be_numm0.wfm
+
+create session
+
+sele 100
+use (Nutzer.Mandant) index (Nutzer.Mandant) alias kartei
+
+sele 20 
+use os index os.ix2
+set filter to log_pm_art .and. log_lfdnr
+
+sele 1
+
+
+gnFormularZaehler = gnFormularZaehler + 1
+
+private pcZahl
+pcZahl = ltrim(str(gnFormularZaehler))
+
+
+
+** END HEADER -- Diese Zeile nicht lîschen*
+* Erstellt am 06.05.1996
+*
+
+privat plBerichtErstellen, pcTextTipsUndTricks
+plBerichtErstellen = .f.
+pcTextTipsUndTricks = "Die PrÅfmittelnummern verschrotteter PrÅfmittel werden wieder neu vergeben. Weitere Hilfe mit Taste F1..."
+
+public Formular&pcZahl
+Formular&pcZahl = new FREIE_NUMMERN_EINGABE()
+Formular&pcZahl..ReadModal()
+
+if plBerichtErstellen
+ do be_numm2.wfm with pcZahl
+endif 
+
+CLASS FREIE_NUMMERN_EINGABE OF BERICHTSEINGABE From "BASIS.CFM"
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "Freie PrÅfmittelnummern"
+   this.Text = "Bericht [ Freie Nummern ]"
+   
+   form.schalter_filter.enabled  = .f.
+   form.schalter_bericht.onclick = class::SCHALTER_BERICHT_OnClick
+   form.schalter_abbruch.onclick = {; form.close()}
+
+   DEFINE RECTANGLE RECHTECK1 OF THIS;
+       PROPERTY; 
+         Width 63.833,;
+         Text "  Angaben zum Bericht  ",;
+         Left 7.833,;
+         Top 1.8232,;
+         Height 8.5879
+
+   DEFINE TEXT TEXT1 OF THIS;
+       PROPERTY; 
+         Width 11.833,;
+         Text "PrÅfmittelart",;
+         Left 15.833,;
+         Top 4,;
+         Height 1
+
+   DEFINE TEXT TEXT2 OF THIS;
+       PROPERTY; 
+         Width 31.5,;
+         Text "Anzahl NÑchster freier Nummern",;
+         Left 20.166,;
+         Top 6.1172,;
+         Height 1.2939
+
+   DEFINE TEXT TEXT3 OF THIS;
+       PROPERTY; 
+         Width 25,;
+         Text "NÑchste freie Nummer ab",;
+         Left 21.166,;
+         Top 8.1172,;
+         Height 1.0586
+         
+   DEFINE COMBOBOX PM_ART OF THIS;
+       PROPERTY; 
+         Width 35.833,;
+         OnChange class::PM_ART_OnChange,;
+         Left 28,;
+         DataSource "FIELD OS->BEN",;
+         Top 3.8232,;
+         Style 1,;
+         Height 1.1768      
+
+   DEFINE SPINBOX ANZAHL_NUMMERN OF THIS;
+       PROPERTY; 
+         Width 6.5,;
+         Rangemin 1,;
+         Rangemax 99,;
+         RangeRequired .t.,;
+         Left 51.5,;
+         Value 10,;
+         Top 6,;
+         Height 1.1172
+
+   DEFINE SPINBOX AB_NUMMER OF THIS;
+       PROPERTY; 
+         Width 10.167,;
+         Rangemin 1,;
+         Rangemax 99999,;
+         RangeRequired .t.,;
+         Left 45.833,;
+         Value 1,;
+         Top 8,;
+         Height 1.1172
+
+
+
+
+    Procedure PM_ART_OnChange
+
+
+    if empty(this.value)
+     msgbox("   Fehler: Es besteht Eingabepflicht.","Achtung",48)
+     this.value = "?"
+    else
+     sele os
+     set order to 1
+     set exact on
+     seek ltrim(this.value)
+     set exact off
+     if .not. found()
+      msgbox("Fehler: Die PrÅfmittelart ist nicht vorhanden oder aber sie wird mit einer Speziellen Nummer nummeriert.","Achtung",48)
+     else
+      form.anzahl_nummern.setfocus()
+     endif
+    endif
+
+
+
+
+   Procedure SCHALTER_BERICHT_OnClick
+   
+    if empty(form.pm_art.value) .or. form.pm_art.value == "?"
+     msgbox("   Fehler: Es mu· die PrÅfmittelart angegeben werden.","Achtung",48)
+     form.pm_art.value = "?"
+     form.pm_art.setfocus()
+     return
+    else
+     sele os
+     set order to 1
+     set exact on
+     seek ltrim(form.pm_art.value)
+     set exact off
+     if .not. found()
+      msgbox("Fehler: Die PrÅfmittelart ist nicht vorhanden oder aber sie wird mit einer Speziellen Nummer nummeriert.","Achtung",48)
+      form.pm_art.setfocus()
+      return
+     else
+      plBerichtErstellen = .t.
+      local lcBenennung, lcCodewort
+      lcBenennung = ben
+      lcCodewort  = codewort
+     endif
+    endif
+    
+   
+    sele kartei
+    set key to lcCodewort
+    
+    local lnAbNummer, lnIndex, lnAktuelleFreieNummer, lcFreieNummern
+    lnAbNummer = form.ab_nummer.value
+    lcFreieNummern = ""
+    lnIndex = 1
+    
+    if seek(lcCodewort)
+     loca rest for lnAbNummer <= lfdnr .and. codewort == lcCodewort
+     if found()
+      lnAktuelleFreieNummer = lnAbNummer
+      do while lnAktuelleFreieNummer < lfdnr
+       lcFreieNummern = lcFreieNummern + right("0000"+ltrim(str(lnAktuelleFreieNummer)),5) + "_"
+       lnIndex = lnIndex + 1
+       if lnIndex > form.anzahl_nummern.value
+        exit
+       else
+        lnAktuelleFreieNummer = lnAktuelleFreieNummer + 1
+       endif
+      enddo
+      do while lnIndex <= form.anzahl_nummern.value
+       lnAktuelleFreieNummer = lfdnr
+       skip + 1
+       if codewort == lcCodewort
+        do while lnIndex <= form.anzahl_nummern.value
+         if lfdnr - lnAktuelleFreieNummer > 1
+          lnAktuelleFreieNummer = lnAktuelleFreieNummer + 1
+          lcFreieNummern = lcFreieNummern + right("0000"+ltrim(str(lnAktuelleFreieNummer)),5) + "_"
+          lnIndex = lnIndex + 1
+         else
+          exit
+         endif
+        enddo
+       else
+        exit
+       endif
+      enddo
+     else
+      lnAktuelleFreieNummer = lnAbNummer - 1
+     endif
+    else
+     lnAktuelleFreieNummer = lnAbNummer - 1
+    endif
+
+    do while lnIndex <= form.anzahl_nummern.value
+     lnAktuelleFreieNummer = lnAktuelleFreieNummer + 1
+     lcFreieNummern = lcFreieNummern + right("0000"+ltrim(str(lnAktuelleFreieNummer)),5) + "_"
+     lnIndex = lnIndex +1
+    enddo
+    
+    
+    local lcDateiname
+    lcDateiname = funique("$????")
+    copy structure to (lcDateiname) fields ben, codewort, not_konv
+   
+    sele 10
+    use (lcDateiname) nosave alias bericht exclusive
+    append blank    
+    
+    repl ben with lcBenennung, codewort with lcCodewort, not_konv with lcFreieNummern
+   
+    Filter&pcZahl..Zeile1 = "          Codewort gleich " + '"' + lcCodewort + '"'
+
+    form.close()   
+   
+   
+ENDCLASS

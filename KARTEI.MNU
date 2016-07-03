@@ -1,0 +1,296 @@
+** END HEADER -- Diese Zeile nicht lîschen*
+* Erstellt am 14.05.1996
+*
+Parameter FormObj
+NEW KARTEIMENU(FormObj,"Root")
+CLASS KARTEIMENU(FormObj,Name) OF MENUBAR(FormObj,Name)
+
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "PrÅfmittelkarte suchen"
+
+   this.OnInitMenu = class::KARTEIMENU_OnClick
+   
+   DEFINE MENU PRöFMITTELKARTE OF THIS;
+       PROPERTY; 
+         Text "PrÅfmittelkarte",;
+         OnClick {;do pmk_su.wfm}
+
+   DEFINE MENU BERICHT OF THIS;
+       PROPERTY; 
+         Text "Berichte"
+
+         DEFINE MENU FéLLIGKEITSLISTE OF THIS.BERICHT;
+             PROPERTY; 
+               Text "FÑlligkeitsliste",;
+               OnClick {;do be_list0.wfm with "FÑlligkeitsliste"}
+
+         DEFINE MENU MAHNLISTE OF THIS.BERICHT;
+             PROPERTY; 
+               Text "Mahnliste",;
+               OnClick {;do be_list0.wfm with "Mahnliste"}
+
+         DEFINE MENU WAHLFREIE_LISTE OF THIS.BERICHT;
+             PROPERTY; 
+               Text "Wahlfreie Liste",;
+               OnClick {;do be_wahl0.wfm}
+
+         DEFINE MENU STATISTIK OF THIS.BERICHT;
+             PROPERTY; 
+               Text "Statistik",;
+               OnClick {;do be_stat0.wfm}
+
+         DEFINE MENU PRöFMITTELBESTAND OF THIS.BERICHT;
+             PROPERTY; 
+               Text "PrÅfmittelbestand",;
+               OnClick {;do be_best0.wfm}
+
+         DEFINE MENU KOSTENRECHNUNG OF THIS.BERICHT;
+             PROPERTY; 
+               Text "Kostenrechnung",;
+               OnClick {;do be_kost0.wfm}
+
+         DEFINE MENU FREIE_NUMMERN OF THIS.BERICHT;
+             PROPERTY; 
+               Text "Freie Nummern",;
+               OnClick {;do be_numm0.wfm}
+
+         DEFINE MENU ZEITBEDARF OF THIS.BERICHT;
+             PROPERTY; 
+               Text "Zeitbedarf",;
+               OnClick {;do be_zeit0.wfm}
+
+         DEFINE MENU PRöFAUFTRAG OF THIS.BERICHT;
+             PROPERTY; 
+               Text "PrÅfauftrag",;
+               OnClick {;do be_auft0.wfm}
+
+   DEFINE MENU BOSS OF THIS;
+       PROPERTY; 
+         Text "BOSS"
+
+         DEFINE MENU PA·WôRTER OF THIS.BOSS;
+             PROPERTY; 
+               Text "Pa·wîrter",;
+               OnClick {;do bo_paszw.wfm}
+
+         DEFINE MENU KATALOGE OF THIS.BOSS;
+             PROPERTY; 
+               Text "Kataloge"
+
+               DEFINE MENU ORDNUNGSSYSTEM OF THIS.BOSS.KATALOGE;
+                   PROPERTY; 
+                     Text "Ordnungssystem",;
+                     OnClick {;do bo_os.wfm}
+
+               DEFINE MENU HERSTELLER OF THIS.BOSS.KATALOGE;
+                   PROPERTY; 
+                     Text "Hersteller",;
+                     OnClick {;do bo_hst.wfm}
+
+               DEFINE MENU EIGENTöMER OF THIS.BOSS.KATALOGE;
+                   PROPERTY; 
+                     Text "EigentÅmer",;
+                     OnClick {;do bo_bes.wfm}
+
+               DEFINE MENU MERKMALE OF THIS.BOSS.KATALOGE;
+                   PROPERTY; 
+                     Text "Merkmale",;
+                     OnClick {;do bo_merkm.wfm}
+
+               DEFINE MENU ZUL_ABWEICHUNGEN OF THIS.BOSS.KATALOGE;
+                   PROPERTY; 
+                     Text "Zul. Abweichungen",;
+                     OnClick {;do bo_abw.wfm}
+
+               DEFINE MENU PRöFFRISTEN OF THIS.BOSS.KATALOGE;
+                   PROPERTY; 
+                     Text "PrÅffristen",;
+                     OnClick {;do bo_kfr.wfm}
+
+               DEFINE MENU KLASSIFIKATION OF THIS.BOSS.KATALOGE;
+                   PROPERTY; 
+                     Text "Klassifikation",;
+                     OnClick {;do bo_klass.wfm}
+
+               DEFINE MENU ART_DER_BEWEGUNG OF THIS.BOSS.KATALOGE;
+                   PROPERTY; 
+                     Text "PrÅfmittelbewegung ( Art )",;
+                     OnClick {;do bo_art.wfm}
+
+               DEFINE MENU STANDORTE OF THIS.BOSS.KATALOGE;
+                   PROPERTY; 
+                     Text "Standorte",;
+                     OnClick {;do bo_ort.wfm}
+
+               DEFINE MENU MUSTERPRöFPROTOKOLLE OF THIS.BOSS.KATALOGE;
+                   PROPERTY; 
+                     Text "MusterprÅfprotokolle",;
+                     OnClick {;do bo_must.wfm}
+
+               DEFINE MENU PRöFPLéNE OF THIS.BOSS.KATALOGE;
+                   PROPERTY; 
+                     Text "PrÅfplÑne",;
+                     OnClick {;do bo_plan.wfm}
+
+         DEFINE MENU SONDERFUNKTIONEN OF THIS.BOSS;
+             PROPERTY; 
+               Text "Sonderfunktionen"
+
+               DEFINE MENU MANDANTEN OF THIS.BOSS.SONDERFUNKTIONEN;
+                   PROPERTY; 
+                     Text "Mandanten",;
+                     OnClick {;do bo_mand.wfm}
+
+               DEFINE MENU EINSATZDAUER_éNDERN OF THIS.BOSS.SONDERFUNKTIONEN;
+                   PROPERTY; 
+                     Text "Einsatzdauer Ñndern",;
+                     OnClick {;do bo_dauer.wfm}
+
+               DEFINE MENU NEUINDIZIEREN OF THIS.BOSS.SONDERFUNKTIONEN;
+                   PROPERTY; 
+                     Text "Neuindizieren",;
+                     OnClick {;do bo_indiz.wfm}
+
+
+   DEFINE MENU EXTRA OF THIS;
+       PROPERTY; 
+         Text "Extra"
+
+         DEFINE MENU NUTZERANMELDUNG OF THIS.EXTRA;
+             PROPERTY; 
+               Text "Nutzeranmeldung",;
+               OnClick {;do nutzer.wfm}
+
+         DEFINE MENU MENU55 OF THIS.EXTRA;
+             PROPERTY; 
+               Separator .T.,;
+               Text ""
+
+         DEFINE MENU UHR OF THIS.EXTRA;
+             PROPERTY; 
+               Text "Uhr",;
+               OnClick {;do uhr.prg}
+
+         DEFINE MENU KALENDER OF THIS.EXTRA;
+             PROPERTY; 
+               Text "Kalender",;
+               OnClick {;do kalender.wfm}
+
+         DEFINE MENU RECHNER OF THIS.EXTRA;
+             PROPERTY; 
+               Text "Rechner",;
+               OnClick {;do rechner.wfm}
+
+         DEFINE MENU MENU56 OF THIS.EXTRA;
+             PROPERTY; 
+               Separator .T.,;
+               Text ""
+
+         DEFINE MENU ISOTOLERANZEN OF THIS.EXTRA;
+             PROPERTY; 
+               Text "ISO-Toleranzen",;
+               OnClick {;msgbox("    Diese Funktion ist optional.","Hinweis",64)}
+
+         DEFINE MENU LEHRENMA·E_DIN_7162 OF THIS.EXTRA;
+             PROPERTY; 
+               Text "Lehrenma·e DIN 7162",;
+               OnClick {;msgbox("    Diese Funktion ist optional.","Hinweis",64)}
+              
+         DEFINE MENU MENU57 OF THIS.EXTRA;
+             PROPERTY;
+               Separator .T.,;
+               Text ""      
+
+         DEFINE MENU TIPS_TRICKS OF THIS.EXTRA;
+             PROPERTY; 
+               Text "Tips + Tricks",;
+               Checked glTipsUndTricks,;
+               OnClick class::TIPS_TRICKS_OnClick
+   
+   DEFINE MENU FENSTER OF THIS;
+       PROPERTY; 
+         Text "Fenster"
+
+   DEFINE MENU BEARBEITEN OF THIS;
+       PROPERTY; 
+         Text "Bearbeiten"
+
+         DEFINE MENU RöCKGéNGIG OF THIS.BEARBEITEN;
+             PROPERTY; 
+               Text "RÅckgÑngig"
+
+         DEFINE MENU AUSSCHNEIDEN OF THIS.BEARBEITEN;
+             PROPERTY; 
+               Text "Ausschneiden"
+
+         DEFINE MENU KOPIEREN OF THIS.BEARBEITEN;
+             PROPERTY; 
+               Text "Kopieren"
+
+         DEFINE MENU EINFöGEN OF THIS.BEARBEITEN;
+             PROPERTY; 
+               Text "EinfÅgen"
+
+   DEFINE MENU SCHLIE·EN_DER_KARTEI OF THIS;
+       PROPERTY; 
+         Text "Schlie·en der Kartei"
+
+         DEFINE MENU ABBRECHEN OF THIS.SCHLIE·EN_DER_KARTEI;
+             PROPERTY; 
+               Text "Abbrechen"
+
+         DEFINE MENU BEENDEN_DES_PROGRAMMES OF THIS.SCHLIE·EN_DER_KARTEI;
+             PROPERTY; 
+               Text "Beenden des Programmes",;
+               OnClick {; hauptform.close()}
+               
+               
+        this.windowMenu    = this.fenster
+        this.editCutMenu   = this.bearbeiten.ausschneiden
+        this.editCopyMenu  = this.bearbeiten.kopieren
+        this.editPasteMenu = this.bearbeiten.einfÅgen
+        this.editUndoMenu  = this.bearbeiten.rÅckgÑngig
+        
+        
+   
+   Procedure KARTEIMENU_OnClick
+   
+    if gnFormularZaehler > 0
+     if substr(nutzer.logik,17,1) = "0"
+      HauptForm.root.boss.sonderfunktionen.mandanten.enabled           = .f.
+      HauptForm.root.boss.sonderfunktionen.einsatzdauer_Ñndern.enabled = .f.
+      HauptForm.root.boss.sonderfunktionen.neuindizieren.enabled       = .f.
+     else 
+      if type ("form.Formularnummer") = "C"  && menÅleiste von FormularN
+       HauptForm.root.boss.sonderfunktionen.neuindizieren.enabled   = .f.
+      else
+       HauptForm.root.boss.sonderfunktionen.neuindizieren.enabled   = .t.
+      endif 
+     endif
+    endif 
+
+
+
+   Procedure TIPS_TRICKS_OnClick
+   
+    this.checked = .not. this.checked
+    
+    set safety off
+
+    rele all like setup*
+    restore from setup.mem additive
+ 
+    * setup1 ... anzahl programmaufrufe
+    * setup2 ... datum des letzten physischen lîschens
+    * setup3 ... logische variable, ob anzeige der tips
+
+    setup3 = this.checked
+    glTipsUndTricks = setup3
+
+    save to setup.mem like setup?
+ 
+    rele setup1, setup2, setup3
+    
+    
+    
+ENDCLASS

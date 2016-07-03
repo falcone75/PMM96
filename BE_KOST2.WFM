@@ -1,0 +1,114 @@
+*** be_kost2.wfm
+
+parameter Formularnummer
+
+
+** END HEADER -- Diese Zeile nicht l”schen*
+* Erstellt am 15.04.1996
+*
+
+* public  -> be_kost0.wfm
+Formular&Formularnummer = new KOSTENRECHNUNG_AUSGABE()
+Formular&Formularnummer..open()
+
+CLASS KOSTENRECHNUNG_AUSGABE OF BERICHTSAUSGABE from basis.cfm
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "Kostenrechnung"
+   this.Text = "Kostenrechnung"
+   this.OnOpen = class::FORMULAR_OnOpen
+
+   
+  Procedure FORMULAR_OnOpen
+         
+   set printer off
+   set device to file (this.Berichtsdatei)  && set printer to... <-> l„át nur 31 zeichen fr pfad und dateiname zu
+   
+   @ 1,63 say dmy(date())
+   @ 3,28 say "K O S T E N R E C H N U N G"
+   @ 4,38 say "* * *"
+   @ 5,((84-len(nutzer.mand_bez))/2) say nutzer.mand_bez
+   @ 6,12 say repl(chr(95),60)
+
+   sele bericht
+   go top
+
+   @ 10,17 say "Kostenart         Kumulativ [DM]   Maximalwert [DM]"
+   @ 11,16 say repl("-",53)
+   @ 12,17 say "Neuwert           " + str(val(spezinr),12,2) + space(7) + str(neuwert,10,2)
+   @ 14,17 say "Zeitwert          " + str(val(bes),12,2) + space(7) + str(val(klassi),10,2)
+   @ 16,17 say "Prfkosten        " + str(val(geraete_nr),12,2) + space(7) + str(prf_kost,10,2)
+   @ 18,17 say "Reparaturkosten   " + str(val(pb_art),12,2) + space(7) + str(rep_kost,10,2)
+   @ 20,17 say "Žnderungskosten   " + str(val(codewort),12,2) + space(7) + str(„nd_kost,10,2)
+
+   @ 25,14 say "Zeitwert [%]    Anzahl      Grafik"
+   @ 27,12 say repl("-",67)
+   
+   local lcAnzeige
+   
+   if empty(pb_bem)
+    lcAnzeige = "    0"
+   else 
+    lcBalken = repl(chr(176),int(35*val(pb_bem)/lfdnr)) + "  " + ltrim(str(round(100*val(pb_bem)/lfdnr,0))) + "%"
+    lcAnzeige = str(val(pb_bem),5) + "  " + lcBalken
+   endif
+   @ 29,13 say "   0%            " + lcAnzeige
+   
+   if empty(pb_ort)
+    lcAnzeige = "    0"
+   else 
+    lcBalken = repl(chr(176),int(35*val(pb_ort)/lfdnr)) + "  " + ltrim(str(round(100*val(pb_ort)/lfdnr,0))) + "%"
+    lcAnzeige = str(val(pb_ort),5) + " " + lcBalken
+   endif
+   @ 31,13 say ">  0% bis 20%    " + lcAnzeige
+
+   if empty(sonstiges)
+    lcAnzeige = "    0"
+   else 
+    lcBalken = repl(chr(176),int(35*val(sonstiges)/lfdnr)) + "  " + ltrim(str(round(100*val(sonstiges)/lfdnr,0))) + "%"
+    lcAnzeige = str(val(sonstiges),5) + "  " + lcBalken
+   endif
+   @ 33,13 say "> 20% bis 40%    " + lcAnzeige
+
+   if empty(abw)
+    lcAnzeige = "    0"
+   else 
+    lcBalken = repl(chr(176),int(35*val(abw)/lfdnr)) + "  " + ltrim(str(round(100*val(abw)/lfdnr,0))) + "%"
+    lcAnzeige = str(val(abw),5) + "  " + lcBalken
+   endif
+   @ 35,13 say "> 40% bis 60%    " + lcAnzeige
+   
+   if empty(merkmale)
+    lcAnzeige = "    0"
+   else 
+    lcBalken = repl(chr(176),int(35*val(merkmale)/lfdnr)) + "  " + ltrim(str(round(100*val(merkmale)/lfdnr,0))) + "%"
+    lcAnzeige = str(val(merkmale),5) + "  " + lcBalken
+   endif
+   @ 37,13 say "> 60% bis 80%    " + lcAnzeige
+   
+   if empty(hst)
+    lcAnzeige = "    0"
+   else 
+    lcBalken = repl(chr(176),int(35*val(hst)/lfdnr)) + "  " + ltrim(str(round(100*val(hst)/lfdnr,0))) + "%"
+    lcAnzeige = str(val(hst),5) + "  " + lcBalken
+   endif
+   @ 39,13 say "> 80%            " + lcAnzeige
+   
+   
+   @ 44,27 say "Ausgewertete Prfmittel : " + ltrim(str(lfdnr))
+   
+   @ 47,7 say "Hinweis : Es wurden  n u r  Prfmittel mit einem Neuwert gr”áer " + rtrim(message) + " DM"
+   @ 48,7 say "          bercksichtigt."
+   
+   
+   if ben = "Filterausgabe"
+    do AufnFilt.prg with Filter&Formularnummer, 52  && -> archiv_p.prg
+   endif 
+    
+   set device to screen
+   
+   use   && l”scht mit nosave in be_list0.wfm angelegte datei  
+   
+   form.ausgabe.datalink = "file " + form.Berichtsdatei
+   
+
+ENDCLASS

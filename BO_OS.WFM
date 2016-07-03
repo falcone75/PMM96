@@ -1,0 +1,361 @@
+*** bo_os.wfm
+
+create session
+
+use os index os.ix1, os.ix2
+
+
+
+** END HEADER -- Diese Zeile nicht lîschen*
+* Erstellt am 25.03.1996
+*
+
+local f
+f = new KATALOG_OS()
+f.ReadModal()
+
+CLASS KATALOG_OS OF KATALOGFORM From "BASIS.CFM"
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "Ordnungssystem"
+   this.Text = "BOSS [ Katalog - Ordnungssystem ]"
+   
+   this.OnOpen = {; if glTipsUndTricks; msgbox('Analog dem HinzufÅgen einer PrÅfmittelart, mu· auch bei Neuaufnahme einer "Weiteren Benennung" der Schalter "HinzufÅgen" gedrÅckt werden. Die Eingabe eines Codewortes mu· dagegen mit der RETURN-Taste bestÑtigt werden. Weitere Hilfe mit Taste F1...',"Tips & Tricks",64); endif}
+      
+   this.schalter_loeschen.onclick    = class::schalter_loeschen_onclick
+   this.schalter_hinzufuegen.onclick = class::schalter_hinzufuegen_onclick
+   this.schalter_korrigieren.enabled = .f.
+   
+   DEFINE RECTANGLE RECHTECK1 OF THIS;
+       PROPERTY; 
+         FontItalic .T.,;
+         Width 57.166,;
+         ColorNormal "RB/BtnFace",;
+         Text " Nummer ",;
+         Left 6.5,;
+         Top 3.8223,;
+         Height 2.8223
+
+   DEFINE TEXT TEXT1 OF THIS;
+       PROPERTY; 
+         Width 12.1689,;
+         Text "PrÅfmittelart",;
+         Left 1.3311,;
+         Top 1.7637,;
+         Height 0.8809
+
+   DEFINE TEXT TEXT2 OF THIS;
+       PROPERTY; 
+         Width 21.668,;
+         Text "Weitere Benennungen",;
+         Left 4.832,;
+         Top 8.293,;
+         Height 1
+
+   DEFINE TEXT TEXT5 OF THIS;
+       PROPERTY; 
+         Width 9.833,;
+         Text "Codewort",;
+         Left 46,;
+         Top 1.7051,;
+         Height 0.8232
+
+   DEFINE COMBOBOX PM_ART OF THIS;
+       PROPERTY; 
+         OnOpen CLASS::PM_ART_ONOPEN,;
+         Width 30,;
+         Style 1,;
+         DropDownHeight 11,;
+         Visible .F.,;
+         Left 13.5,;
+         OnChange CLASS::PM_ART_ONCHANGE,;
+         Top 1.5293,;
+         Height 1.1758
+
+   DEFINE ENTRYFIELD CODEWORT OF THIS;
+       PROPERTY; 
+         Width 13.1689,;
+         Valid CLASS::CODEWORT_VALID,;
+         ValidErrorMsg "UngÅltige Eingabe",;
+         ValidRequired .T.,;
+         Left 55.6641,;
+         Value "",;
+         MaxLength 10,;
+         Top 1.4102,;
+         Enabled .F.,;
+         Function "!",;
+         Height 1.2354
+
+   DEFINE COMBOBOX BENENNUNGEN OF THIS;
+       PROPERTY; 
+         Width 38.166,;
+         Style 1,;
+         Left 27,;
+         Top 8.1172,;
+         Enabled .F.,;
+         Height 1.1768
+
+   DEFINE RADIOBUTTON LOG_LFDNR OF THIS;
+       PROPERTY; 
+         Width 21.166,;
+         Text "Laufende Nummer",;
+         Left 12.5,;
+         Group .T.,;
+         Value .T.,;
+         Top 4.9404,;
+         Enabled .F.,;
+         Height 1.0596
+
+   DEFINE RADIOBUTTON LOG_SPEZINR OF THIS;
+       PROPERTY; 
+         Width 20.5,;
+         Text "Spezielle Nummer",;
+         Left 39,;
+         Group .F.,;
+         Value .F.,;
+         Top 5,;
+         Enabled .F.,;
+         Height 0.9404
+         
+*************************************************************************    
+    
+    Procedure PM_ART_OnOpen 
+    
+     sele os
+     set order to 2
+     set filter to log_pm_art
+     this.datasource = "field os->ben"
+     set filter to
+     this.value = ""
+     this.visible = .t.  
+     this.setfocus()        
+   
+   
+    Procedure PM_ART_OnChange
+   
+     sele os
+     set order to 2
+     set exact on
+     seek ltrim(this.value)
+     set exact off
+          
+     if empty(this.value) .or. .not. found()
+      form.codewort.value    = ""
+      form.benennungen.value = ""
+      form.benennungen.enabled = .f.
+     else
+      form.codewort.value = codewort
+      if log_lfdnr
+       form.log_lfdnr.value = .t.
+      else
+       form.log_spezinr.value = .t.
+      endif      
+      form.benennungen.enabled = .t.
+      set order to 1
+      set key to codewort
+      set filter to .not. log_pm_art
+      form.benennungen.datasource = "FIELD os->ben"
+      set key to
+      set filter to
+     endif   
+   
+   
+   Procedure CODEWORT_Valid
+   
+    do case
+     case empty(this.value) .or. this.value = "?"
+      this.validerrormsg = "Fehler: Es besteht Eingabepflicht."
+      return .f.   
+     case " " $ ltrim(rtrim(this.value))
+      this.validerrormsg = "Fehler: Es darf im Codewort kein Leerzeichen enthalten sein."
+      return .f. 
+     otherwise
+      sele os
+      set order to 1
+      set exact on
+      seek this.value
+      set exact off
+      if found()
+       this.validerrormsg = "Fehler: Das Codewort ist schon vorhanden."
+       return .f.
+      else
+       do while .t.
+        if msgbox("Wird die neue PrÅfmittelart mit einer Laufenden Nummer beschriftet ?","Laufende Nummer ?",292) = 6
+         form.log_lfdnr.value   = .t.
+         form.log_spezinr.value = .f.
+         exit
+        else
+         if msgbox("Wird die neue PrÅfmittelart mit einer Speziellen Nummer beschriftet ?","Spezielle Nummer ?",292) = 6
+          form.log_lfdnr.value   = .f.
+          form.log_spezinr.value = .t.
+          exit
+         endif
+        endif
+       enddo
+       set order to 0
+       append blank
+       repl ben with ltrim(form.pm_art.value), codewort with ltrim(this.value), log_pm_art with .t.
+       if form.log_lfdnr.value
+        repl log_lfdnr with .t.
+       else
+        repl log_lfdnr with .f.
+       endif 
+       set order to 1
+       set key to codewort
+       set filter to .not. log_pm_art
+       form.benennungen.datasource = "FIELD os->ben"
+       set key to
+       set filter to
+       form.benennungen.enabled = .t.
+       set order to 2
+       set filter to log_pm_art
+       form.pm_art.visible = .f.
+       form.pm_art.datasource = "field os->ben"
+       form.pm_art.value = ben
+       form.pm_art.visible = .t.
+       form.codewort.enabled = .f.
+       form.pm_art.setfocus()
+       return .t.
+      endif 
+    endcase
+   
+   
+   
+   Procedure SCHALTER_LOESCHEN_OnClick
+   
+    if form.activecontrol.name = "PM_ART"
+     
+     if .not. empty(form.pm_art.value)
+      sele os
+      set filter to log_pm_art
+      set order to 2
+      set exact on
+      seek ltrim(form.pm_art.value)
+      set exact off
+      if .not. found()
+       msgbox("Fehler: Die PrÅfmittelart ist nicht vorhanden.","Achtung",48)
+      else
+       sele 5
+       if alias() <> "MANDANT"
+        use mandant
+       endif
+       scan all
+        use (rtrim(mandant)) index (rtrim(mandant)) in 10 alias kartei
+        if seek(os->codewort,"kartei")
+         msgbox("Lîschen nicht mîglich, weil die PrÅfmittelart noch in der PrÅfmittelkartei vorhanden ist.","Hinweis",64)
+         return
+        endif 
+       endscan    
+       sele kartei
+       use
+       if msgbox("Mit dem Lîschen der PrÅfmittelart werden auch zu-  gehîrige EintrÑge in den Katalogen: Merkmale und ZulÑssige Abweichung gelîscht.","PrÅfmittelart lîschen...",273) = 1
+        sele 15
+        if alias() <> "MERKMALE"
+         use merkmale index merkmale
+        endif
+        set key to os->codewort
+        dele all
+        set key to
+        sele 20
+        if alias() <> "ABW"
+         use abw index abw
+        endif
+        set key to os->codewort
+        dele all
+        set key to
+        sele os
+        dele
+        set filter to log_pm_art
+        set order to 2
+        form.pm_art.visible = .f.
+        form.pm_art.datasource = "field os->ben"
+        form.pm_art.value = ""
+        form.pm_art.visible = .t.
+        set filter to
+        form.codewort.value = ""
+       endif
+      endif
+     endif    
+    
+    else
+    
+     if .not. empty(form.benennungen.value)
+      sele os
+      set order to 1
+      set exact on
+      seek left(form.codewort.value+space(10),10) + ltrim(form.benennungen.value)
+      set exact off
+      if .not. found()
+       msgbox("  Fehler: Die Benennung ist nicht vorhanden.","Achtung",48)
+      else
+       if msgbox('Die Benennung "' + form.benennungen.value + '" wird aus dem Katalog gelîscht.',"Benennung lîschen...",273) = 1
+        local lcRettenCodewort
+        lcRettenCodewort = codewort
+        dele
+        set key to lcRettenCodewort
+        set filter to .not. log_pm_art
+        form.benennungen.datasource = "FIELD os->ben"
+        set key to        
+        set filter to
+        form.benennungen.value = ""
+       endif
+      endif
+    
+     endif
+     
+    endif 
+          
+   
+    
+   Procedure SCHALTER_HINZUFUEGEN_OnClick
+   
+    if form.activecontrol.name = "PM_ART"
+     
+     if .not. empty(form.pm_art.value)
+      sele os
+      set filter to log_pm_art
+      set order to 2
+      set exact on
+      seek ltrim(form.pm_art.value)
+      set exact off
+      if found()
+       msgbox("Fehler: Die PrÅfmittelart ist schon vorhanden.","Achtung",48)
+      else
+       form.codewort.value = "?"
+       form.codewort.enabled = .t.
+       form.codewort.setfocus()    &&  append -> procedure: codewort_valid
+      endif 
+     endif
+     
+    else
+    
+     if .not. empty(form.benennungen.value)
+      sele os
+      set order to 1
+      set exact on
+      seek left(form.codewort.value+space(10),10) + ltrim(form.benennungen.value)
+      set exact off
+      if found()
+       msgbox("  Fehler: Die Benennung ist schon vorhanden.","Achtung",48)
+      else
+       set order to 0
+       append blank
+       repl ben with ltrim(form.benennungen.value), codewort with form.codewort.value, log_pm_art with .f.
+       if form.log_lfdnr.value
+        repl log_lfdnr with .t.
+       else
+        repl log_lfdnr with .f.
+       endif
+       set order to 1
+       set key to codewort
+       set filter to .not. log_pm_art
+       form.benennungen.datasource = "FIELD os->ben"
+       set key to        
+       set filter to 
+       form.benennungen.value = ""
+      endif
+     endif
+    endif
+    
+    
+    
+ENDCLASS

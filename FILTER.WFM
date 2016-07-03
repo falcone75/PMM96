@@ -1,0 +1,2233 @@
+*** filter.wfm
+
+** korrekte Åbergabe der formularnummer :
+parameter pcNummer
+privat pcNummerAufrufendesFormular
+pcNummerAufrufendesFormular = pcNummer
+rele pcNummer
+
+if val(pcNummerAufrufendesFormular) <> 4711   &&  4711 bei aufruf durch boss/einsatzdauer Ñndern
+ **** retten satznummer fÅr abbruch
+ privat pnSatznummerBeiAufruf
+ sele kartei
+ pnSatznummerBeiAufruf = recno()
+endif
+
+public MakroArray
+MakroArray = new array(1,4)   && 1.spalte=objektname, 2.spalte=verknÅfung, 3.spalte=ausdruck fÅr suchmakro, 4.spalte=textzeile fÅr anzeige filter
+MakroArray.fill("")
+
+
+
+
+** END HEADER -- Diese Zeile nicht lîschen*
+* Erstellt am 16.02.1996
+*
+
+local f
+f = new filterform()
+f.ReadModal()
+rele lfdnr,spezinr,MakroArray    && alles arrays
+
+CLASS FILTERFORM OF FORM
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "Filter"
+   this.Width = 103.333
+   this.Text = "Filter"
+   this.MDI = .F.
+   this.EscExit = .F.
+   this.Left = 1.5
+   this.Top = 3.3
+   this.Height = 21.7646
+   this.OnOpen = {; if glTipsUndTricks; msgbox("Im Filter sollte immer das Codewort anstelle der Benennung eingegeben werden, wenn die Benennung gleich der Bezeichnung der PrÅfmittelart ist. Dadurch werden PrÅfmittel viel schneller gefunden und in den Katalogen fÅr Merkmale und ZulÑssige Abweichung werden nur die zur PrÅfmittelart zugehîrigen EintrÑge angezeigt. Weitere Hilfe mit Taste F1...","Tips & Tricks",64); endif}
+   this.OnClose = class::FORMULAR_OnClose
+
+
+   DEFINE TABBOX REGISTER1 OF THIS;
+       PROPERTY; 
+         Width 103.3311,;
+         ColorHighLight "BtnText/BtnFace",;
+         ColorNormal "BtnFace",;
+         ID 100,;
+         OnSelChange {;form.PageNo=this.CurSel},;
+         DataSource 'ARRAY {"Filter I","Filter II"}',;
+         Top 20.7637,;
+         Height 1
+
+   DEFINE RECTANGLE RECHTECK2 OF THIS;
+       PROPERTY; 
+         Width 102,;
+         FontItalic .T.,;
+         ColorNormal "0x408000/BtnFace",;
+         Text "  Stammdaten  ",;
+         Left 0.5,;
+         Top 3.7051,;
+         FontSize 10,;
+         Height 14.7061
+
+   DEFINE RECTANGLE RECHTECK3 OF THIS;
+       PROPERTY; 
+         Width 102.002,;
+         FontItalic .T.,;
+         ColorNormal "0x400080/W",;
+         Text "  PrÅfmittel  ",;
+         Left 0.6641,;
+         Top 0.3516,;
+         FontSize 10,;
+         Height 3
+
+   DEFINE RECTANGLE RECHTECK4 OF THIS;
+       PROPERTY; 
+         Width 99.1689,;
+         FontItalic .T.,;
+         ColorNormal "GB/BtnFace",;
+         Text "  PrÅfmittelbewegung  ",;
+         Left 1.8311,;
+         Top 13.0586,;
+         Height 4.8223
+
+   DEFINE RECTANGLE RECHTECK5 OF THIS;
+       PROPERTY; 
+         Width 101.833,;
+         FontItalic .T.,;
+         ColorNormal "RB+/BtnFace",;
+         Text "  Historie  ",;
+         Left 0.5,;
+         Top 0.5293,;
+         PageNo 2,;
+         FontSize 10,;
+         Height 6.8809
+
+   DEFINE TEXT TEXT1 OF THIS;
+       PROPERTY; 
+         Width 11.002,;
+         Text "Benennung",;
+         Left 1.8311,;
+         Top 1.5879,;
+         Height 0.8809
+
+   DEFINE TEXT TEXT2 OF THIS;
+       PROPERTY; 
+         Width 9.5,;
+         Text "Codewort",;
+         Left 52.5,;
+         Top 1.6465,;
+         Height 0.9395
+
+   DEFINE TEXT TEXT3 OF THIS;
+       PROPERTY; 
+         Width 7.833,;
+         Text "Nummer",;
+         Left 81,;
+         Top 1.5879,;
+         Height 0.8809
+
+   DEFINE TEXT TEXT4 OF THIS;
+       PROPERTY; 
+         Width 9.5,;
+         Text "Hersteller",;
+         Left 1.5,;
+         Top 5.293,;
+         Height 1
+
+   DEFINE TEXT TEXT5 OF THIS;
+       PROPERTY; 
+         Width 10.6689,;
+         Text "Ersteinsatz",;
+         Left 71.1641,;
+         Top 9.293,;
+         Height 0.9395
+
+   DEFINE TEXT TEXT6 OF THIS;
+       PROPERTY; 
+         Width 9.666,;
+         Text "Merkmale",;
+         Left 1.5,;
+         Top 7.293,;
+         Height 0.9395
+
+   DEFINE TEXT TEXT7 OF THIS;
+       PROPERTY; 
+         Width 9.333,;
+         Text "Zul. Abw.",;
+         Left 62.5,;
+         Top 7.3516,;
+         Height 0.8223
+
+   DEFINE TEXT TEXT8 OF THIS;
+       PROPERTY; 
+         Width 11,;
+         Text "EigentÅmer",;
+         Left 1.5,;
+         Top 9.1172,;
+         Height 0.9395
+
+   DEFINE TEXT TEXT9 OF THIS;
+       PROPERTY; 
+         Width 15,;
+         Text "PrÅffrist [Tage]",;
+         Left 1.5,;
+         Top 11.293,;
+         Height 0.9395
+
+   DEFINE TEXT TEXT10 OF THIS;
+       PROPERTY; 
+         Width 13.002,;
+         Text "Klassifikation",;
+         Left 46.3311,;
+         Top 5.2344,;
+         Height 0.8223
+
+   DEFINE TEXT TEXT11 OF THIS;
+       PROPERTY; 
+         Width 8.3359,;
+         Text " PrÅfzeit",;
+         Left 81.1641,;
+         Top 5.3516,;
+         Height 0.9395
+
+   DEFINE TEXT TEXT12 OF THIS;
+       PROPERTY; 
+         Width 10.1689,;
+         Text "Sonstiges",;
+         Left 33.9,;
+         Top 11.3516,;
+         Height 1.0586
+
+   DEFINE TEXT TEXT13 OF THIS;
+       PROPERTY; 
+         Width 3.166,;
+         Text "Art",;
+         Left 9.3,;
+         Top 14.4102,;
+         Height 0.9395
+
+   DEFINE TEXT TEXT14 OF THIS;
+       PROPERTY; 
+         Width 6.666,;
+         Text "Datum",;
+         Left 34.5,;
+         Top 14.4688,;
+         Height 0.9395
+
+   DEFINE TEXT TEXT15 OF THIS;
+       PROPERTY; 
+         Width 12.1689,;
+         Text "Kosten [DM]",;
+         Left 67.1641,;
+         Top 14.4102,;
+         Height 1
+
+   DEFINE TEXT TEXT16 OF THIS;
+       PROPERTY; 
+         Width 8.502,;
+         Text "Standort",;
+         Left 3.3311,;
+         Top 16.3516,;
+         Height 0.8809
+
+   DEFINE TEXT TEXT17 OF THIS;
+       PROPERTY; 
+         Width 11.1689,;
+         Text "Bemerkung",;
+         Left 47.6641,;
+         Top 16.4102,;
+         Height 1
+
+   DEFINE TEXT TEXT19 OF THIS;
+       PROPERTY; 
+         Width 3.1689,;
+         Text "Art",;
+         Left 9.3,;
+         Top 1.8809,;
+         PageNo 2,;
+         Height 0.9395
+
+   DEFINE TEXT TEXT20 OF THIS;
+       PROPERTY; 
+         Width 6.666,;
+         Text "Datum",;
+         Left 34.5,;
+         Top 1.7637,;
+         PageNo 2,;
+         Height 0.9395
+
+   DEFINE TEXT TEXT21 OF THIS;
+       PROPERTY; 
+         Width 12.1689,;
+         Text "Kosten [DM]",;
+         Left 67.1641,;
+         Top 1.7637,;
+         PageNo 2,;
+         Height 1
+
+   DEFINE TEXT TEXT22 OF THIS;
+       PROPERTY; 
+         Width 11.1689,;
+         Text "Bemerkung",;
+         Left 47.1641,;
+         Top 3.7051,;
+         PageNo 2,;
+         Height 1
+
+   DEFINE TEXT TEXT23 OF THIS;
+       PROPERTY; 
+         Width 8.5,;
+         Text "Standort",;
+         Left 3,;
+         Top 3.7637,;
+         PageNo 2,;
+         Height 0.8809
+         
+   DEFINE PUSHBUTTON VERKNUEPFUNG OF THIS;
+       PROPERTY; 
+         Width 25.002,;
+         Text "VerknÅpfung Ñndern",;
+         Group .T.,;
+         Left 17,;
+         OnClick CLASS::VERKNUEPFUNGAENDERN,;
+         Enabled .F.,;
+         Top 18.9482,;
+         Height 1.3984      
+
+   DEFINE PUSHBUTTON ABBRUCH OF THIS;
+       PROPERTY; 
+         Width 15,;
+         Text "Abbruch",;
+         OnOpen {; this.setfocus()},;
+         UpBitmap "RESOURCE #28",;
+         Group .T.,;
+         Left 60,;
+         OnClick CLASS::ABBRUCH_ONCLICK,;
+         SpeedTip "Alten Filter beibehalten",;
+         Top 18.9,;
+         SpeedBar .f.,;
+         Height 1.4
+
+   DEFINE PUSHBUTTON OK OF THIS;
+       PROPERTY; 
+         Width 15,;
+         Text "OK",;
+         UpBitmap "RESOURCE #20",;
+         Group .T.,;
+         Left 80,;
+         OnClick CLASS::OK_ONCLICK,;
+         SpeedTip "Neuen Filter einstellen",;
+         Top 18.9,;
+         SpeedBar .f.,;
+         Height 1.4
+
+   DEFINE COMBOBOX VZ_BEN OF THIS;
+       PROPERTY; 
+         Width 5.002,;
+         Style 2,;
+         DropDownHeight 5,;
+         Left 13.3311,;
+         OnChange {;class::zugriffsrechte(form.ben)},;
+         DataSource 'ARRAY {"  ","=","#","$","~"}',;
+         Top 1.4102,;
+         Height 1.1768
+
+   DEFINE COMBOBOX BEN OF THIS;
+       PROPERTY; 
+         Width 32.1689,;
+         FontName "Arial",;
+         Value "",;
+         OnGotFocus class::BEN_OnGotFocus,;
+         Style 1,;
+         DropDownHeight 8,;
+         Left 19.1641,;
+         OnChange CLASS::BEN_OnChange,;
+         Enabled .F.,;
+         Top 1.4102,;
+         Height 1.2354
+
+   DEFINE COMBOBOX CODEWORT OF THIS;
+       PROPERTY; 
+         Width 18.002,;
+         OnOpen CLASS::CODEWORT_OnOpen,;
+         FontName "Arial",;
+         DropDownHeight 12,;
+         Value "",;
+         Style 1,;
+         Left 62.1641,;
+         OnChange CLASS::CODEWORT_OnChange,;
+         Top 1.4102,;
+         Height 1.2354
+
+   DEFINE ENTRYFIELD NUMMER OF THIS;
+       PROPERTY; 
+         Width 12.833,;
+         Valid CLASS::NUMMER_VALID,;
+         Left 89,;
+         Value "",;
+         MaxLength 500,;
+         ValidRequired .T.,;
+         Top 1.3516,;
+         Height 1.2354
+
+   DEFINE COMBOBOX VZ_HST OF THIS;
+       PROPERTY; 
+         Width 5,;
+         Style 2,;
+         DropDownHeight 5,;
+         Left 11,;
+         OnChange {;class::zugriffsrechte(form.hst)},;
+         DataSource 'ARRAY {"  ","=","#","$","~"}',;
+         Top 5.0586,;
+         Height 1.1758
+
+   DEFINE COMBOBOX HST OF THIS;
+       PROPERTY; 
+         Width 28.833,;
+         OnOpen {; this.value=""; this.visible=.t.},;
+         Visible .f.,;
+         FontName "Arial",;
+         DropDownHeight 10,;
+         Style 1,;
+         Left 16.5,;
+         OnChange {;class::makro(form.vz_hst)},;
+         Enabled .F.,;
+         DataSource "FIELD HST->HST",;
+         Top 5.0586,;
+         Height 1.2354
+
+   DEFINE COMBOBOX VZ_KLASSI OF THIS;
+       PROPERTY; 
+         Width 5,;
+         Style 2,;
+         DropDownHeight 5,;
+         Left 59.5,;
+         OnChange {;class::zugriffsrechte(form.klassi)},;
+         DataSource 'ARRAY {"  ","=","#","$","~"}',;
+         Top 5.1172,;
+         Height 1.1768
+
+   DEFINE COMBOBOX KLASSI OF THIS;
+       PROPERTY; 
+         Width 15.3359,;
+         OnOpen {; this.value=""; this.visible=.t.},;
+         Visible .f.,;
+         FontName "Arial",;
+         DropDownHeight 5,;
+         Style 1,;
+         Left 65.1641,;
+         OnChange {;class::makro(form.vz_klassi)},;
+         Enabled .F.,;
+         DataSource "FIELD KLASSI->KLASSI",;
+         Top 5.0586,;
+         Height 1.2354
+
+   DEFINE COMBOBOX VZ_P_ZEIT OF THIS;
+       PROPERTY; 
+         Width 5.1689,;
+         Style 2,;
+         DropDownHeight 5,;
+         Left 89.3311,;
+         OnChange {;class::zugriffsrechte(form.p_zeit)},;
+         DataSource 'ARRAY {"  ","=","<",">","/"}',;
+         Top 5.1758,;
+         Height 1.1768
+
+   DEFINE COMBOBOX VZ_MERKMALE OF THIS;
+       PROPERTY; 
+         Width 5,;
+         Style 2,;
+         DropDownHeight 5,;
+         Left 11,;
+         OnChange {;class::zugriffsrechte(form.merkmale)},;
+         DataSource 'ARRAY {"  ","=","#","$","~"}',;
+         Top 7.1172,;
+         Height 1.1768
+
+   DEFINE COMBOBOX MERKMALE OF THIS;
+       PROPERTY; 
+         Width 45.002,;
+         FontName "Arial",;
+         Value "",;
+         DropDownHeight 9,;
+         Style 1,;
+         OnGotFocus class::MERKMALE_OnGotFocus,;
+         Left 16.6641,;
+         OnChange {;class::makro(form.vz_merkmale)},;
+         Enabled .F.,;
+         Top 7.0586,;
+         Height 1.2354
+
+   DEFINE COMBOBOX VZ_ABW OF THIS;
+       PROPERTY; 
+         Width 5.002,;
+         Style 2,;
+         DropDownHeight 5,;
+         Left 71.6641,;
+         OnChange {;class::zugriffsrechte(form.abw)},;
+         DataSource 'ARRAY {"  ","=","#","$","~"}',;
+         Top 7.0586,;
+         Height 1.1758
+
+   DEFINE COMBOBOX ABW OF THIS;
+       PROPERTY; 
+         Width 24.002,;
+         Value "",;
+         FontName "Arial",;
+         OnGotFocus class::ABW_OnGotFocus,;
+         Style 1,;
+         Left 77.3311,;
+         OnChange {;class::makro(form.vz_abw)},;
+         Enabled .F.,;
+         Top 7.0586,;
+         Height 1.2354
+
+   DEFINE COMBOBOX VZ_BES OF THIS;
+       PROPERTY; 
+         Width 5,;
+         Style 2,;
+         DropDownHeight 5,;
+         Left 12.5,;
+         OnChange {;class::zugriffsrechte(form.bes)},;
+         DataSource 'ARRAY {"  ","=","#","$","~"}',;
+         Top 9,;
+         Height 1.1758
+
+   DEFINE COMBOBOX BES OF THIS;
+       PROPERTY; 
+         Width 22.502,;
+         OnOpen {; this.value=""; this.visible=.t.},;
+         Visible .f.,;
+         DropDownHeight 8,;
+         FontName "Arial",;
+         Style 1,;
+         Left 18.1641,;
+         OnChange {;class::makro(form.vz_bes)},;
+         Enabled .F.,;
+         DataSource "FIELD BES->BES",;
+         Top 9,;
+         Height 1.2344
+
+   DEFINE COMBOBOX VZ_GERAETE_NR OF THIS;
+       PROPERTY; 
+         Width 5,;
+         Style 2,;
+         DropDownHeight 4,;
+         Left 52,;
+         OnChange {;class::zugriffsrechte(form.geraete_nr)},;
+         DataSource 'ARRAY {" ","=","#","$"}',;
+         Top 9.0586,;
+         Height 1.1758
+
+   DEFINE ENTRYFIELD GERAETE_NR OF THIS;
+       PROPERTY; 
+         Width 12.666,;
+         Left 57.5,;
+         Value "",;
+         OnChange {;class::makro(form.vz_geraete_nr)},;
+         MaxLength 15,;
+         Enabled .F.,;
+         Top 9,;
+         Height 1.293
+
+   DEFINE COMBOBOX VZ_KFR OF THIS;
+       PROPERTY; 
+         Width 5,;
+         Style 2,;
+         DropDownHeight 4,;
+         Left 16.3,;
+         OnChange {;class::zugriffsrechte(form.kfr)},;
+         DataSource 'ARRAY {" ","=","<",">"}',;
+         Top 11.1758,;
+         Height 1.1768
+
+   DEFINE COMBOBOX KFR OF THIS;
+       PROPERTY; 
+         Width 10.002,;
+         Style 1,;
+         OnOpen {; this.value=""; this.visible=.t.},;
+         Visible .f.,;
+         Left 21.9641,;
+         OnChange CLASS::KFR_OnChange,;
+         Enabled .F.,;
+         DataSource "FIELD KFR->KFR",;
+         Top 11.1758,;
+         Height 1.1768
+
+   DEFINE COMBOBOX VZ_ERST_EINS OF THIS;
+       PROPERTY; 
+         Width 5.002,;
+         Style 2,;
+         DropDownHeight 5,;
+         Left 82.3311,;
+         OnChange {;class::zugriffsrechte(form.erst_eins)},;
+         DataSource 'ARRAY {" ","=","<",">","/"}',;
+         Top 9.0586,;
+         Height 1.1758
+
+   DEFINE ENTRYFIELD ERST_EINS OF THIS;
+       PROPERTY; 
+         Width 13.6689,;
+         Valid class::DATUM_Valid,;
+         ValidRequired .t.,;
+         Left 87.8311,;
+         Value "",;
+         OnChange {;class::makro(form.vz_erst_eins)},;
+         Enabled .F.,;
+         Top 9.0586,;
+         Height 1.1758
+
+   DEFINE COMBOBOX VZ_SONSTIGES OF THIS;
+       PROPERTY; 
+         Width 5.002,;
+         Style 2,;
+         DropDownHeight 5,;
+         Left 43.7641,;
+         OnChange {;class::zugriffsrechte(form.sonstiges)},;
+         DataSource 'ARRAY {"  ","=","#","$","~"}',;
+         Top 11.1758,;
+         Height 1.1758
+
+   DEFINE ENTRYFIELD SONSTIGES OF THIS;
+       PROPERTY; 
+         Width 52,;
+         FontName "Arial",;
+         Left 49.65,;
+         Value "",;
+         OnChange {;class::makro(form.vz_sonstiges)},;
+         MaxLength 50,;
+         Enabled .F.,;
+         Top 11.1758,;
+         Height 1.1768
+
+   DEFINE COMBOBOX PB_ART OF THIS;
+       PROPERTY; 
+         Width 19.335,;
+         FontName "Arial",;
+         OnOpen {; this.value=""; this.visible=.t.; class::setzenstandort("PB_ART")},;
+         Visible .f.,;
+         Style 1,;
+         Left 12.8311,;
+         OnChange CLASS::PB_ART_OnChange,;
+         DataSource "FIELD PB_ART->PB_ART",;
+         Top 14.2344,;
+         Height 1.2354
+
+   DEFINE COMBOBOX VZ_PB_DATUM OF THIS;
+       PROPERTY; 
+         Width 5,;
+         Style 2,;
+         DropDownHeight 5,;
+         Left 41.5,;
+         OnChange {;class::zugriffsrechte(form.pb_datum)},;
+         DataSource 'ARRAY {"  ","=","<",">","/"}',;
+         Top 14.293,;
+         Height 1.1758
+
+   DEFINE COMBOBOX VZ_PB_KOST OF THIS;
+       PROPERTY; 
+         Width 5,;
+         Style 2,;
+         DropDownHeight 5,;
+         Left 79.5,;
+         OnChange {;class::zugriffsrechte(form.pb_kost)},;
+         DataSource 'ARRAY {" ","=","<",">","/"}',;
+         Top 14.2344,;
+         Height 1.1768
+
+   DEFINE ENTRYFIELD PB_KOST OF THIS;
+       PROPERTY; 
+         Width 9.5,;
+         Left 85.5,;
+         Value "",;
+         OnChange {;class::makro(form.vz_pb_kost)},;
+         Enabled .F.,;
+         Top 14.1758,;
+         Height 1.1768
+
+   DEFINE COMBOBOX VZ_PB_BEM OF THIS;
+       PROPERTY; 
+         Width 5.002,;
+         Style 2,;
+         DropDownHeight 5,;
+         Left 58.6641,;
+         OnChange {;class::zugriffsrechte(form.pb_bem)},;
+         DataSource 'ARRAY {"  ","=","#","$","~"}',;
+         Top 16.2344,;
+         Height 1.1768
+
+   DEFINE ENTRYFIELD PB_BEM OF THIS;
+       PROPERTY; 
+         Width 35.6689,;
+         FontName "Arial",;
+         Left 64.1641,;
+         Value "",;
+         OnChange {;class::makro(form.vz_pb_bem)},;
+         MaxLength 30,;
+         Enabled .F.,;
+         Top 16.2344,;
+         Height 1.1768
+
+   DEFINE COMBOBOX VZ_PB_ORT OF THIS;
+       PROPERTY; 
+         Width 5.002,;
+         Style 2,;
+         DropDownHeight 5,;
+         Left 11.8311,;
+         OnChange {;class::zugriffsrechte(form.pb_ort)},;
+         DataSource 'ARRAY {"  ","=","#","$","~"}',;
+         Top 16.1758,;
+         Height 1.1768
+
+   DEFINE COMBOBOX PB_ORT OF THIS;
+       PROPERTY; 
+         Width 29,;
+         Value "",;
+         FontName "Arial",;
+         DropDownHeight 9,;
+         Style 1,;
+         Left 17.5,;
+         OnChange {;class::makro(form.vz_pb_ort)},;
+         Enabled .F.,;
+         Top 16.1758,;
+         Height 1.2354
+
+   DEFINE ENTRYFIELD P_ZEIT OF THIS;
+       PROPERTY; 
+         Width 6.666,;
+         Left 95,;
+         Value "",;
+         OnChange {;class::makro(form.vz_p_zeit)},;
+         Enabled .F.,;
+         Top 5.1758,;
+         Height 1.1768
+
+   DEFINE ENTRYFIELD PB_DATUM OF THIS;
+       PROPERTY; 
+         Width 17.1689,;
+         Valid class::DATUM_Valid,;
+         ValidRequired .t.,;
+         Left 47.3311,;
+         Value "",;
+         OnChange {;class::makro(form.vz_pb_datum)},;
+         Enabled .F.,;
+         Top 14.293,;
+         Height 1.1758
+
+   DEFINE TEXT TEXT24 OF THIS;
+       PROPERTY; 
+         Width 15.502,;
+         Text "Anzahl EinsÑtze",;
+         Left 6.3311,;
+         Top 5.4688,;
+         PageNo 2,;
+         Height 0.7637
+
+   DEFINE TEXT TEXT25 OF THIS;
+       PROPERTY; 
+         Width 19.502,;
+         Text "Anzahl Reparaturen",;
+         Left 36.1641,;
+         Top 5.4688,;
+         PageNo 2,;
+         Height 0.8809
+
+   DEFINE TEXT TEXT26 OF THIS;
+       PROPERTY; 
+         Width 11.666,;
+         Text "Zeitwert [%]",;
+         Left 70.5,;
+         Top 5.4688,;
+         PageNo 2,;
+         Height 0.8809
+
+   DEFINE COMBOBOX HIST_ART OF THIS;
+       PROPERTY; 
+         Width 16.4678,;
+         OnOpen class::HIST_ART_OnOpen,;
+         FontName "Arial",;
+         Style 1,;
+         Left 12.82,;
+         OnChange class::HIST_ART_OnChange,;
+         Top 1.6465,;
+         PageNo 2,;
+         Height 1.2354
+
+   DEFINE COMBOBOX VZ_HIST_DATUM OF THIS;
+       PROPERTY; 
+         Width 5.002,;
+         Style 2,;
+         DropDownHeight 5,;
+         Left 41.5,;
+         OnChange {;class::zugriffsrechte(form.hist_datum)},;
+         DataSource 'ARRAY {"  ","=","<",">","/"}',;
+         Top 1.5879,;
+         PageNo 2,;
+         Height 1.1768
+
+   DEFINE ENTRYFIELD HIST_DATUM OF THIS;
+       PROPERTY; 
+         Width 17.16,;
+         Valid class::DATUM_Valid,;
+         ValidRequired .t.,;
+         Left 47.3311,;
+         Value "",;
+         OnChange {;class::makro(form.vz_hist_datum)},;
+         Enabled .F.,;
+         Top 1.5879,;
+         PageNo 2,;
+         Height 1.2354
+
+   DEFINE COMBOBOX VZ_HIST_KOST OF THIS;
+       PROPERTY; 
+         Width 5,;
+         Style 2,;
+         DropDownHeight 5,;
+         Left 79.5,;
+         OnChange {;class::zugriffsrechte(form.hist_kost)},;
+         DataSource 'ARRAY {" ","=","<",">","/"}',;
+         Top 1.5879,;
+         PageNo 2,;
+         Height 1.1768
+
+   DEFINE ENTRYFIELD HIST_KOST OF THIS;
+       PROPERTY; 
+         Width 11.666,;
+         Left 85.5,;
+         Value "",;
+         OnChange {;class::makro(form.vz_hist_kost)},;
+         Enabled .F.,;
+         Top 1.5879,;
+         PageNo 2,;
+         Height 1.2354
+
+   DEFINE COMBOBOX VZ_HIST_ORT OF THIS;
+       PROPERTY; 
+         Width 5.002,;
+         Style 2,;
+         DropDownHeight 5,;
+         Left 11.8311,;
+         OnChange {;class::zugriffsrechte(form.hist_ort)},;
+         DataSource 'ARRAY {"  ","=","#","$","~"}',;
+         Top 3.5293,;
+         PageNo 2,;
+         Height 1.1758
+
+   DEFINE COMBOBOX HIST_ORT OF THIS;
+       PROPERTY; 
+         Width 26.335,;
+         Value "",;
+         FontName "Arial",;
+         DropDownHeight 9,;
+         Style 1,;
+         Left 17.8311,;
+         OnChange {;class::makro(form.vz_hist_ort)},;
+         Enabled .F.,;
+         Top 3.4688,;
+         PageNo 2,;
+         Height 1.2354
+         
+   DEFINE COMBOBOX VZ_HIST_BEM OF THIS;
+       PROPERTY; 
+         Width 5,;
+         Style 2,;
+         DropDownHeight 5,;
+         Left 58.5,;
+         OnChange {;class::zugriffsrechte(form.hist_bem)},;
+         DataSource 'ARRAY {" ","=","#","$","~"}',;
+         Top 3.4688,;
+         PageNo 2,;
+         Height 1.1768
+
+   DEFINE ENTRYFIELD HIST_BEM OF THIS;
+       PROPERTY; 
+         Width 36.002,;
+         FontName "Arial",;
+         Left 64.1641,;
+         Value "",;
+         OnChange {;class::makro(form.vz_hist_bem)},;
+         MaxLength 30,;
+         Enabled .F.,;
+         Top 3.4688,;
+         PageNo 2,;
+         Height 1.2354
+   
+   DEFINE COMBOBOX VZ_ANZ_EINS OF THIS;
+       PROPERTY; 
+         Width 5.002,;
+         Style 2,;
+         DropDownHeight 5,;
+         Left 22.3311,;
+         OnChange {;class::zugriffsrechte(form.anz_eins)},;
+         DataSource 'ARRAY {" ","=","<",">","/"}',;
+         Top 5.3516,;
+         PageNo 2,;
+         Height 1.1768
+
+   DEFINE ENTRYFIELD ANZ_EINS OF THIS;
+       PROPERTY; 
+         Width 5.666,;
+         Left 28,;
+         Value "",;
+         OnChange {;class::makro(form.vz_anz_eins)},;
+         Enabled .F.,;
+         Top 5.3516,;
+         PageNo 2,;
+         Height 1.2354
+
+   DEFINE COMBOBOX VZ_ANZ_REP OF THIS;
+       PROPERTY; 
+         Width 5.002,;
+         Style 2,;
+         DropDownHeight 5,;
+         Left 55.8311,;
+         OnChange {;class::zugriffsrechte(form.anz_rep)},;
+         DataSource 'ARRAY {" ","=","<",">","/"}',;
+         Top 5.293,;
+         PageNo 2,;
+         Height 1.1758
+
+   DEFINE ENTRYFIELD ANZ_REP OF THIS;
+       PROPERTY; 
+         Width 5.5,;
+         Left 61.5,;
+         Value "",;
+         OnChange {;class::makro(form.vz_anz_rep)},;
+         Enabled .F.,;
+         Top 5.293,;
+         PageNo 2,;
+         Height 1.2354
+
+   DEFINE COMBOBOX VZ_ZW_P OF THIS;
+       PROPERTY; 
+         Width 5.002,;
+         Style 2,;
+         DropDownHeight 5,;
+         Left 82.1641,;
+         OnChange {;class::zugriffsrechte(form.zw_p)},;
+         DataSource 'ARRAY {" ","=","<",">","/"}',;
+         Top 5.293,;
+         PageNo 2,;
+         Height 1.1758
+
+   DEFINE ENTRYFIELD ZW_P OF THIS;
+       PROPERTY; 
+         Width 6.3359,;
+         Left 88.6641,;
+         Value "",;
+         OnChange {;class::makro(form.vz_zw_p)},;
+         Enabled .F.,;
+         Top 5.2344,;
+         PageNo 2,;
+         Height 1.2354
+
+   DEFINE RECTANGLE RECHTECK1 OF THIS;
+       PROPERTY; 
+         Width 101.5,;
+         FontItalic .T.,;
+         ColorNormal "GB+/BtnFace",;
+         Text "  Kosten ( DM )  ",;
+         Left 1,;
+         Top 7.9395,;
+         PageNo 2,;
+         FontSize 10,;
+         Height 5.4102
+
+   DEFINE TEXT TEXT27 OF THIS;
+       PROPERTY; 
+         Width 8.501,;
+         Text "Neuwert",;
+         Left 24.165,;
+         Top 9.293,;
+         PageNo 2,;
+         Height 0.8809
+
+   DEFINE TEXT TEXT28 OF THIS;
+       PROPERTY; 
+         Width 8.168,;
+         Text "Zeitwert",;
+         Left 61.665,;
+         Top 9.293,;
+         PageNo 2,;
+         Height 0.8223
+
+   DEFINE TEXT TEXT29 OF THIS;
+       PROPERTY; 
+         Width 10.1689,;
+         Text "Reparatur",;
+         Left 37.1641,;
+         Top 11.4102,;
+         PageNo 2,;
+         Height 1
+
+   DEFINE TEXT TEXT31 OF THIS;
+       PROPERTY; 
+         Width 7.002,;
+         Text "PrÅfen",;
+         Left 5.1641,;
+         Top 11.4688,;
+         PageNo 2,;
+         Height 0.8223
+
+   DEFINE TEXT TEXT32 OF THIS;
+       PROPERTY; 
+         Width 9.5,;
+         Text "énderung",;
+         Left 70.5,;
+         Top 11.4102,;
+         PageNo 2,;
+         Height 0.8809
+
+   DEFINE RECTANGLE RECHTECK6 OF THIS;
+       PROPERTY; 
+         Width 101.002,;
+         FontItalic .T.,;
+         ColorNormal "RG+/BtnFace",;
+         Text "  Notizen  ",;
+         Left 1.3311,;
+         Top 14,;
+         PageNo 2,;
+         FontSize 10,;
+         Height 2.9395
+
+   DEFINE RECTANGLE RECHTECK7 OF THIS;
+       PROPERTY; 
+         Width 100.502,;
+         FontItalic .T.,;
+         ColorNormal "B+/BtnFace",;
+         Text "  PrÅfprotokoll  ",;
+         Left 1.8311,;
+         Top 17.5879,;
+         PageNo 2,;
+         FontSize 10,;
+         Height 2.8809
+
+   DEFINE COMBOBOX VZ_NEUWERT OF THIS;
+       PROPERTY; 
+         Width 5.001,;
+         Style 2,;
+         DropDownHeight 5,;
+         Left 32.665,;
+         OnChange {;class::zugriffsrechte(form.neuwert)},;
+         DataSource 'ARRAY {" ","=","<",">","/"}',;
+         Top 9.1172,;
+         PageNo 2,;
+         Height 1.1768
+
+   DEFINE ENTRYFIELD NEUWERT OF THIS;
+       PROPERTY; 
+         Width 14.5,;
+         Left 38.5,;
+         Value "",;
+         OnChange {;class::makro(form.vz_neuwert)},;
+         Enabled .F.,;
+         Top 9.1172,;
+         PageNo 2,;
+         Height 1.2354
+
+   DEFINE COMBOBOX VZ_ZW_DM OF THIS;
+       PROPERTY; 
+         Width 5.001,;
+         Style 2,;
+         DropDownHeight 5,;
+         Left 69.832,;
+         OnChange {;class::zugriffsrechte(form.zw_dm)},;
+         DataSource 'ARRAY {" ","=","<",">","/"}',;
+         Top 9.0586,;
+         PageNo 2,;
+         Height 1.1758
+
+   DEFINE ENTRYFIELD ZW_DM OF THIS;
+       PROPERTY; 
+         Width 14,;
+         Left 75.5,;
+         Value "",;
+         OnChange {;class::makro(form.vz_zw_dm)},;
+         Enabled .F.,;
+         Top 9.0586,;
+         PageNo 2,;
+         Height 1.2354
+
+   DEFINE COMBOBOX VZ_REP_KOST OF THIS;
+       PROPERTY; 
+         Width 5,;
+         Style 2,;
+         DropDownHeight 5,;
+         Left 47.5,;
+         OnChange {;class::zugriffsrechte(form.rep_kost)},;
+         DataSource 'ARRAY {" ","=","<",">","/"}',;
+         Top 11.293,;
+         PageNo 2,;
+         Height 1.1758
+
+   DEFINE ENTRYFIELD REP_KOST OF THIS;
+       PROPERTY; 
+         Width 14.502,;
+         Left 53.3311,;
+         Value "",;
+         OnChange {;class::makro(form.vz_rep_kost)},;
+         Enabled .F.,;
+         Top 11.293,;
+         PageNo 2,;
+         Height 1.2354
+
+   DEFINE COMBOBOX VZ_PRöF_KOST OF THIS;
+       PROPERTY; 
+         Width 5.002,;
+         Style 2,;
+         DropDownHeight 5,;
+         Left 12.6641,;
+         OnChange {;class::zugriffsrechte(form.prÅf_kost)},;
+         DataSource 'ARRAY {" ","=","<",">","/"}',;
+         Top 11.2344,;
+         PageNo 2,;
+         Height 1.1768
+
+   DEFINE ENTRYFIELD PRöF_KOST OF THIS;
+       PROPERTY; 
+         Width 14.666,;
+         Left 18.5,;
+         Value "",;
+         OnChange {;class::makro(form.vz_prÅf_kost)},;
+         Enabled .F.,;
+         Top 11.293,;
+         PageNo 2,;
+         Height 1.2354
+
+   DEFINE COMBOBOX VZ_éND_KOST OF THIS;
+       PROPERTY; 
+         Width 5,;
+         Style 2,;
+         DropDownHeight 5,;
+         Left 80.5,;
+         OnChange {;class::zugriffsrechte(form.Ñnd_kost)},;
+         DataSource 'ARRAY {" ","=","<",">","/"}',;
+         Top 11.1758,;
+         PageNo 2,;
+         Height 1.1768
+
+   DEFINE ENTRYFIELD éND_KOST OF THIS;
+       PROPERTY; 
+         Width 14.502,;
+         Left 86.1641,;
+         Value "",;
+         OnChange {;class::makro(form.vz_Ñnd_kost)},;
+         Enabled .F.,;
+         Top 11.1172,;
+         PageNo 2,;
+         Height 1.2354
+
+   DEFINE ENTRYFIELD NOT_KONV OF THIS;
+       PROPERTY; 
+         Width 82,;
+         FontName "Arial",;
+         Left 18,;
+         Value "",;
+         OnChange {;class::makro("$")},;
+         MaxLength 70,;
+         Top 15.0586,;
+         PageNo 2,;
+         Height 1.2354
+
+   DEFINE ENTRYFIELD PROT_KONV OF THIS;
+       PROPERTY; 
+         Width 82,;
+         FontName "Arial",;
+         Left 18,;
+         Value "",;
+         OnChange {;class::makro("$")},;
+         MaxLength 70,;
+         Top 18.6465,;
+         PageNo 2,;
+         Height 1.2354
+
+   DEFINE TEXT TEXT33 OF THIS;
+       PROPERTY; 
+         Width 3.835,;
+         Text "( $ )",;
+         Left 12.8311,;
+         Top 15.1758,;
+         PageNo 2,;
+         Height 1
+
+   DEFINE TEXT TEXT34 OF THIS;
+       PROPERTY; 
+         Width 4.1689,;
+         Text "( $ )",;
+         Left 12.8311,;
+         Top 18.7637,;
+         PageNo 2,;
+         Height 0.9395
+
+   DEFINE TEXT TEXT35 OF THIS;
+       PROPERTY; 
+         Width 10.002,;
+         Text "GerÑte-Nr.",;
+         Left 41.6641,;
+         Top 9.2344,;
+         Height 0.8809
+
+
+***************************************************************************
+
+   Procedure FORMULAR_OnClose
+
+    sele os
+     set order to 1
+     set key to 
+    sele merkmale
+     set key to
+    sele abw
+     set key to
+    sele pb_ort
+     set key to
+     set filter to mand_nr = nutzer.mand_nr
+
+    sele kartei
+
+
+   Procedure ZUGRIFFSRECHTE(objekt)
+   
+    objekt.value = ""
+    
+    if objekt.name $ "P_ZEIT ERST_EINS PB_DATUM PB_KOST HIST_DATUM HIST_KOST ANZ_EINS ANZ_REP ZW_P ZW_DM NEUWERT PRöF_KOST REP_KOST éND_KOST"
+     if empty(this.value)
+      objekt.picture = ""
+     else
+      do case
+       case objekt.name $ "P_ZEIT ANZ_EINS ANZ_REP"
+        objekt.picture = "999"
+       case objekt.name $ "ERST_EINS PB_DATUM HIST_DATUM"
+        objekt.picture = "99.99.9999"
+       case objekt.name $ "PB_KOST HIST_KOST"
+        objekt.picture = "######## "   && leerzeichen am ende notwendig !!!
+       case objekt.name $ "NEUWERT ZW_DM PRöF_KOST REP_KOST éND_KOST"
+        objekt.picture = "########## "
+       case objekt.name $ "ZW_P"
+        objekt.picture = "#### "
+      endcase  
+      if this.value = "/"
+       objekt.picture = objekt.picture + "/" + objekt.picture
+      endif
+      objekt.value = space(21)  && liest picture ein
+     endif
+    endif       
+    
+    for i=1 to MakroArray.size/4
+     if MakroArray[i,1] == objekt.name
+      MakroArray.delete(i)
+      if MakroArray.size/4 > 1
+       MakroArray.resize(MakroArray.size/4-1)
+      else 
+       form.verknuepfung.enabled = .f.
+       MakroArray.fill("")
+      endif      
+      exit
+     endif
+    next
+
+    if empty(this.value)
+     objekt.enabled = .f.
+    else
+     objekt.enabled = .t.
+    endif
+    
+    objekt.setfocus()
+    objekt.keyboard(chr(26))
+
+   
+   
+   Procedure BEN_OnGotFocus
+
+    sele os
+
+    if .not. empty(form.codewort.value)
+     privat pcAktuellesCodewort
+     pcAktuellesCodewort = ltrim(rtrim(form.codewort.value))
+     set order to 1
+     set key to pcAktuellesCodewort
+    else
+     set order to 2
+    endif 
+    local lcAktuellerWert
+    lcAktuellerWert = this.value
+    form.ben.visible = .f.
+    form.ben.DataSource = "FIELD OS->BEN"
+    form.ben.value = lcAktuellerWert
+    form.ben.visible = .t.
+   
+   
+   
+   Procedure BEN_OnChange
+   
+    if .not. empty(this.value) .and. .not. empty(form.nummer.value) .and. empty(form.codewort.value)
+     sele os
+     set order to 2
+     if seek(ltrim(this.value))
+      if log_lfdnr <> form.nummer.log_lfdnr
+       if form.nummer.log_lfdnr
+        msgbox("Fehler: Die Benennung verlangt eine Spezielle Nummer.","Achtung",48)
+       else
+        msgbox("Fehler: Die Benennung verlangt eine Laufende Nummer.","Achtung",48)
+       endif 
+       this.setfocus() 
+       return
+      endif
+     endif
+    endif
+   
+    class::makro(form.vz_ben)
+    
+   
+   
+   Procedure CODEWORT_OnOpen
+   
+    this.visible = .f.
+    sele os
+    set order to 2
+    set filter to log_pm_art
+    this.datasource = "field os->ben"
+    set filter to
+    this.value = ""
+    this.visible = .t.
+   
+   
+   Procedure CODEWORT_OnChange
+    
+    if .not. empty(this.value)
+     sele os
+     set order to 2
+     if seek(ltrim(this.value))
+      this.keyboard(codewort) 
+     else
+      set order to 1
+      if .not. seek(ltrim(this.value))
+       msgbox("Fehler: Die Eingabe ist nicht im Katalog enthalten.","Achtung",48)
+       this.setfocus() 
+       return
+      endif      
+     endif
+         
+    endif
+
+    class::makro("#")
+
+    
+
+   Procedure MERKMALE_OnGotFocus
+   
+    privat pcAktuellesCodewort
+    pcAktuellesCodewort = ltrim(rtrim(form.codewort.value))
+   
+    sele merkmale
+    set order to 1
+    set key to pcAktuellesCodewort
+    local lcAktuellerWert
+    lcAktuellerWert = this.value
+    this.visible = .f.
+    this.DataSource = "FIELD merkmale->merkmale"
+    this.value = lcAktuellerWert
+    this.visible = .t.
+
+
+
+   Procedure ABW_OnGotFocus
+   
+    privat pcAktuellesCodewort
+    pcAktuellesCodewort = ltrim(rtrim(form.codewort.value))
+   
+    sele abw
+    set order to 1
+    set key to pcAktuellesCodewort
+    local lcAktuellerWert
+    lcAktuellerWert = this.value
+    this.visible = .f.
+    this.DataSource = "FIELD abw->abw"
+    this.value = lcAktuellerWert
+    this.visible = .t.
+    
+
+      
+   Procedure KFR_OnChange
+      
+    if .not. empty(this.value) .and. form.vz_kfr.value = "="
+     sele kfr
+     set order to 1
+     if .not. seek(val(this.value))
+      msgbox("Fehler: Die Eingabe ist nicht im Katalog enthalten.","Achtung",48)
+      this.setfocus() 
+      return
+     endif
+    endif
+
+    class::makro(form.vz_kfr)
+      
+      
+      
+   Procedure PB_ART_OnChange
+      
+    if .not. empty(this.value)
+     sele pb_art
+     set order to 1
+     if .not. seek(ltrim(this.value))
+      msgbox("Fehler: Die Eingabe ist nicht im Katalog enthalten.","Achtung",48)
+      this.setfocus() 
+      return
+     endif
+    endif
+
+    class::SetzenStandort("PB_ART")
+
+    class::makro("=")   
+      
+      
+      
+  Procedure HIST_ART_OnOpen
+ 
+   sele pb_art
+   set filter to .not. proper(rtrim(pb_art)) $ "Eichen Kalibrieren"
+   this.DataSource = "FIELD PB_ART->PB_ART"
+   set filter to pb_art <> "Im Einsatz"
+   this.value = ""
+  
+   class::SetzenStandort("HIST_ART")
+   
+  
+  
+  Procedure HIST_ART_OnChange
+      
+    if .not. empty(this.value)
+     sele pb_art
+     set order to 1
+     set filter to .not. proper(rtrim(pb_art)) $ "Eichen Kalibrieren"
+     seek ltrim(this.value)
+     set filter to pb_art <> "Im Einsatz"
+     if .not. found()
+      msgbox("Fehler: Die Eingabe ist nicht im Katalog enthalten.","Achtung",48)
+      this.setfocus() 
+      return
+     endif
+    endif
+
+    class::SetzenStandort("HIST_ART")
+
+    class::makro("=")   
+  
+ 
+ 
+  Procedure SetzenStandort(Aufruf)
+
+   local lcEingabe
+   if Aufruf = "PB_ART"
+    lcEingabe = proper(ltrim(rtrim(form.pb_art.value)))
+   else
+    lcEingabe = proper(ltrim(rtrim(form.hist_art.value)))
+   endif
+
+   privat pcArtKurz
+   
+   do case      
+    case lcEingabe $ "Eichen Kalibrieren Im Einsatz"
+     pcArtKurz = '"E"'
+    case lcEingabe = "Lager"
+     pcArtKurz = '"L"'
+    case lcEingabe = "Zum PrÅfen"
+     pcArtKurz = '"P"'
+    case lcEingabe = "Reparatur"
+     pcArtKurz = '"R"'
+    otherwise
+     pcArtKurz = '"S"'
+   endcase
+
+   sele pb_ort
+   set order to 1
+   set key to nutzer.mand_nr + &pcArtKurz
+   
+   local lcAktuellerStandort  && erhalten wegen filtermakro
+   
+   if Aufruf = "PB_ART"
+    form.pb_ort.visible = .f.
+    lcAktuellerStandort = form.pb_ort.value
+    form.pb_ort.DataSource = "FIELD pb_ort->pb_ort"
+    form.pb_ort.value = lcAktuellerStandort
+    form.pb_ort.visible = .t.   
+   else
+    form.hist_ort.visible = .f.
+    lcAktuellerStandort = form.hist_ort.value
+    form.hist_ort.DataSource = "FIELD pb_ort->pb_ort"
+    form.hist_ort.value = lcAktuellerStandort
+    form.hist_ort.visible = .t.   
+   endif
+
+   set key to
+ 
+ 
+   
+   procedure NUMMER_Valid
+   
+    if empty(this.value)
+     class::makro("=")
+     return .t.
+    else
+     local lcModifizierteEingabe
+     lcModifizierteEingabe = ltrim(rtrim(this.value))
+     do while right(lcModifizierteEingabe,1) = ";"
+      lcModifizierteEingabe = left(lcModifizierteEingabe,len(lcModifizierteEingabe)-1)
+     enddo 
+     do while left(lcModifizierteEingabe,1) = ";"
+      lcModifizierteEingabe = right(lcModifizierteEingabe,len(lcModifizierteEingabe)-1)
+     enddo 
+     this.value = lcModifizierteEingabe
+    endif   
+    
+    do case
+    
+     case .not.(form.ben.enabled) .and. .not.(form.codewort.enabled)  .or.  ;
+           empty(form.ben.value) .and. empty(form.codewort.value)
+   
+      local lcTest
+      
+      if ";" $ lcModifizierteEingabe
+       lcTest = rtrim(substr(lcModifizierteEingabe,1,at(";",lcModifizierteEingabe)-1))
+      else
+       lcTest = lcModifizierteEingabe
+      endif 
+     
+      local lnZaehler 
+      lnZaehler=1
+    
+      this.log_lfdnr = .t.
+    
+      do while lnZaehler <= len(lcTest)
+       if .not. substr(lcTest,lnZaehler,1) $ "0123456789-"
+        this.log_lfdnr = .f.       
+        exit    
+       endif
+       lnZaehler=lnZaehler+1
+      enddo
+     
+     case .not. empty(form.codewort.value)   && besitzt prioritÑt vor ben
+     
+      sele os
+      set order to 1
+      set key to ltrim(form.codewort.value)
+      set filter to log_pm_art
+      
+      this.log_lfdnr = log_lfdnr
+      local llAbruch
+      llAbbruch = .f.
+      scan rest while codewort = ltrim(form.codewort.value)
+       if log_lfdnr <> this.log_lfdnr
+        llAbbruch = .t.
+        exit
+       endif
+      endscan 
+      if llAbbruch
+       this.validerrormsg = "Fehler: Das Codewort spricht gleichzeitig Laufende und Spezielle Nummern an"
+       return .f.
+      endif
+      
+     case .not. empty(form.ben.value)
+   
+      sele os
+      set order to 2
+      seek ltrim(form.ben.value)
+      this.log_lfdnr = log_lfdnr
+      scan rest while ben = ltrim(form.ben.value)
+       if log_lfdnr <> this.log_lfdnr
+        this.validerrormsg = "Fehler: Die Benennung kommt bei Laufender und Spezieller Nummer vor"
+        return .f.
+       endif
+      endscan 
+   
+    endcase
+   
+          
+    if this.log_lfdnr
+   
+     if " " $ lcModifizierteEingabe
+      do while " " $ lcModifizierteEingabe
+       lcModifizierteEingabe = LEFT(lcModifizierteEingabe,AT(" ",lcModifizierteEingabe)-1) + RIGHT(lcModifizierteEingabe,LEN(lcModifizierteEingabe)-AT(" ",lcModifizierteEingabe))
+      enddo
+      this.value = lcModifizierteEingabe
+     endif  
+   
+     local lnZaehler 
+     lnZaehler=1
+    
+     DO WHILE lnZaehler <= LEN(lcModifizierteEingabe)
+      IF .NOT. SUBSTR(lcModifizierteEingabe,lnZaehler,1) $ "0123456789-;"
+       this.validerrormsg = "Fehler: Schreibfehler"
+       return .f.
+      ENDIF
+      lnZaehler=lnZaehler+1
+     ENDDO
+    
+     Ssuchstr=lcModifizierteEingabe
+     Sateilstr=1
+     STORE 0 TO Seteilstr, Salfdnr
+     public lfdnr   && wird nach verlassen von filter gelîscht
+     lfdnr = new array(1,2)
+    
+     DO WHILE .T.
+    
+      Salfdnr = Salfdnr + 1
+     
+      Seteilstr = AT(";",Ssuchstr)
+      IF Seteilstr=0
+       Seteilstr = LEN(Ssuchstr)+1
+      ENDIF
+      Steilstr = SUBSTR(lcModifizierteEingabe,Sateilstr,Seteilstr-1)
+     
+      IF empty(Steilstr)
+       this.validerrormsg = "Fehler: Schreibfehler"
+       return .f.
+      ENDIF
+        
+      Spminus = AT("-",Steilstr)
+        
+      IF Spminus=0
+      
+       IF "-" $ "Steilstr" .OR. Steilstr="0"
+        this.validerrormsg = "Fehler: Schreibfehler"
+        return .f.
+       ENDIF
+       STORE Steilstr TO Svon_lfdnr,Sbis_lfdnr
+       IF VAL(Svon_lfdnr) > 99999
+        this.validerrormsg = "Fehler: Au·erhalb des zulÑssigen Wertebereiches"
+        return .f.
+       ELSE
+        lfdnr[Salfdnr,1] = VAL(Svon_lfdnr)
+        lfdnr[Salfdnr,2] = lfdnr[Salfdnr,1]
+        lfdnr.grow(1)
+       ENDIF
+     
+       Sateilstr = Sateilstr + Seteilstr
+       IF Sateilstr > LEN(lcModifizierteEingabe)
+        EXIT
+       ELSE
+        Ssuchstr = SUBSTR(lcModifizierteEingabe,Sateilstr,LEN(lcModifizierteEingabe)+1-Sateilstr)
+        LOOP
+       ENDIF
+   
+      ENDIF
+        
+      IF Spminus=1
+       this.validerrormsg = "Fehler: Schreibfehler"
+       return .f.
+      ELSE
+       Svon_lfdnr = SUBSTR(Steilstr,1,Spminus-1)
+       IF "-" $ "Svon_lfdnr"  .OR.  Svon_lfdnr = "0"
+        this.validerrormsg = "Fehler: Schreibfehler"
+        return .f.
+       ENDIF
+      ENDIF
+     
+      IF Seteilstr-Spminus = 1
+       Sbis_lfdnr = "99999"
+      ELSE
+       Sbis_lfdnr = SUBSTR(Steilstr,Spminus+1,Seteilstr-Spminus)
+       IF "-" $ "Sbis_lfdnr"  .OR.  Sbis_lfdnr = "0"
+        this.validerrormsg = "Fehler: Schreibfehler"
+        return .f.
+       ENDIF
+      ENDIF
+     
+      Svon_lfdnr=VAL(Svon_lfdnr)
+      Sbis_lfdnr=VAL(Sbis_lfdnr)
+      DO CASE
+       CASE  Svon_lfdnr > Sbis_lfdnr
+        if Salfdnr = 1
+         this.validerrormsg = "Fehler: Der erste Wert ist grî·er als der zweite Wert"
+        else 
+         this.validerrormsg = "Fehler: Ein erster Wert ist grî·er als ein zweiter Wert"
+        endif 
+        return .f.
+       CASE  Svon_lfdnr > 99999 .OR. Sbis_lfdnr > 99999
+        this.validerrormsg = "Fehler: Au·erhalb des zulÑssigen Wertebereiches"
+        return .f.
+       OTHERWISE
+        lfdnr[Salfdnr,1] = Svon_lfdnr
+        lfdnr[Salfdnr,2] = Sbis_lfdnr
+        lfdnr.grow(1)
+      ENDCASE
+   
+      Sateilstr = Sateilstr + Seteilstr
+      IF Sateilstr > LEN(lcModifizierteEingabe)
+       EXIT
+      ELSE
+        Ssuchstr = SUBSTR(lcModifizierteEingabe,Sateilstr,LEN(lcModifizierteEingabe)+1-Sateilstr)
+      ENDIF
+   
+     ENDDO
+   
+     lfdnr.resize(lfdnr.size/2-1)    && letzte zeile mit .f. gefÅllt
+   
+     if Salfdnr > 1
+      for i=1 to Salfdnr-1
+       lfdnr.sort()
+       if lfdnr[i+1,1] < lfdnr[i,2]
+        this.validerrormsg = "Fehler: Es wurden Laufende Nummern mehrfach eingegeben"
+        return .f.
+       endif
+      next 
+     endif 
+     
+   
+    else
+   
+   
+     public spezinr    && wird nach verlassen von filter gelîscht
+     spezinr = new array(0)
+     
+     lcModifizierteEingabe = lcModifizierteEingabe + ";"
+     
+     local lnPosition, lnAnzahl, lnAnfang
+   
+     lnPosition = at(";",lcModifizierteEingabe)
+     store 1 to lnAnzahl, lnAnfang
+     
+     do while lnPosition > 0
+     
+      spezinr.add( ltrim(rtrim(substr(lcModifizierteEingabe,lnAnfang,lnPosition-lnAnfang))) )
+     
+      lnAnzahl = lnAnzahl + 1
+      lnAnfang = lnPosition + 1
+      lnPosition = at(";",lcModifizierteEingabe,lnAnzahl)
+   
+     enddo
+     
+   
+    endif
+    
+    class::makro("=")
+   
+    return .t.   
+   
+   
+ ************************************************
+
+   
+   procedure MAKRO(ref_vz)
+   
+     local llLeereEingabe
+     llLeereEingabe = .f.
+   
+     if upper(this.name) $ "ERST_EINS PB_DATUM HIST_DATUM"
+      if empty(ctod(left(this.value,10)))
+       llLeereEingabe = .t.
+      endif
+     else
+      if empty(this.value)
+       llLeereEingabe = .t.
+      endif
+     endif
+     
+     local lcZeichen
+     
+     if upper(this.name) $ "CODEWORT NUMMER PB_ART HIST_ART NOT_KONV PROT_KONV"
+      lcZeichen = ref_vz
+     else
+      lcZeichen = ref_vz.value
+     endif 
+     
+     local llGefunden
+     llGefunden = .f.
+    
+     for i=1 to MakroArray.size/4
+      if MakroArray[i,1] == this.name
+       llGefunden = .t.
+       exit
+      endif
+     next
+    
+     if .not. llGefunden
+      if llLeereEingabe
+       return
+      else
+       form.verknuepfung.enabled = .t.
+       if .not. empty(MakroArray[1,1])
+        MakroArray.grow(1)
+        MakroArray.fill("",MakroArray.size-3)
+       endif
+       i = MakroArray.size/4
+       MakroArray[i,1] = this.name
+       MakroArray[i,2] = ".AND."
+       MakroArray[i,4] = "UND       "
+      endif 
+     else
+      if llLeereEingabe
+       if MakroArray.size/4 > 1
+        MakroArray.delete(i)
+        MakroArray.resize(MakroArray.size/4-1)
+       else 
+        form.verknuepfung.enabled = .f.
+        MakroArray.fill("")
+       endif
+       return
+      endif    
+     endif
+    
+     local lcEingabe, lcMakro
+     lcEingabe = ltrim(rtrim(this.value))
+
+     do case 
+      case upper(this.name) $ "P_ZEIT KFR PB_KOST HIST_KOST ANZ_EINS ANZ_REP ZW_P NEUWERT ZW_DM PRöF_KOST REP_KOST éND_KOST"
+       if lcZeichen = "/"
+        lcMakro = this.name + ">=" + rtrim(left(lcEingabe,at("/",lcEingabe)-1)) + ".and." + this.name + "<=" + ltrim(right(lcEingabe,len(lcEingabe)-at("/",lcEingabe)))
+       else
+        lcMakro = this.name + lcZeichen + lcEingabe
+       endif
+      case upper(this.name) $ "ERST_EINS PB_DATUM HIST_DATUM"  
+       if lcZeichen = "/"
+        lcMakro = this.name + ">={" + left(lcEingabe,at("/",lcEingabe)-1) + "}.and." + this.name + "<={" + right(lcEingabe,len(lcEingabe)-at("/",lcEingabe)) + "}"
+       else
+        lcMakro = this.name + lcZeichen + "{" + lcEingabe + "}"
+       endif
+      otherwise
+       do case
+        case lcZeichen = "="
+         lcMakro = this.name + '=="' + lcEingabe + '"'
+        case lcZeichen = "#"
+         lcMakro = this.name + '="' + lcEingabe + '"'
+        case lcZeichen = "$"
+         lcMakro = '"' + upper(lcEingabe) + '"$upper(' + this.name + ")"
+        case lcZeichen = "~"
+         lcMakro = "diff(" + this.name + ',"' + lcEingabe + '")=4'
+       endcase
+     endcase
+    
+     if MakroArray[i,3] <> lcMakro
+     
+      MakroArray[i,3] = lcMakro
+     
+      local lcFeld, lcText, lcString1, lcString2, lcAnzahl, lnPos1, lnPos2
+    
+      lcString1 = " 1BEN 2CODEWORT 3NUMMER 4HST 5KLASSI 6P_ZEIT 7MERKMALE 8ABW 9BES10GERAETE_NR11ERST_EINS12KFR13SONSTIGES14PB_ART15PB_DATUM16PB_KOST17PB_ORT18PB_BEM19HIST_ART20HIST_DATUM21HIST_KOST22HIST_ORT23HIST_BEM24ANZ_EINS25ANZ_REP26ZW_P27NEUWERT28ZW_DM29PRöF_KOST30REP_KOST31éND_KOST32NOT_KONV33PROT_KONV34"
+      lcString2 = "*Benennung*Codewort*Nummer*Hersteller*Klassifikation*PrÅfzeit*Merkmale*ZulÑssige Abweichung*EigentÅmer*GerÑte-Nr.*Ersteinsatz*PrÅffrist*Sonstiges*PrÅfmittelbewegung (Art)*PrÅfmittelbewegung (Datum)*PrÅfmittelbewegung (Kosten[DM])*PrÅfmittelbewegung (Standort)*PrÅfmittelbewegung (Bemerkung)*Historie (Art)*Historie (Datum)*Historie (Kosten[DM])*Historie (Standort)*Historie (Bemerkung)*Anzahl EinsÑtze*Anzahl Reparaturen*Zeitwert[%]*Neuwert[DM]*Zeitwert[DM]*PrÅfkosten[DM]*Reparaturkosten[DM]*énderungskosten[DM]*Notizen*PrÅfprotokoll*"
+    
+      lcAnzahl = val(substr(lcString1,at(upper(this.name),lcString1)-2,2)) 
+    
+      lnPos1 = at("*",lcString2,lcAnzahl)
+      lnPos2 = at("*",lcString2,lcAnzahl+1)
+      
+      lcFeld = substr(lcString2,lnPos1+1,lnPos2-lnPos1-1)
+     
+      lcText = left(MakroArray[i,4],10)
+      
+      if upper(this.name) $ "ERST_EINS P_ZEIT KFR PB_DATUM PB_KOST HIST_DATUM HIST_KOST ANZ_EINS ANZ_REP ZW_P NEUWERT ZW_DM PRöF_KOST REP_KOST éND_KOST"
+       if lcZeichen = "/"
+        lcText = lcText + rtrim(left(lcEingabe,at("/",lcEingabe)-1)) + " <= " + lcFeld + " <= " + ltrim(right(lcEingabe,len(lcEingabe)-at("/",lcEingabe)))
+       else
+        lcText = lcText + lcFeld + " " + lcZeichen + " " + lcEingabe
+       endif
+      else
+       lcEingabe = '"' + lcEingabe + '"'
+       do case
+        case lcZeichen = "="
+         lcText = lcText + lcFeld + " gleich " + lcEingabe
+        case lcZeichen = "#"
+         lcText = lcText + lcFeld + " beginnend mit " + lcEingabe
+        case lcZeichen = "$"
+         lcText = lcText + lcEingabe + " enthalten in " + lcFeld
+        case lcZeichen = "~"
+         lcText = lcText + lcFeld + " Ñhnlich " + lcEingabe
+       endcase
+      endif
+     
+      MakroArray[i,4] = lcText
+    
+     endif      
+      
+    
+ *******************************************   
+      
+   
+   procedure VerknuepfungAendern
+   
+    privat f              && wegen makroersetzung
+    f = new logikform()
+
+    f.width = 60
+    
+    for i=1 to MakroArray.size/4
+     if i <= 8
+      if len(MakroArray[i,4])-10 > f.width
+       f.width = len(MakroArray[i,4])-10 + 2
+      endif
+     endif
+    next
+    if f.width > 105
+     f.width = 105
+    endif
+    f.left = (105-f.width)/2
+    f.height = 2.9 * MakroArray.size/4 + 3
+    f.top = 13 - f.height/2
+    
+    privat pcIndex, poRefLogik, poRefAusdruck
+   
+    for i=1 to MakroArray.size/4
+   
+     if i <= 8
+     
+     pcIndex = ltrim(str(i))
+     
+     DEFINE COMBOBOX logik&pcIndex OF f;
+         PROPERTY; 
+           Width 17,;
+           Style 2,;
+           DataSource 'ARRAY {"UND","UND NICHT","ODER","ODER NICHT"}',;
+           DropDownHeight 4,;
+           Height 1.18
+     
+     DEFINE TEXT ausdruck&pcIndex OF f;
+         PROPERTY; 
+           Text "",;
+           Alignment 4,;
+           Left 0.5,;
+           Height 1.18
+     
+     poRefLogik    = f.logik&pcIndex
+     poRefAusdruck = f.ausdruck&pcIndex   
+   
+     if i = 1
+      if MakroArray[i,1] $ "HIST_ART HIST_DATUM HIST_KOST HIST_ORT HIST_BEM ZW_P ZW_DM"
+       poRefLogik.DataSource = 'ARRAY {""}'
+      else 
+       poRefLogik.DataSource = 'ARRAY {"","NICHT"}'
+      endif
+      poRefLogik.DropDownHeight = 2
+      poRefLogik.Width = 10
+     else
+      if MakroArray[i,1] $ "HIST_ART HIST_DATUM HIST_KOST HIST_ORT HIST_BEM ZW_P ZW_DM"
+       poRefLogik.DataSource = 'ARRAY {"UND"}'
+       poRefLogik.DropDownHeight = 2
+       poRefLogik.Width = 10
+      endif
+     endif
+     
+     poRefLogik.value = rtrim(left(MakroArray[i,4],10))
+     poRefLogik.top   = 2.9*i - 2
+     poRefLogik.left  = (f.width-poRefLogik.width)/2
+   
+     poRefAusdruck.text  = right(MakroArray[i,4],len(MakroArray[i,4])-10)
+     poRefAusdruck.width = f.width-1
+     poRefAusdruck.top   = 2.9*i - 0.5
+   
+     endif
+    
+    next 
+    
+    f.abbruchfeld1.top = f.height - 1.5
+    f.abbruchfeld1.left = f.width/2 - 16
+    f.okfeld1.top      = f.height - 1.5
+    f.okfeld1.left      = f.width/2 + 3
+    
+    f.mdi = .f.
+    f.readmodal()
+   
+  
+ *******************************************  
+   
+   
+   procedure DATUM_Valid
+
+   set century on
+   
+   local lcDatumVon, lcDatumBis
+
+   if .not. "/" $ this.value
+    if this.value = "  .  .  "
+     return .t.
+    else 
+     if len(rtrim(this.value)) = 8   && eingabe ohne jahrhundert
+      lcDatumVon = left(this.value,6) + substr(dtoc(date()),7,2) + substr(this.value,7,2)
+     else
+      lcDatumVon = this.value
+     endif
+    endif
+   else
+    do case
+     case left(this.value,10) = "  .  .  " .and. right(this.value,10) = "  .  .  "
+      return .t.
+     case left(this.value,10) = "  .  .  " .or. right(this.value,10) = "  .  .  "
+      this.ValidErrorMsg = "Fehler: Fehlendes Datum"
+      return .f.
+     otherwise
+      if len(rtrim(left(this.value,10))) = 8  && eingabe ohne jahrhundert
+       lcDatumVon = left(this.value,6) + substr(dtoc(date()),7,2) + substr(this.value,7,2)
+      else
+       lcDatumVon = left(this.value,10)
+      endif
+      if len(rtrim(right(this.value,10))) = 8  && eingabe ohne jahrhundert
+       lcDatumBis = substr(this.value,12,6) + substr(dtoc(date()),7,2) + substr(this.value,18,2)
+      else
+       lcDatumBis = right(this.value,10)
+      endif
+    endcase
+   endif
+      
+   if lcDatumVon <> dtoc(ctod(left(this.value,10)))
+    this.ValidErrorMsg = "Fehler: Falsches Datum"   
+    return .f.  
+   endif
+   
+   if "/" $ this.value
+    if lcDatumBis <> dtoc(ctod(right(this.value,10)))
+     this.ValidErrorMsg = "Fehler: Falsches Datum"   
+     return .f. 
+    else
+     if len(rtrim(left(this.value,10))) = 8 .or. len(rtrim(right(this.value,10))) = 8
+      this.value = lcDatumVon + "/" + lcDatumBis
+     endif
+    endif  
+   else
+    if len(rtrim(this.value)) = 8 
+     this.value = lcDatumVon
+    endif 
+   endif
+   
+   return .t.
+   
+   
+ **************************************************************
+
+   
+   Procedure OK_OnClick
+
+    ** form.ok.setfocus() -> zwingt an dieser stelle die Valid-Routinen,
+    * wenn "OK" aus einem mit einer Valid-Routine verbundenem eingabefeld
+    * heraus betÑtigt wird / ohne setfocus() an dieser stelle werden die
+    * Valid-Proceduren am ende dieser routine aufgerufen
+
+    form.ok.setfocus()  
+    local lcKeyString
+    lcKeyString = ""
+
+    if .not. empty(form.codewort.value)
+     for i=1 to MakroArray.size/4
+      if MakroArray[i,1] = "CODEWORT" .and. MakroArray[i,2] = ".AND."
+       lcKeyString = upper(ltrim(rtrim(form.codewort.value)))
+       exit
+      endif 
+     next
+    endif
+    
+
+    privat pcFilterMakro
+    pcFilterMakro = ""
+   
+    if .not. empty(form.nummer.value)
+     privat pnN
+     pnN=1
+     if form.nummer.log_lfdnr     
+      do while type("lfdnr[pnN,1]") <> "U"
+       if lfdnr[pnN,1] = lfdnr[pnN,2]
+        pcFilterMakro = pcFilterMakro + "lfdnr=" + ltrim(str(lfdnr[pnN,1])) + ".OR."
+       else 
+        pcFilterMakro = pcFilterMakro + "lfdnr>=" + ltrim(str(lfdnr[pnN,1])) + ".and.lfdnr<=" + ltrim(str(lfdnr[pnN,2])) + ".OR."
+       endif
+       pnN=pnN+1
+      enddo 
+     else
+      do while type("spezinr[pnN]") <> "U"
+       pcFilterMakro = pcFilterMakro + 'spezinr="' + spezinr[pnN] + '".OR.'
+       pnN=pnN+1
+      enddo 
+     endif
+     rele pnN
+     pcFilterMakro = left(pcFilterMakro,len(pcFilterMakro)-4) 
+    else 
+     pcFilterMakro = ".T."
+    endif     
+   
+   
+    privat Filter0
+    Filter0 = new object()
+    
+    privat pcSuchMakro, pcZeile
+    pcSuchMakro = ""
+    
+    local llErweiterteSuche
+    llErweiterteSuche = .f.
+   
+    MakroArray[1,4] = right(MakroArray[1,4],len(MakroArray[1,4])-10)
+    if ".NOT." $ MakroArray[1,2]
+     MakroArray[1,4] = "NICHT     " + MakroArray[1,4]
+    else
+     MakroArray[1,4] = space(10) + MakroArray[1,4]
+    endif
+        
+    for i=1 to MakroArray.size/4
+     do case
+      case MakroArray[i,1] = "CODEWORT"
+       if MakroArray[i,2] <> ".AND."
+        pcSuchMakro = pcSuchMakro + MakroArray[i,2] + MakroArray[i,3]
+       endif
+      case MakroArray[i,1] = "NUMMER"
+       if MakroArray[i,2] <> ".AND."
+        pcSuchMakro = pcSuchMakro + MakroArray[i,2] + "(" + pcFilterMakro + ")"
+        pcFilterMakro = ".T."
+       endif
+      case .not. MakroArray[i,1] $ "HIST_ART HIST_DATUM HIST_KOST HIST_ORT HIST_BEM ZW_P ZW_DM"
+       pcSuchMakro = pcSuchMakro + MakroArray[i,2] + MakroArray[i,3]
+     endcase
+     if "Historie" $ MakroArray[i,4] .or. "Zeitwert" $ MakroArray[i,4]
+      llErweiterteSuche = .t.
+     endif
+     FilterZeile = "Filter0.zeile" + ltrim(str(i))
+     &FilterZeile = MakroArray[i,4]
+    next
+   
+    if empty(pcSuchMakro)
+     pcSuchMakro = ".t."
+    else
+     if left(pcSuchMakro,5) <> ".NOT."
+      pcSuchMakro = right(pcSuchMakro,len(pcSuchMakro)-at(".",pcSuchMakro,2))
+     endif   
+    endif 
+
+    Filter0.KeyString   = lcKeyString
+    Filter0.FilterMakro = pcFilterMakro
+    Filter0.SuchMakro   = pcSuchMakro
+   
+    if llErweiterteSuche
+     Filter0.ErweiterteSuche = .t.
+    else
+     Filter0.ErweiterteSuche = .f.
+    endif 
+    
+    sele kartei
+    set order to 1
+    
+    set key to lcKeyString
+    
+    set filter to &pcFilterMakro
+    
+    go top
+
+    privat Suchen0
+    Suchen0 = new array(0)
+    
+    do suchen with form, "0", "Einzelsuche", "SuchArrayJa"
+    
+    if Suchen0.size = 1
+    
+     Suchen&pcNummerAufrufendesFormular = Suchen0
+     Suchen&pcNummerAufrufendesFormular[1] = "*" + Suchen&pcNummerAufrufendesFormular[1]
+     Filter&pcNummerAufrufendesFormular = Filter0
+     
+     if 'PB_ART=="Schrott"' $ pcSuchMakro
+
+      privat poRef
+      poRef = Formular&pcNummerAufrufendesFormular
+
+      poRef.rechteck4.OnLeftDblClick = {;}
+      poRef.not_konv.OnLeftDblClick  = {;}
+      poRef.prot_konv.OnLeftDblClick = {;}
+      poRef.rechteck4.MousePointer = 1
+      poRef.not_konv.MousePointer  = 1
+      poRef.not_ole.MousePointer   = 1
+      poRef.prot_konv.MousePointer = 1
+      poRef.prot_ole.MousePointer  = 1
+     
+     endif
+     
+     use in 15  && evtl. lîschen von browser.dbf ( mit nosave geîffnet )
+          
+     form.close()
+     
+    else
+    
+     msgbox("    Keine PrÅfmittel gefunden.","Hinweis",64)
+     
+    endif  
+
+   
+   
+   Procedure ABBRUCH_OnClick
+   
+    if val(pcNummerAufrufendesFormular) <> 4711
+     sele kartei
+     set order to 1
+     set key to Filter&pcNummerAufrufendesFormular..KeyString
+     pcFilterMakro = Filter&pcNummerAufrufendesFormular..FilterMakro
+     set filter to &pcFilterMakro
+     go pnSatznummerBeiAufruf
+     Formular&pcNummerAufrufendesFormular..PageNo = 1
+    endif 
+     
+    form.close()
+
+     
+   
+ENDCLASS
+
+
+
+
+******* formular -> verknÅpfung Ñndern *************************
+
+
+CLASS LOGIKFORM OF FORM
+   this.Width = 55
+   this.Text = "VerknÅpfung Ñndern"
+   this.Left = 21.5
+   this.Top = 0.3525
+   this.Height = 20.4697
+
+
+   DEFINE PUSHBUTTON ABBRUCHFELD1 OF THIS;
+       PROPERTY; 
+         Width 13,;
+         OnOpen {;this.SetFocus()},;
+         Group .T.,;
+         Text "Abbruch",;
+         UpBitmap "RESOURCE #28",;
+         OnClick {;form.close()},;
+         Height 1.3
+
+   DEFINE PUSHBUTTON OKFELD1 OF THIS;
+       PROPERTY; 
+         Width 13,;
+         Group .T.,;
+         Text "OK",;
+         UpBitmap "RESOURCE #20",;
+         OnClick class::OnClick_OkFeld1,;
+         Height 1.3
+
+
+
+ procedure OnClick_OkFeld1
+
+  local lcLogik
+  privat pcIndex, poRef
+
+  for i=1 to MakroArray.size/4
+
+   pcIndex = ltrim(str(i))
+   poRef = form.logik&pcIndex
+   
+   if rtrim(left(MakroArray[i,4],10)) <> poRef.value  
+    if i = 1 .and. empty(poRef.value)   &&  leer nur bei i=1 mîglich
+     MakroArray[1,2] = ".AND."
+     MakroArray[1,4] = "UND       " + right(MakroArray[1,4],len(MakroArray[1,4])-10)
+    else
+     do case
+      case poRef.value == "UND"
+       lcLogik = ".AND."
+      case poRef.value == "ODER"
+       lcLogik = ".OR."
+      case poRef.value == "NICHT"
+       lcLogik = ".NOT."    
+      case poRef.value == "UND NICHT"
+       lcLogik = ".AND..NOT."
+      case poRef.value == "ODER NICHT"
+       lcLogik = ".OR..NOT."
+     endcase  
+     MakroArray[i,2] = lcLogik
+     MakroArray[i,4] = left(poRef.value+space(10),10) + right(MakroArray[i,4],len(MakroArray[i,4])-10)
+    endif 
+   endif
+   
+  next 
+
+  form.close()
+
+ENDCLASS

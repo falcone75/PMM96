@@ -1,0 +1,184 @@
+*** bo_klass.wfm
+
+create session
+
+use klassi index klassi
+
+
+
+
+** END HEADER -- Diese Zeile nicht lîschen*
+* Erstellt am 16.03.1996
+*
+
+local f
+f = new KATALOG_KLASSI()
+f.ReadModal()
+
+CLASS KATALOG_KLASSI OF KATALOGFORM From "BASIS.CFM"
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "Klassifikation"
+   this.Text = "BOSS [ Katalog - Klassifikation ]"
+   
+   this.schalter_loeschen.onclick    = class::schalter_loeschen_onclick
+   this.schalter_korrigieren.onclick = class::schalter_korrigieren_onclick
+   this.schalter_hinzufuegen.onclick = class::schalter_hinzufuegen_onclick
+
+
+   DEFINE TEXT TEXT1 OF THIS;
+       PROPERTY; 
+         Width 13.166,;
+         Text "Klassifikation",;
+         Left 19,;
+         Top 3.4102,;
+         Height 0.8809
+
+   DEFINE COMBOBOX KLASSI OF THIS;
+       PROPERTY; 
+         Width 18,;
+         Style 1,;
+         DropDownHeight 8,;
+         Left 32.833,;
+         DataSource "FIELD klassi->klassi",;
+         Top 3.1758,;
+         Height 1.1768
+
+   DEFINE TEXT KORREKTUR_TEXT OF THIS;
+       PROPERTY; 
+         Width 23.333,;
+         Text "Korrigierte Klassifikation",;
+         Left 15.5,;
+         Visible .f.,;
+         Top 6.7646,;
+         Height 0.9404
+
+   DEFINE ENTRYFIELD KORREKTUR_EINGABE OF THIS;
+       PROPERTY; 
+         Width 14.834,;
+         Valid class::KORREKTUR_EINGABE_Valid,;
+         Left 39.666,;
+         Visible .f.,;
+         MaxLength 10,;
+         Top 6.5293,;
+         ValidRequired .T.,;
+         Height 1.2939
+
+*************************************************************************
+
+   Procedure SCHALTER_LOESCHEN_OnClick
+   
+     if .not. empty(form.klassi.value)
+      sele klassi
+      set order to 1
+      set exact on
+      seek ltrim(form.klassi.value)
+      set exact off
+      if .not. found()
+       msgbox("  Fehler: Die Klassifikation ist nicht vorhanden.","Achtung",48)
+      else
+       if msgbox('Die Klassifikation "' + form.klassi.value + '" wirklich lîschen ?',"Hersteller lîschen ?",292) = 6
+        dele
+        form.klassi.datasource = "field klassi->klassi"
+        form.klassi.value = ""
+       endif
+      endif
+     endif    
+    
+   
+   
+   Procedure SCHALTER_KORRIGIEREN_OnClick
+   
+     if .not. empty(form.klassi.value)
+      sele klassi
+      set order to 1
+      set exact on
+      seek ltrim(form.klassi.value)
+      set exact off
+      if .not. found()
+       msgbox("Fehler: Die Klassifikation ist nicht vorhanden.","Achtung",48)
+      else
+       form.korrektur_text.visible  = .t.
+       form.korrektur_eingabe.value   = form.klassi.value
+       form.korrektur_eingabe.visible = .t.
+       form.korrektur_eingabe.setfocus()
+      endif
+     endif
+    
+   
+   
+    Procedure KORREKTUR_EINGABE_Valid
+   
+      do case
+       case empty(this.value)
+        this.value = form.klassi.value
+        return .t.
+       case this.value == form.klassi.value
+        this.visible = .f.
+        form.korrektur_text.visible = .f.
+        form.klassi.setfocus()
+        return .t.
+       otherwise
+        sele klassi
+        local lcRettenSatznummer
+        lcRettenSatznummer = recno()
+        set order to 1
+        set exact on
+        seek ltrim(this.value)
+        set exact off
+        if found()
+         this.ValidErrorMsg = " Fehler: Die Klassifikation ist schon vorhanden."
+         return .f.
+        else
+         local lnWeiter
+         lnWeiter = msgbox("Soll auch die PrÅfmittelkartei ( alle Mandanten ) korrigiert werden ?","PrÅfmittelkartei korrigieren ?",547)
+         if lnWeiter <> 2  && kein abbruch
+          go lcRettenSatznummer
+          repl klassi with ltrim(this.value)
+          if lnWeiter = 6  && ja
+           sele 5
+           if alias() <> "MANDANT"
+            use mandant
+           endif
+           scan all
+            sele 10
+            use (rtrim(mandant))
+            repl all klassi with ltrim(this.value) for klassi == this.value
+            sele 5
+           endscan    
+           sele 10
+           use
+          endif
+          form.klassi.datasource = "field klassi->klassi"
+          form.klassi.value = form.korrektur_eingabe.value
+         endif 
+        endif 
+        form.korrektur_text.visible    = .f.
+        form.korrektur_eingabe.visible = .f.
+        form.klassi.setfocus()         
+        return .t.
+      endcase
+      
+     
+    
+    Procedure SCHALTER_HINZUFUEGEN_OnClick
+   
+     if .not. empty(form.klassi.value)
+      sele klassi
+      set order to 1
+      set exact on
+      seek ltrim(form.klassi.value)
+      set exact off
+      if found()
+       msgbox("  Fehler: Die Klassifikation ist schon vorhanden.","Achtung",48)
+      else
+       set order to 0
+       append blank
+       repl klassi with ltrim(form.klassi.value)
+       form.klassi.datasource = "FIELD klassi->klassi"
+       form.klassi.value = ""
+      endif
+     endif
+    
+    
+    
+ENDCLASS

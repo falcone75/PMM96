@@ -1,0 +1,357 @@
+*** be_auft0.wfm
+
+create session
+
+sele 100
+use (Nutzer.Mandant) index (Nutzer.Mandant) alias kartei
+
+sele 1
+
+
+gnFormularZaehler = gnFormularZaehler + 1
+
+private pcZahl
+pcZahl = ltrim(str(gnFormularZaehler))
+
+
+
+** END HEADER -- Diese Zeile nicht lîschen*
+* Erstellt am 07.05.1996
+*
+
+privat plBerichtErstellen, pcTextTipsUndTricks
+plBerichtErstellen = .f.
+pcTextTipsUndTricks = ""
+
+public Formular&pcZahl
+Formular&pcZahl = new PRUEFAUFTRAG_EINGABE()
+Formular&pcZahl..ReadModal()
+
+if plBerichtErstellen
+ do be_auft2.wfm with pcZahl
+endif 
+
+CLASS PRUEFAUFTRAG_EINGABE OF BERICHTSEINGABE From "BASIS.CFM"
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "PrÅfauftrag"
+   this.Text = "Bericht [ PrÅfauftrag ]"
+
+   form.schalter_bericht.onclick = class::SCHALTER_BERICHT_OnClick
+   form.schalter_abbruch.onclick = {; form.close()}
+
+   DEFINE RECTANGLE RECHTECK1 OF THIS;
+       PROPERTY; 
+         Width 76.167,;
+         Text "  Angaben zum Bericht  ",;
+         Left 1.833,;
+         Top 0.3516,;
+         Height 12.7061
+         
+   DEFINE RECTANGLE RECHTECK2 OF THIS;
+       PROPERTY; 
+         Width 72.666,;
+         Text "  Inhalt des Berichtes  ",;
+         Left 3.5,;
+         Top 7.7637,;
+         Height 4.9395
+         
+
+   DEFINE TEXT TEXT1 OF THIS;
+       PROPERTY; 
+         Width 10.668,;
+         Text "EmpfÑnger",;
+         Left 28.165,;
+         Top 1.1172,;
+         Height 0.8223
+
+   DEFINE TEXT TEXT2 OF THIS;
+       PROPERTY; 
+         Width 9.333,;
+         Text "Absender",;
+         Left 58,;
+         Top 1.1172,;
+         Height 0.8818
+         
+   DEFINE TEXT TEXT3 OF THIS;
+       PROPERTY; 
+         Width 6.667,;
+         Text "Firma",;
+         Left 7.666,;
+         Top 2.4111,;
+         Height 0.8828
+
+   DEFINE TEXT TEXT4 OF THIS;
+       PROPERTY; 
+         Width 9.6689,;
+         Text "Abteilung",;
+         Left 7.666,;
+         Top 3.6465,;
+         Height 0.8809
+
+   DEFINE TEXT TEXT5 OF THIS;
+       PROPERTY; 
+         Width 7.3359,;
+         Text "Stra·e",;
+         Left 7.666,;
+         Top 4.8809,;
+         Height 0.9395
+         
+    DEFINE TEXT TEXT6 OF THIS;
+       PROPERTY; 
+         Width 4.335,;
+         Text "Ort",;
+         Left 7.666,;
+         Top 6.1758,;
+         Height 1
+         
+   
+   DEFINE ENTRYFIELD EMPF_FIRMA OF THIS;
+       PROPERTY; 
+         Width 28,;
+         Left 18.833,;
+         MaxLength 30,;
+         Value "",;
+         Top 2.1758,;
+         Height 1.1182
+   
+   DEFINE ENTRYFIELD EMPF_ABT OF THIS;
+       PROPERTY; 
+         Width 28.002,;
+         Left 18.833,;
+         MaxLength 30,;
+         Value "",;
+         Top 3.4688,;
+         Height 1.1182
+         
+   DEFINE ENTRYFIELD EMPF_STRASZE OF THIS;
+       PROPERTY; 
+         Width 28,;
+         Left 18.833,;
+         MaxLength 30,;
+         Value "",;
+         Top 4.7637,;
+         Height 1.1182
+
+   DEFINE ENTRYFIELD EMPF_ORT OF THIS;
+       PROPERTY; 
+         Width 28,;
+         Left 18.833,;
+         MaxLength 30,;
+         Value "",;
+         Top 6.0586,;
+         Height 1.1182
+         
+   DEFINE ENTRYFIELD ABS_FIRMA OF THIS;
+       PROPERTY; 
+         Width 28.001,;
+         Left 48.332,;
+         MaxLength 30,;
+         Value "",;
+         Top 2.1758,;
+         Height 1.1182         
+
+   DEFINE ENTRYFIELD ABS_ABT OF THIS;
+       PROPERTY; 
+         Width 28,;
+         Left 48.332,;
+         MaxLength 30,;
+         Value "",;
+         Top 3.4688,;
+         Height 1.1182
+
+   DEFINE ENTRYFIELD ABS_STRASZE OF THIS;
+       PROPERTY; 
+         Width 28,;
+         Left 48.332,;
+         MaxLength 30,;
+         Value "",;
+         Top 4.7637,;
+         Height 1.1182
+
+   DEFINE ENTRYFIELD ABS_ORT OF THIS;
+       PROPERTY; 
+         Width 28,;
+         Left 48.332,;
+         MaxLength 30,;
+         Value "",;
+         Top 6.0586,;
+         Height 1.1182
+
+   DEFINE CHECKBOX LOG_BEN OF THIS;
+       PROPERTY; 
+         Group .T.,;
+         Width 14.835,;
+         Enabled .F.,;
+         Text "Benennung",;
+         Left 5.165,;
+         Value .T.,;
+         Top 8.9395,;
+         Height 1
+
+   DEFINE CHECKBOX LOG_NUMMER OF THIS;
+       PROPERTY; 
+         Group .T.,;
+         Width 19.833,;
+         Enabled .F.,;
+         Text "PrÅfmittelnummer",;
+         Left 34.5,;
+         Value .T.,;
+         Top 8.9395,;
+         Height 1
+
+   DEFINE CHECKBOX LOG_MERKMALE OF THIS;
+       PROPERTY; 
+         Group .T.,;
+         Width 12.5,;
+         Enabled .F.,;
+         Text "Merkmale",;
+         Left 20.5,;
+         Value .T.,;
+         Top 8.9395,;
+         Height 1
+         
+   DEFINE CHECKBOX LOG_ABW OF THIS;
+       PROPERTY; 
+         Group .T.,;
+         Width 19.501,;
+         Text "Zul. Abweichung",;
+         Left 55.165,;
+         Value .F.,;
+         Top 8.9395,;
+         Height 1
+         
+   DEFINE CHECKBOX LOG_HST OF THIS;
+       PROPERTY; 
+         Group .T.,;
+         Width 12,;
+         Text "Hersteller",;
+         Left 5.165,;
+         Value .F.,;
+         Top 10.2,;
+         Height 1
+
+   DEFINE CHECKBOX LOG_GERAETE_NR OF THIS;
+       PROPERTY; 
+         Group .T.,;
+         Width 12.833,;
+         Text "GerÑte-Nr.",;
+         Left 20.5,;
+         Value .F.,;
+         Top 10.2,;
+         Height 1
+
+   DEFINE CHECKBOX LOG_ERST_EINS OF THIS;
+       PROPERTY; 
+         Group .T.,;
+         Width 14,;
+         Text "Ersteinsatz",;
+         Left 34.5,;
+         Value .F.,;
+         Top 10.2,;
+         Height 1
+
+   DEFINE CHECKBOX LOG_ANZ_EINS OF THIS;
+       PROPERTY; 
+         Group .T.,;
+         Width 19,;
+         Text "Anzahl EinsÑtze",;
+         Left 55.165,;
+         Value .F.,;
+         Top 10.2,;
+         Height 1
+         
+   DEFINE CHECKBOX LOG_VORANSCHLAG OF THIS;
+       PROPERTY; 
+         Group .T.,;
+         Width 22.667,;
+         Text "Kostenvoranschlag",;
+         Left 15.833,;
+         Value .F.,;
+         Top 11.3,;
+         Height 1
+         
+   DEFINE CHECKBOX LOG_FILTER OF THIS;
+       PROPERTY; 
+         Group .T.,;
+         Width 9.333,;
+         Text "Filter",;
+         Left 51,;
+         Value .F.,;
+         Top 11.3,;
+         Height 1
+         
+         
+*************************************************************************         
+
+   
+   Procedure SCHALTER_BERICHT_OnClick
+   
+    plBerichtErstellen = .t.
+   
+    local lcLogik, lcEmpfaenger, lcAbsender
+    
+    lcEmpfaenger = left(form.empf_firma.value+space(30),30) + left(form.empf_abt.value+space(30),30) + left(form.empf_strasze.value+space(30),30) + left(form.empf_ort.value+space(30),30)
+    lcAbsender   = left(form.abs_firma.value+space(30),30) + left(form.abs_abt.value+space(30),30) + left(form.abs_strasze.value+space(30),30) + left(form.abs_ort.value+space(30),30)
+    
+    if form.log_abw.value
+     lcLogik = "1"
+    else
+     lcLogik = "0"
+    endif
+    if form.log_hst.value
+     lcLogik = lcLogik + "1"
+    else
+     lcLogik = lcLogik + "0"
+    endif
+    if form.log_geraete_nr.value
+     lcLogik = lcLogik + "1"
+    else 
+     lcLogik = lcLogik + "0"
+    endif
+    if form.log_erst_eins.value
+     lcLogik = lcLogik + "1"
+    else 
+     lcLogik = lcLogik + "0"
+    endif
+    if form.log_anz_eins.value
+     lcLogik = lcLogik + "1"
+    else 
+     lcLogik = lcLogik + "0"
+    endif
+    if form.log_voranschlag.value
+     lcLogik = lcLogik + "1"
+    else 
+     lcLogik = lcLogik + "0"
+    endif
+    if form.log_filter.value
+     lcLogik = lcLogik + "1"
+    else 
+     lcLogik = lcLogik + "0"
+    endif
+   
+    sele kartei
+    
+    local lcDateiname
+    lcDateiname = funique("$????")
+    copy structure to (lcDateiname) fields klassi, not_konv, prot_konv, ben, codewort, merkmale, lfdnr, spezinr, abw, hst, geraete_nr, erst_eins, anz_eins
+   
+    sele 10
+    use (lcDateiname) nosave alias bericht exclusive
+    append blank    
+    
+    repl klassi with lcLogik, not_konv with lcEmpfaenger, prot_konv with lcAbsender
+   
+    if empty(Filter&pcZahl..Zeile1)  && kein filter eingegeben
+     Filter&pcZahl..SuchMakro = 'pb_art=="Kalibrieren".and.' + Filter&pcZahl..SuchMakro
+     Filter&pcZahl..Zeile1 = '          PrÅfmittelbewegung (Art) gleich "Kalibrieren"'
+    endif
+    
+    do suchen with form, form.formularnummer, "Gesamtsuche", "SuchArrayNein", "be_auft1.prg"
+   
+    form.close()   
+   
+   
+ENDCLASS
+
+
+

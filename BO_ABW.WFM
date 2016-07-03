@@ -1,0 +1,150 @@
+*** bo_abw.wfm
+
+create session
+
+use abw index abw
+
+sele 2
+use os index os.ix1,os.ix2
+
+
+
+
+** END HEADER -- Diese Zeile nicht l”schen*
+* Erstellt am 18.03.1996
+*
+
+local f
+f = new KATALOG_ABW()
+f.ReadModal()
+
+CLASS KATALOG_ABW OF KATALOGFORM From "BASIS.CFM"
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "Zul„ssige Abweichung"
+   this.Text = "BOSS [ Katalog - Zul„ssige Abweichung ]"
+   
+   this.schalter_loeschen.onclick    = class::schalter_loeschen_onclick
+   this.schalter_hinzufuegen.onclick = class::schalter_hinzufuegen_onclick
+
+   this.schalter_korrigieren.enabled = .f.
+   
+   
+   DEFINE TEXT TEXT1 OF THIS;
+       PROPERTY; 
+         Width 12.002,;
+         Text "Prfmittelart",;
+         Left 11.3311,;
+         Top 2.3516,;
+         Height 0.9395
+
+   DEFINE COMBOBOX PM_ART OF THIS;
+       PROPERTY; 
+         OnOpen CLASS::PM_ART_ONOPEN,;
+         Width 36.002,;
+         DropDownHeight 10,;
+         Visible .F.,;
+         Left 23.6641,;
+         Style 2,;
+         OnChange CLASS::PM_ART_ONCHANGE,;
+         Top 2.1172,;
+         Height 1.1768
+
+   DEFINE TEXT TEXT2 OF THIS;
+       PROPERTY; 
+         Width 22,;
+         Text "Zul„ssige Abweichung",;
+         Left 9.166,;
+         Top 5.7637,;
+         Height 0.8809
+
+   DEFINE COMBOBOX ABW OF THIS;
+       PROPERTY; 
+         Width 30.166,;
+         Left 31.5,;
+         Value "",;
+         Style 1,;
+         Top 5.5293,;
+         Enabled .F.,;
+         Height 1.1758
+
+*************************************************************************
+
+   Procedure PM_ART_OnOpen
+    
+    sele os
+    set order to 2
+    set filter to log_pm_art
+    this.datasource = "field os->ben"
+    set filter to
+    this.value = ""
+    this.visible = .t.
+   
+   
+   
+   Procedure PM_ART_OnChange
+   
+    sele os
+    set order to 2
+    set exact on
+    seek this.value
+    set exact off
+   
+    form.abw.visible = .f.
+    sele abw
+    set order to 1
+    set key to os->codewort
+    form.abw.datasource = "field abw->abw"
+    form.abw.value = ""
+    form.abw.visible = .t.
+    form.abw.enabled = .t.
+    form.abw.setfocus()
+    
+   
+   
+   Procedure SCHALTER_LOESCHEN_OnClick
+   
+     if .not. empty(form.abw.value)
+      sele abw
+      * kein set order to... <-> set key to...
+      seek os->codewort + ltrim(form.abw.value)
+      if .not. found()
+       msgbox("   Fehler: Die Zul„ssige Abweichung ist nicht vorhanden.","Achtung",48)
+      else
+       form.abw.value = abw   && wegen m”glicher verkrzter eingabe
+       if msgbox('Die Zul„ssige Abweichung "' + form.abw.value + '" wirklich l”schen ?',"Zul„ssige Abweichung l”schen ?",292) = 6
+        dele
+        form.abw.visible = .f.
+        form.abw.datasource = "field abw->abw"
+        form.abw.value = ""
+        form.abw.visible = .t.
+       endif
+      endif
+     endif    
+    
+   
+    
+    Procedure SCHALTER_HINZUFUEGEN_OnClick
+   
+     if .not. empty(form.abw.value)
+      sele abw
+      * kein set order to... <-> set key to...
+      seek os->codewort + ltrim(form.abw.value)
+      if found()
+       form.abw.value = abw   && wegen m”glicher verkrzter eingabe
+       msgbox("  Fehler: Die Zul„ssige Abweichung ist schon vorhanden.","Achtung",48)
+      else
+       set order to 0
+       append blank
+       repl codewort with os->codewort, abw with ltrim(form.abw.value)
+       form.abw.visible = .f.
+       set order to 1
+       set key to os->codewort
+       form.abw.datasource = "field abw->abw"
+       form.abw.value = ""
+       form.abw.visible = .t.
+      endif
+     endif
+    
+    
+    
+ENDCLASS

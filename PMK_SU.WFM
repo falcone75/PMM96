@@ -1,0 +1,1890 @@
+*** pmk_su.wfm
+
+create session
+
+do databas
+
+
+sele 100
+use (Nutzer.Mandant) index (Nutzer.Mandant) alias kartei
+
+sele 101   && wird beim blÑttern (Òskip) und zur schnellsuche benîtigt
+use (Nutzer.Mandant) index (Nutzer.Mandant)
+
+* im zusammenhang mit kartei kein set order to... <-> zerstîrt set key to..
+
+
+sele 40
+use p_plan index p_plan
+set filter to kartei->codewort $ pm_arten
+
+sele kartei
+go top
+
+if eof()
+ if msgbox("FÅr diesen Mandanten ist die Kartei noch leer oder es wurden alle PrÅfmittel verschrottet. Sie mÅssen zuerst eine neue Karte anlegen.","Neue Karte anlegen...",17) = 1
+  do pmk_neu.wfm with "0"
+ endif
+ return
+endif 
+
+gnFormularZaehler = gnFormularZaehler + 1
+
+private pcZahl, poRefFilter
+pcZahl = ltrim(str(gnFormularZaehler))
+
+public Filter&pcZahl
+Filter&pcZahl = new object() 
+poRefFilter = Filter&pcZahl
+poRefFilter.KeyString       = ""
+poRefFilter.FilterMakro     = ".t."
+poRefFilter.SuchMakro       = ".t."
+poRefFilter.ErweiterteSuche = .f.
+poRefFilter.Zeile1          = ""
+
+public Suchen&pcZahl
+Suchen&pcZahl = new array(1)
+Suchen&pcZahl[1] = "*" + ltrim(str(recno()))
+
+public Schnellsuche&pcZahl
+Schnellsuche&pcZahl = new SCHNELLSUCHEFORM()
+Schnellsuche&pcZahl..formularnummer = pcZahl
+
+public Browser&pcZahl
+
+
+** END HEADER -- Diese Zeile nicht lîschen*
+* Erstellt am 11.04.1996
+*
+
+public Formular&pcZahl
+Formular&pcZahl = new PMK_SUFORM()
+Formular&pcZahl..Formularnummer = pcZahl
+Formular&pcZahl..Open() 
+
+if glTipsUndTricks
+ msgbox("Verweilen des Mauszeigers auf einem Schalter in der Schalterleiste zeigt dessen Funktion  ++  Bearbeiten eines Feldes durch anklicken  ++  Aufruf eines zum Feld zugehîrigen Kataloges mit der rechten Maustaste  ++  Bearbeiten von Historie, Notizen oder PrÅfprotokoll durch doppelklicken  ++  Weitere Hilfe mit F1-Taste...","Tips & Tricks",64)
+endif
+
+
+CLASS PMK_SUFORM OF KARTE From "BASIS.CFM"
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "PrÅfmittelkarte suchen"
+   this.Text = "PrÅfmittelkarte"
+      
+   this.OnOpen  = class::Formular_OnOpen
+   
+   this.schalter_filter.enabled       = .t.
+   this.schalter_browser.enabled      = .t.
+   this.schalter_schnellsuche.enabled = .t.
+
+   if substr(nutzer.logik,3,1) = "1"
+    form.schalter_pmk_neu.enabled = .t. 
+   endif
+   
+   this.schalter_fensterinfo.enabled       = .t.
+   this.schalter_erste_karte.enabled       = .t.
+   this.schalter_rueckwaertssuchen.enabled = .t.
+   this.schalter_karte_vorher.enabled      = .t.
+   this.schalter_karte_danach.enabled      = .t.
+   this.schalter_vorwaertssuchen.enabled   = .t.
+   this.schalter_letzte_karte.enabled      = .t.
+   this.schalter_schlieszen.enabled        = .t.   
+      
+   this.schalter_schnellsuche.onclick      = class::SCHNELLSUCHE_OnClick
+   this.schalter_ausgabe.onclick           = {;form.print()}
+   form.schalter_erste_karte.onclick       = {;class::schalter_erste_karte_onclick(form.formularnummer)}
+   form.schalter_rueckwaertssuchen.onclick = {;class::schalter_rueckwaertssuchen_onclick(form.formularnummer)}
+   form.schalter_karte_vorher.onclick      = class::schalter_karte_vorher_onclick
+   form.schalter_karte_danach.onclick      = class::schalter_karte_danach_onclick
+   form.schalter_vorwaertssuchen.onclick   = {;class::schalter_vorwaertssuchen_onclick(form.formularnummer)}
+   form.schalter_letzte_karte.onclick      = {;class::schalter_letzte_karte_onclick(form.formularnummer)}
+   
+   this.schalter_schlieszen.onclick = class::SCHALTER_SCHLIESZEN_OnClick
+   
+
+   DEFINE TABBOX REGISTER1 OF THIS;
+       PROPERTY; 
+         Width 103.8311,;
+         ColorHighLight "BtnText/BtnFace",;
+         ColorNormal "BtnFace",;
+         ID 100,;
+         OnSelChange CLASS::REGISTER1_ONSELCHANGE,;
+         DataSource 'ARRAY {"Stammdaten","Historie","Kosten","Notizen","PrÅfprotokoll","PrÅfplan","Message"}',;
+         Top 21.2939,;
+         Height 1
+
+   DEFINE RECTANGLE RECHTECK2 OF THIS;
+       PROPERTY; 
+         Width 103.07,;
+         FontSize 10,;
+         ColorNormal "0x400080/W",;
+         Text "  PrÅfmittel  ",;
+         Left 0.266,;
+         Top 2.0172,;
+         PageNo 0,;
+         FontItalic .T.,;
+         Height 3.2768
+
+   DEFINE RECTANGLE RECHTECK3 OF THIS;
+       PROPERTY; 
+         Width 100.666,;
+         FontSize 10,;
+         ColorNormal "0x408000/BtnFace",;
+         Text "  Stammdaten  ",;
+         Left 1.5,;
+         Top 5.7051,;
+         FontItalic .T.,;
+         Height 14.8242
+
+   DEFINE RECTANGLE RECHTECK4 OF THIS;
+       PROPERTY; 
+         Width 97.167,;
+         ColorNormal "GB/BtnFace",;
+         Text "  PrÅfmittelbewegung  ",;
+         Left 3.166,;
+         Top 15.1758,;
+         FontItalic .T.,;
+         Height 4.8242
+
+   DEFINE RECTANGLE RECHTECK5 OF THIS;
+       PROPERTY; 
+         Width 99.3,;
+         FontSize 10,;
+         ColorNormal "RB+/BtnFace",;
+         Text "  Historie  ",;
+         Left 2.1,;
+         Top 5.8809,;
+         PageNo 2,;
+         FontItalic .T.,;
+         Height 14.5889
+
+   DEFINE RECTANGLE RECHTECK6 OF THIS;
+       PROPERTY; 
+         Width 84.5,;
+         FontSize 10,;
+         ColorNormal "GB+/BtnFace",;
+         Text "  Kosten [DM] ",;
+         Left 9.166,;
+         Top 6.8232,;
+         PageNo 3,;
+         FontItalic .T.,;
+         Height 12.4707
+         
+   DEFINE RECTANGLE RECHTECK_NOTIZEN OF THIS;
+       PROPERTY; 
+         Width 95.5,;
+         FontSize 10,;
+         ColorNormal "RG+/BtnFace",;
+         Text "  Notizen  ",;
+         Left 4,;
+         Top 5.88,;
+         PageNo 4,;
+         FontItalic .T.,;
+         Height 14.53
+
+  DEFINE RECTANGLE RECHTECK_PROTOKOLL OF THIS;
+       PROPERTY; 
+         Width 95.5,;
+         FontSize 10,;
+         ColorNormal "B+/BtnFace",;
+         Text "  PrÅfprotokoll  ",;
+         Left 4,;
+         Top 5.88,;
+         PageNo 5,;
+         FontItalic .T.,;
+         Height 14.53
+
+  DEFINE RECTANGLE RECHTECK10 OF THIS;
+       PROPERTY; 
+         Width 95.5,;
+         FontSize 10,;
+         ColorNormal "0x408000/BtnFace",;
+         Text "  PrÅfplan  ",;
+         Left 4,;
+         Top 5.88,;
+         PageNo 6,;
+         FontItalic .T.,;
+         Height 14.53
+       
+    DEFINE RECTANGLE RECHTECK11 OF THIS;
+       PROPERTY; 
+         Width 90.333,;
+         Left 6.5,;
+         BorderStyle 1,;
+         Top 8.8818,;
+         PageNo 7,;
+         Height 8.7061      
+         
+    DEFINE RECTANGLE RECHTECK12 OF THIS;
+       PROPERTY; 
+         Width 76.5,;
+         FontSize 10,;
+         ColorNormal "R+/BtnFace",;
+         Text "  Message  ",;
+         Left 13.166,;
+         Top 11,;
+         PageNo 7,;
+         FontItalic .T.,;
+         Height 4.0586      
+
+   DEFINE TEXT TEXT1 OF THIS;
+       PROPERTY; 
+         Width 11,;
+         Text "Benennung",;
+         Left 5,;
+         Top 3.3496,;
+         PageNo 0,;
+         Height 0.8809
+
+   DEFINE TEXT TEXT2 OF THIS;
+       PROPERTY; 
+         Width 9.4668,;
+         Text "Codewort",;
+         Left 47.1992,;
+         Top 3.3496,;
+         PageNo 0,;
+         Height 0.9395
+
+   DEFINE TEXT TEXT3 OF THIS;
+       PROPERTY; 
+         Width 8.2002,;
+         Text "Nummer",;
+         Left 72.7998,;
+         Top 3.3496,;
+         PageNo 0,;
+         Height 0.8809
+
+   DEFINE TEXT TEXT4 OF THIS;
+       PROPERTY; 
+         Width 9.5,;
+         Text "Hersteller",;
+         Left 3.666,;
+         Top 7.2939,;
+         Height 1
+
+   DEFINE TEXT TEXT5 OF THIS;
+       PROPERTY; 
+         Width 13,;
+         Text "Klassifikation",;
+         Left 51.166,;
+         Top 7.2939,;
+         Height 0.8232
+
+   DEFINE TEXT TEXT6 OF THIS;
+       PROPERTY; 
+         Width 13.834,;
+         Text " PrÅfzeit [min]",;
+         Left 81.166,;
+         Top 7.2939,;
+         Height 0.9404
+
+   DEFINE TEXT TEXT7 OF THIS;
+       PROPERTY; 
+         Width 10.167,;
+         Text "Merkmale",;
+         Left 3.833,;
+         Top 9.2939,;
+         Height 0.9404
+
+   DEFINE TEXT TEXT8 OF THIS;
+       PROPERTY; 
+         Width 9.833,;
+         Text "Zul. Abw.",;
+         Left 62.5,;
+         Top 9.2939,;
+         Height 0.8232
+
+   DEFINE TEXT TEXT9 OF THIS;
+       PROPERTY; 
+         Width 11,;
+         Text "EigentÅmer",;
+         Left 4.666,;
+         Top 11.2344,;
+         Height 0.9414
+
+   DEFINE TEXT TEXT10 OF THIS;
+       PROPERTY; 
+         Width 10.333,;
+         Text "GerÑte-Nr.",;
+         Left 41,;
+         Top 11.2344,;
+         Height 1.0596
+
+   DEFINE TEXT TEXT11 OF THIS;
+       PROPERTY; 
+         Width 10.667,;
+         Text "Ersteinsatz",;
+         Left 76.333,;
+         Top 11.2344,;
+         Height 0.9414
+
+   DEFINE TEXT TEXT12 OF THIS;
+       PROPERTY; 
+         Width 15,;
+         Text "PrÅffrist [Tage]",;
+         Left 5.3,;
+         Top 13.2344,;
+         Height 0.9414
+
+   DEFINE TEXT TEXT13 OF THIS;
+       PROPERTY; 
+         Width 9.667,;
+         Text "Sonstiges",;
+         Left 29.33,;
+         Top 13.2344,;
+         Height 1.0596
+
+   DEFINE TEXT TEXT14 OF THIS;
+       PROPERTY; 
+         Width 3.166,;
+         Text "Art",;
+         Left 15.5,;
+         Top 16.6465,;
+         Height 0.9414
+
+   DEFINE TEXT TEXT15 OF THIS;
+       PROPERTY; 
+         Width 6.667,;
+         Text "Datum",;
+         Left 41.333,;
+         Top 16.6465,;
+         Height 0.9414
+
+   DEFINE TEXT TEXT16 OF THIS;
+       PROPERTY; 
+         Width 12.167,;
+         Text "Kosten [DM]",;
+         Left 66.833,;
+         Top 16.6465,;
+         Height 1
+
+   DEFINE TEXT TEXT17 OF THIS;
+       PROPERTY; 
+         Width 8.501,;
+         Text "Standort",;
+         Left 5.832,;
+         Top 18.2939,;
+         Height 0.8809
+
+   DEFINE TEXT TEXT18 OF THIS;
+       PROPERTY; 
+         Width 11.167,;
+         Text "Bemerkung",;
+         Left 45.166,;
+         Top 18.2939,;
+         Height 1
+
+   DEFINE TEXT TEXT19 OF THIS;
+       PROPERTY; 
+         Width 6.6689,;
+         ColorNormal "GB/BtnFace",;
+         Text "Datum",;
+         Left 7,;
+         Top 7.6992,;
+         PageNo 2,;
+         Height 1
+
+   DEFINE TEXT TEXT20 OF THIS;
+       PROPERTY; 
+         Width 3.835,;
+         ColorNormal "GB/BtnFace",;
+         Text "Art",;
+         Left 19,;
+         Top 7.6992,;
+         PageNo 2,;
+         Height 0.8809
+
+   DEFINE TEXT TEXT21 OF THIS;
+       PROPERTY; 
+         Width 9.002,;
+         ColorNormal "GB/BtnFace",;
+         Text "Standort",;
+         Left 31,;
+         Top 7.6992,;
+         PageNo 2,;
+         Height 0.8809
+
+   DEFINE TEXT TEXT22 OF THIS;
+       PROPERTY; 
+         Width 11.1025,;
+         ColorNormal "GB/BtnFace",;
+         Text "Bemerkung",;
+         Left 52,;
+         Top 7.6992,;
+         PageNo 2,;
+         Height 0.9395
+
+   DEFINE TEXT TEXT23 OF THIS;
+       PROPERTY; 
+         Width 7.002,;
+         ColorNormal "GB/BtnFace",;
+         Text "Kosten",;
+         Left 85,;
+         Top 7.6992,;
+         PageNo 2,;
+         Height 1
+
+   DEFINE TEXT TEXT24 OF THIS;
+       PROPERTY; 
+         Width 12.1689,;
+         ColorNormal "BG/BtnFace",;
+         Text " Zeitwert [%]",;
+         Left 71.6641,;
+         Top 18.7646,;
+         PageNo 2,;
+         Height 0.8818
+
+   DEFINE TEXT TEXT25 OF THIS;
+       PROPERTY; 
+         Width 15.3359,;
+         ColorNormal "BG/BtnFace",;
+         Text "Anzahl EinsÑtze",;
+         Left 12.6641,;
+         Top 18.7646,;
+         PageNo 2,;
+         Height 0.9404
+
+   DEFINE TEXT TEXT26 OF THIS;
+       PROPERTY; 
+         Width 19.002,;
+         ColorNormal "BG/BtnFace",;
+         Text "Anzahl Reparaturen",;
+         Left 41.3311,;
+         Top 18.7646,;
+         PageNo 2,;
+         Height 0.8818
+
+   DEFINE TEXT TEXT27 OF THIS;
+       PROPERTY; 
+         Width 10.8662,;
+         ColorNormal "RG/BtnFace",;
+         Text "Ersteinsatz",;
+         Left 39.7998,;
+         Top 17.4697,;
+         PageNo 2,;
+         Height 0.8828
+
+   DEFINE TEXT TEXT28 OF THIS;
+       PROPERTY; 
+         Width 11,;
+         ColorNormal "RG/BtnFace",;
+         Text "Ersteinsatz",;
+         Left 22.166,;
+         Alignment 4,;
+         Top 17.4111,;
+         PageNo 3,;
+         Height 0.9414
+
+   DEFINE TEXT TEXT29 OF THIS;
+       PROPERTY; 
+         Width 22,;
+         ColorNormal "RG/BtnFace",;
+         Text "Nutzungsdauer [Jahre]",;
+         Left 54.166,;
+         Alignment 4,;
+         Top 17.4697,;
+         PageNo 3,;
+         Height 0.9414
+
+   DEFINE TEXT TEXT30 OF THIS;
+       PROPERTY; 
+         Width 8.502,;
+         Text "Zeitwert",;
+         ColorNormal "BG/BtnFace",;
+         Left 76.6641,;
+         Top 15.5879,;
+         PageNo 3,;
+         Height 0.8809
+
+   DEFINE TEXT TEXT31 OF THIS;
+       PROPERTY; 
+         Width 9.833,;
+         Text "Reparatur",;
+         ColorNormal "BG/BtnFace",;
+         Left 46.5,;
+         Top 15.5879,;
+         PageNo 3,;
+         Height 0.7637
+
+   DEFINE TEXT TEXT32 OF THIS;
+       PROPERTY; 
+         Width 9.8359,;
+         Text "éndern",;
+         Left 62.6641,;
+         ColorNormal "BG/BtnFace",;
+         Top 15.5879,;
+         PageNo 3,;
+         Height 0.9395
+
+   DEFINE TEXT TEXT33 OF THIS;
+       PROPERTY; 
+         Width 7.502,;
+         Text "PrÅfen",;
+         ColorNormal "BG/BtnFace",;
+         Left 33.3311,;
+         Top 15.5879,;
+         PageNo 3,;
+         Height 0.8809
+
+   DEFINE TEXT TEXT34 OF THIS;
+       PROPERTY; 
+         Width 8,;
+         Text "Neuwert",;
+         ColorNormal "BG/BtnFace",;
+         Left 18,;
+         Top 15.5879,;
+         PageNo 3,;
+         Height 0.8809
+
+   DEFINE ENTRYFIELD BEN OF THIS;
+       PROPERTY; 
+         Width 26.4336,;
+         OnOpen {; if substr(nutzer.logik,2,1) = "0"; this.enabled=.f.; endif},;
+         Border .f.,;
+         ColorNormal "n+/w+",;
+         DataLink "KARTEI->BEN",;
+         Left 16.8994,;
+         OnRightMouseDown {; class::KATALOG_OnRightMouseDown(this.name)},;
+         Top 3.3496,;
+         PageNo 0,;
+         Height 0.8828
+
+   DEFINE ENTRYFIELD CODEWORT OF THIS;
+       PROPERTY; 
+         Width 11.7334,;
+         Border .F.,;
+         DataLink "KARTEI->CODEWORT",;
+         Enabled .F.,;
+         Left 57.0996,;
+         Top 3.3496,;
+         PageNo 0,;
+         Height 0.8828
+
+   DEFINE ENTRYFIELD NUMMER OF THIS;
+       PROPERTY; 
+         OnOpen {; if kartei->lfdnr > 0; this.DataLink = "kartei->lfdnr"; else; this.DataLink = "kartei->spezinr"; endif},;
+         Width 18.0332,;
+         Border .F.,;
+         Left 81.2998,;
+         Enabled .F.,;
+         Value "",;
+         Function "BZ",;
+         Top 3.3496,;
+         PageNo 0,;
+         Height 0.8828
+
+   DEFINE ENTRYFIELD HST OF THIS;
+       PROPERTY; 
+         Width 32.167,;
+         OnOpen {; if substr(nutzer.logik,2,1) = "0"; this.enabled=.f.; endif},;
+         Border .F.,;
+         ColorNormal "n+/w+",;
+         DataLink "KARTEI->HST",;
+         OnRightMouseDown {; class::KATALOG_OnRightMouseDown(this.name)},;
+         Left 13.666,;
+         Top 7.2939,;
+         Height 0.8828
+
+   DEFINE ENTRYFIELD KLASSI OF THIS;
+       PROPERTY; 
+         Width 12.333,;
+         OnOpen {; if substr(nutzer.logik,2,1) = "0"; this.enabled=.f.; endif},;
+         Border .F.,;
+         ColorNormal "n+/w+",;
+         DataLink "KARTEI->KLASSI",;
+         OnRightMouseDown {; class::KATALOG_OnRightMouseDown(this.name)},;
+         Left 64.833,;
+         Top 7.2939,;
+         Height 0.8828
+
+   DEFINE ENTRYFIELD P_ZEIT OF THIS;
+       PROPERTY; 
+         Width 4.5,;
+         OnOpen {; if substr(nutzer.logik,2,1) = "0"; this.enabled=.f.; endif},;
+         Border .F.,;
+         ColorNormal "n+/w+",;
+         DataLink "KARTEI->P_ZEIT",;
+         Left 95.166,;
+         Function "BZ",;
+         Top 7.2939,;
+         Height 0.8828
+
+   DEFINE ENTRYFIELD MERKMALE OF THIS;
+       PROPERTY; 
+         Width 46.833,;
+         OnOpen {; if substr(nutzer.logik,2,1) = "0"; this.enabled=.f.; endif},;
+         Border .F.,;
+         ColorNormal "n+/w+",;
+         DataLink "KARTEI->MERKMALE",;
+         OnRightMouseDown {; class::KATALOG_OnRightMouseDown(this.name)},;
+         Left 14,;
+         Top 9.2344,;
+         Height 0.8828
+
+   DEFINE ENTRYFIELD ABW OF THIS;
+       PROPERTY; 
+         Width 27,;
+         OnOpen {; if substr(nutzer.logik,2,1) = "0"; this.enabled=.f.; endif},;
+         Border .F.,;
+         ColorNormal "n+/w+",;
+         DataLink "KARTEI->ABW",;
+         OnRightMouseDown {; class::KATALOG_OnRightMouseDown(this.name)},;
+         Left 72.166,;
+         Top 9.2344,;
+         Height 0.8828
+
+   DEFINE ENTRYFIELD BES OF THIS;
+       PROPERTY; 
+         Width 18.333,;
+         OnOpen {; if substr(nutzer.logik,2,1) = "0"; this.enabled=.f.; endif},;
+         Border .F.,;
+         ColorNormal "n+/w+",;
+         DataLink "KARTEI->BES",;
+         OnRightMouseDown {; class::KATALOG_OnRightMouseDown(this.name)},;
+         Left 16,;
+         Top 11.2344,;
+         Height 0.8828
+
+   DEFINE ENTRYFIELD GEREATE_NR OF THIS;
+       PROPERTY; 
+         Width 17.667,;
+         OnOpen {; if substr(nutzer.logik,2,1) = "0"; this.enabled=.f.; endif},;
+         Border .F.,;
+         ColorNormal "n+/w+",;
+         DataLink "KARTEI->GERAETE_NR",;
+         Left 51.333,;
+         Top 11.2344,;
+         Height 0.8828
+
+   DEFINE ENTRYFIELD ERST_EINS OF THIS;
+       PROPERTY; 
+         Width 11,;
+         Border .F.,;
+         DataLink "KARTEI->ERST_EINS",;
+         Left 87.666,;
+         Enabled .F.,;
+         Top 11.2344,;
+         Height 0.8828
+
+   DEFINE ENTRYFIELD KFR OF THIS;
+       PROPERTY; 
+         Width 5.5,;
+         OnOpen {; if substr(nutzer.logik,2,1) = "0"; this.enabled=.f.; endif},;
+         Border .F.,;
+         ColorNormal "n+/w+",;
+         DataLink "KARTEI->KFR",;
+         OnRightMouseDown {; class::KATALOG_OnRightMouseDown(this.name)},;
+         Left 20.5,;
+         Function "BZ",;
+         Top 13.2344,;
+         Height 0.8828
+
+   DEFINE ENTRYFIELD SONSTIGES OF THIS;
+       PROPERTY; 
+         Width 58.666,;
+         OnOpen {; if substr(nutzer.logik,2,1) = "0"; this.enabled=.f.; endif},;
+         Border .F.,;
+         ColorNormal "n+/w+",;
+         DataLink "KARTEI->SONSTIGES",;
+         Left 39.5,;
+         Top 13.2344,;
+         Height 0.8828
+
+   DEFINE ENTRYFIELD PB_ART OF THIS;
+       PROPERTY; 
+         Width 15.167,;
+         Border .F.,;
+         DataLink "KARTEI->PB_ART",;
+         Left 19.333,;
+         Enabled .F.,;
+         Top 16.6465,;
+         Height 0.8828
+
+   DEFINE ENTRYFIELD PB_DATUM OF THIS;
+       PROPERTY; 
+         Width 11.334,;
+         Border .F.,;
+         DataLink "KARTEI->PB_DATUM",;
+         Left 48.666,;
+         Enabled .F.,;
+         Top 16.6465,;
+         Height 0.8828
+
+   DEFINE ENTRYFIELD PB_KOST OF THIS;
+       PROPERTY; 
+         Width 9.167,;
+         Border .F.,;
+         DataLink "KARTEI->PB_KOST",;
+         Left 79.666,;
+         Enabled .F.,;
+         Function "BZ",;
+         Top 16.6465,;
+         Height 0.8828
+
+   DEFINE ENTRYFIELD PB_ORT OF THIS;
+       PROPERTY; 
+         Width 27.334,;
+         Border .F.,;
+         DataLink "KARTEI->PB_ORT",;
+         Left 14.666,;
+         Enabled .F.,;
+         Top 18.2344,;
+         Height 0.8828
+
+   DEFINE ENTRYFIELD PB_BEM OF THIS;
+       PROPERTY; 
+         Width 40.667,;
+         Border .F.,;
+         DataLink "KARTEI->PB_BEM",;
+         Left 56.666,;
+         Enabled .F.,;
+         Top 18.2344,;
+         Height 0.8828
+
+   DEFINE EDITOR HISTORIE OF THIS;
+       PROPERTY; 
+         Width 94,;
+         Modify .F.,;
+         ColorNormal "W/W+",;
+         DataLink "KARTEI->HISTORIE",;
+         Left 4.8,;
+         Top 9,;
+         CUATab .T.,;
+         PageNo 2,;
+         Height 7.5879,;
+         Wrap .t.,;
+         FontName "Monotony",;
+         FontSize 9,;
+         FontBold .f.
+         
+
+   DEFINE ENTRYFIELD ERST_EINS_HIST OF THIS;
+       PROPERTY; 
+         Width 11,;
+         Border .F.,;
+         DataLink "KARTEI->ERST_EINS",;
+         Left 51.5,;
+         Enabled .F.,;
+         Top 17.4697,;
+         PageNo 2,;
+         Height 0.8828
+
+   DEFINE ENTRYFIELD ANZ_EINS OF THIS;
+       PROPERTY; 
+         Width 5,;
+         Border .F.,;
+         DataLink "KARTEI->ANZ_EINS",;
+         Left 29,;
+         Enabled .F.,;
+         Function "J",;
+         Top 18.7646,;
+         PageNo 2,;
+         Height 0.8828
+
+   DEFINE ENTRYFIELD ANZ_REP OF THIS;
+       PROPERTY; 
+         Width 5,;
+         Border .F.,;
+         DataLink "KARTEI->ANZ_REP",;
+         Left 61.5,;
+         Enabled .F.,;
+         Function "J",;
+         Top 18.7646,;
+         PageNo 2,;
+         Height 0.8828
+
+   DEFINE TEXT ZW_PAGE2 OF THIS;
+       PROPERTY; 
+         Width 4.9336,;
+         ColorNormal "W/W+",;
+         Text "",;
+         Left 84.8994,;
+         Alignment 4,;
+         Top 18.7646,;
+         PageNo 2,;
+         Height 0.8828
+   
+   DEFINE ENTRYFIELD ERST_EINS_PAGE3 OF THIS;
+       PROPERTY; 
+         Width 11,;
+         ColorNormal "W/W+",;
+         Border .F.,;
+         DataLink "KARTEI->ERST_EINS",;
+         Left 33.833,;
+         Enabled .F.,;
+         Top 17.5293,;
+         PageNo 3,;
+         Height 0.8828
+
+   DEFINE ENTRYFIELD ND OF THIS;
+       PROPERTY; 
+         Width 3,;
+         ColorNormal "W/W+",;
+         Border .F.,;
+         DataLink "KARTEI->ND",;
+         Left 76.833,;
+         Enabled .F.,;
+         Function "ZJ",;
+         Top 17.5293,;
+         PageNo 3,;
+         Height 0.8828
+
+   DEFINE ENTRYFIELD NW OF THIS;
+       PROPERTY; 
+         Width 11.6689,;
+         Border .F.,;
+         DataLink "KARTEI->NEUWERT",;
+         Left 16.1641,;
+         Enabled .F.,;
+         Function "ZJ",;
+         Top 14.2979,;
+         PageNo 3,;
+         Height 0.8828
+
+   DEFINE RECTANGLE GRAFIK_NW OF THIS;
+       PROPERTY; 
+         Width 5,;
+         ColorNormal "0x8000ff/0x8000ff",;
+         Text "",;
+         Border .F.,;
+         Left 19.5,;
+         Top 10,;
+         PageNo 3,;
+         Height 0.0977
+
+   DEFINE TEXT NW_PROZ OF THIS;
+       PROPERTY; 
+         Width 5.8359,;
+         Text "",;
+         Left 19.1641,;
+         Top 8.8809,;
+         PageNo 3,;
+         Height 0.8223
+
+   DEFINE TEXT ZW_DM_PAGE3 OF THIS;
+       PROPERTY; 
+         Width 11.666,;
+         ColorNormal "W/W+",;
+         Text "",;
+         Left 75,;
+         Alignment 2,;
+         Top 14.2979,;
+         PageNo 3,;
+         Height 0.9395
+
+   DEFINE TEXT ZW_PROZ_PAGE3 OF THIS;
+       PROPERTY; 
+         Width 6.835,;
+         Text "",;
+         Left 77.8311,;
+         Alignment 1,;
+         Top 9.5293,;
+         PageNo 3,;
+         Height 0.8223
+
+   DEFINE RECTANGLE GRAFIK_ZW OF THIS;
+       PROPERTY; 
+         Width 5.002,;
+         ColorNormal "G/G",;
+         Text "",;
+         Border .F.,;
+         Left 78.6641,;
+         Top 10,;
+         PageNo 3,;
+         Height 0.0977
+
+   DEFINE ENTRYFIELD REP_KOST OF THIS;
+       PROPERTY; 
+         Width 11.6689,;
+         Border .F.,;
+         DataLink "KARTEI->REP_KOST",;
+         Left 45.3311,;
+         Enabled .F.,;
+         Function "J",;
+         Top 14.2979,;
+         PageNo 3,;
+         Height 0.8828
+
+   DEFINE TEXT REP_KOST_PROZ OF THIS;
+       PROPERTY; 
+         Width 10.6689,;
+         Text "",;
+         Left 45.6641,;
+         Alignment 1,;
+         Top 10.5293,;
+         PageNo 3,;
+         Height 0.7637
+
+   DEFINE RECTANGLE GRAFIK_REP_KOST OF THIS;
+       PROPERTY; 
+         Width 5.002,;
+         ColorNormal "B+/B+",;
+         Text "",;
+         Border .F.,;
+         Left 48.8311,;
+         Top 10,;
+         PageNo 3,;
+         Height 0.0977
+
+   DEFINE ENTRYFIELD éND_KOST OF THIS;
+       PROPERTY; 
+         Width 11.6689,;
+         Border .F.,;
+         DataLink "KARTEI->éND_KOST",;
+         Left 60.1641,;
+         Enabled .F.,;
+         Function "J",;
+         Top 14.2979,;
+         PageNo 3,;
+         Height 0.8828
+
+   DEFINE TEXT éND_KOST_PROZ OF THIS;
+       PROPERTY; 
+         Width 10.6689,;
+         Text "",;
+         Left 60.8311,;
+         Alignment 1,;
+         Top 9.0586,;
+         PageNo 3,;
+         Height 0.8223
+
+   DEFINE RECTANGLE GRAFIK_éND_KOST OF THIS;
+       PROPERTY; 
+         Width 5.002,;
+         ColorNormal "0x80ffff/0x80ffff",;
+         Text "",;
+         Border .F.,;
+         Left 63.1641,;
+         Top 10,;
+         PageNo 3,;
+         Height 0.0977
+
+   DEFINE ENTRYFIELD PRöF_KOST OF THIS;
+       PROPERTY; 
+         Width 11.666,;
+         Border .F.,;
+         DataLink "KARTEI->PRöF_KOST",;
+         Left 30.5,;
+         Enabled .F.,;
+         Function "J",;
+         Top 14.2979,;
+         PageNo 3,;
+         Height 0.8828
+
+   DEFINE TEXT PRöF_KOST_PROZ OF THIS;
+       PROPERTY; 
+         Width 10.5,;
+         Text "",;
+         Left 31.5,;
+         Alignment 1,;
+         Top 9.7051,;
+         PageNo 3,;
+         Height 0.8809
+
+   DEFINE RECTANGLE GRAFIK_PRöF_KOST OF THIS;
+       PROPERTY; 
+         Width 5.002,;
+         ColorNormal "RG/RG",;
+         Text "",;
+         Border .F.,;
+         Left 33.8311,;
+         Top 10,;
+         PageNo 3,;
+         Height 0.0977
+         
+   DEFINE EDITOR NOT_KONV OF THIS;
+       PROPERTY; 
+         Width 87.166,;
+         Modify .F.,;
+         ColorNormal "W/W+",;
+         Visible .F.,;
+         Left 8,;
+         Top 7.3,;
+         CUATab .T.,;
+         FontName "Arial",;
+         PageNo 4,;
+         Height 12
+
+   DEFINE OLE NOT_OLE OF THIS;
+       PROPERTY; 
+         Width 87.166,;
+         Visible .F.,;
+         Left 8,;
+         Top 7.3,;
+         PageNo 4,;
+         Height 12
+
+   DEFINE EDITOR PROT_KONV OF THIS;
+       PROPERTY; 
+         Width 87.166,;
+         Modify .F.,;
+         ColorNormal "W/W+",;
+         Visible .F.,;
+         DataLink "KARTEI->PROT_KONV",;
+         Left 8,;
+         Top 7.3,;
+         CUATab .T.,;
+         FontName "Arial",;
+         PageNo 5,;
+         Height 12
+
+   DEFINE OLE PROT_OLE OF THIS;
+       PROPERTY; 
+         Width 87.166,;
+         Visible .F.,;
+         Left 8,;
+         Top 7.3,;
+         PageNo 5,;
+         Height 12
+
+   DEFINE EDITOR PLAN_KONV OF THIS;
+       PROPERTY; 
+         MousePointer 1,;
+         Width 87.166,;
+         Modify .F.,;
+         Left 8,;
+         Value "",;
+         Top 7.3,;
+         CUATab .T.,;
+         PageNo 6,;
+         Height 12
+
+   DEFINE OLE PLAN_OLE OF THIS;
+       PROPERTY; 
+         MousePointer 1,;
+         Width 87.166,;
+         Visible .F.,;
+         Left 8,;
+         Top 7.3,;
+         PageNo 6,;
+         Height 12
+         
+   DEFINE ENTRYFIELD MESSAGE OF THIS;
+       PROPERTY; 
+         Width 66.667,;
+         OnOpen {; if substr(nutzer.logik,2,1) = "0"; this.enabled=.f.; endif},;
+         Left 18.333,;
+         Border .F.,;
+         ColorNormal "n+/w+",;
+         DataLink "kartei->message",;
+         Top 12.7479,;
+         PageNo 7,;
+         Height  0.8828
+
+         
+**************************************************************************
+
+
+   Procedure FORMULAR_OnOpen
+   
+    if substr(nutzer.logik,2,1) = "1"   && -> bearbeiten zugelassen
+     form.rechteck4.MousePointer = 3
+     form.rechteck4.OnLeftMouseDown = {; do pb_edi.wfm; class::berechnungen()}
+     form.historie.OnLeftDblClick   = {; class::HistorieLoeschen()}     
+     form.not_konv.OnLeftDblClick   = {; this.colornormal = "WindowText/Window"; this.modify = .t.}
+     form.not_konv.OnLostFocus      = {; this.colornormal = "W/W+"; this.modify = .f.}
+     form.prot_konv.OnLeftDblClick  = {; this.colornormal = "WindowText/Window"; this.modify = .t.}
+     form.prot_konv.OnLostFocus     = {; this.colornormal = "W/W+"; this.modify = .f.}
+    else
+     form.historie.MousePointer  = 1
+     form.not_konv.MousePointer  = 1
+     form.not_ole.MousePointer   = 1
+     form.prot_konv.MousePointer = 1
+     form.prot_ole.MousePointer  = 1
+    endif 
+    
+    class::Berechnungen()
+    
+    
+    
+   Procedure KATALOG_OnRightMouseDown(name)
+   
+    public gcObjektname  && wird in OnClose routine gelîscht
+    gcObjektname = name
+
+    local f
+    f = new AUSWAHLKATALOG()
+    f.ReadModal()
+ 
+ 
+  
+   Procedure SCHNELLSUCHE_OnClick
+ 
+    privat pcFormularnummer
+    pcFormularnummer = form.formularnummer
+ 
+    SCHNELLSUCHE&pcFormularnummer..open()    
+
+    if glTipsUndTricks
+     msgbox("Eine gefundene PrÅfmittelkarte kann bearbeitet werden, ohne die Schnellsuche zu schlie·en.","Tips & Tricks",64)
+    endif
+
+
+   
+   Procedure REGISTER1_OnSelChange
+   
+    if substr(nutzer.logik,2,1) = "1" .and. ( this.CurSel = 4 .or. this.CurSel = 5 )
+     form.schalter_ole.enabled = .t.
+    else
+     form.schalter_ole.enabled = .f.
+    endif
+
+    form.PageNo = this.CurSel  && umschalten 
+    
+    if form.PageNo = 1 .and. substr(nutzer.logik,2,1) = "1"
+     form.ben.enabled = .t.
+    else
+     form.ben.enabled = .f.
+    endif
+        
+    if form.PageNo = 6
+    
+     if empty(form.plan_konv.value)  && wird in procedure berechnungen zurÅckgesetzt
+      do WahlPlan with form   &&  -> archiv_p.prg
+     endif
+   
+    endif
+    
+    
+      
+   Procedure SCHALTER_ERSTE_KARTE_OnClick   && erste gefundene karte
+   
+    parameter Formularnummer
+    
+    sele kartei 
+    
+    privat poRefArray
+    poRefArray = Suchen&Formularnummer
+    
+    if left(poRefArray[1],1) <> "*"
+     local lnPos
+     lnPos = poRefArray.scan("*")
+     poRefArray[lnPos] = right(poRefArray[lnPos],len(poRefArray[lnPos])-1)
+     poRefArray[1] = "*" + poRefArray[1]
+    endif   
+    
+    if recno() <> val(right(poRefArray[1],len(poRefArray[1])-1))
+     go val(right(poRefArray[1],len(poRefArray[1])-1))
+     class::Berechnungen()
+    endif
+
+
+   
+   Procedure SCHALTER_RUECKWAERTSSUCHEN_OnClick   && rÅckwÑrtssuchen
+   
+    parameter Formularnummer
+    
+    sele kartei
+    
+    local lnPos
+    lnPos = Suchen&Formularnummer..scan("*")
+    
+    privat poRefArray
+    poRefArray = Suchen&Formularnummer
+     
+    if lnPos > 1
+     go val(poRefArray[lnPos-1])
+     poRefArray[lnPos-1] = "*" + poRefArray[lnPos-1]
+     poRefArray[lnPos] = right(poRefArray[lnPos],len(poRefArray[lnPos])-1)
+     class::Berechnungen()
+    else
+     if recno() = val(right(poRefArray[1],len(poRefArray[1])-1))
+      msgbox("Keine weitere Karte mit gewÑhltem Filter gefunden.","Hinweis",64)
+     else
+      go val(right(poRefArray[1],len(poRefArray[1])-1))
+      class::Berechnungen()
+     endif 
+    endif
+    
+   
+   
+   Procedure SCHALTER_KARTE_VORHER_OnClick   && karte vorher
+   
+      sele kartei
+      
+      go recno() in 101
+      skip-1 in 101
+      if bof(101)
+       msgbox("   Anfang der PrÅfmittelkartei.","Hinweis",64)
+      else
+       go recno(101)
+       class::Berechnungen()
+      endif
+   
+   
+   
+   Procedure SCHALTER_KARTE_DANACH_OnClick   && karte danach
+   
+      sele kartei
+      
+      go recno() in 101
+      skip in 101
+      if eof(101)
+       msgbox("    Ende der PrÅfmittelkartei.","Hinweis",64)
+       skip-1 in 101
+      else
+       go recno(101)
+       class::Berechnungen()
+      endif
+   
+      
+      
+   Procedure SCHALTER_VORWAERTSSUCHEN_OnClick   && vorwÑrtssuchen
+   
+    parameter Formularnummer
+    
+    sele kartei
+    
+    local lnPos
+    lnPos = Suchen&Formularnummer..scan("*")
+   
+    privat poRefArray
+    poRefArray = Suchen&Formularnummer
+   
+    poRefArray[lnPos] = right(poRefArray[lnPos],len(poRefArray[lnPos])-1)
+   
+    if lnPos < poRefArray.size
+     go val(poRefArray[lnPos+1])
+     class::Berechnungen()
+     poRefArray[lnPos+1] = "*" + poRefArray[lnPos+1]
+    else
+     local lnSatznummer
+     lnSatznummer = recno()
+     go val(poRefArray[poRefArray.size])
+     skip
+     local lnZeilenArray
+     lnZeilenArray = poRefArray.size
+     do suchen with form, Formularnummer, "Einzelsuche", "SuchArrayJa"
+     if lnZeilenArray = poRefArray.size
+      if lnSatznummer = val(poRefArray[poRefArray.size])
+       msgbox("Keine weitere Karte mit gewÑhltem Filter gefunden.","Hinweis",64)
+      else 
+       go val(poRefArray[poRefArray.size])
+       class::Berechnungen()
+      endif
+     else
+      class::Berechnungen()
+     endif
+     poRefArray[poRefArray.size] = "*" + poRefArray[poRefArray.size]
+    endif
+   
+   
+   
+   Procedure SCHALTER_LETZTE_KARTE_OnClick   && letzte gefundene karte
+   
+    parameter Formularnummer
+    
+    sele kartei
+   
+    privat poRefArray
+    poRefArray = Suchen&Formularnummer
+    
+    if left(poRefArray[poRefArray.size],1) <> "*"
+     local lnPos
+     lnPos = Suchen&Formularnummer..scan("*")
+     poRefArray[lnPos] = right(poRefArray[lnPos],len(poRefArray[lnPos])-1)
+     poRefArray[poRefArray.size] = "*" + poRefArray[poRefArray.size]
+    endif
+    
+    if recno() <> val(right(poRefArray[poRefArray.size],len(poRefArray[poRefArray.size])-1))
+     go val(right(poRefArray[poRefArray.size],len(poRefArray[poRefArray.size])-1))
+     class::Berechnungen()
+    endif 
+     
+     
+      
+   Procedure Berechnungen
+   
+    privat pcFormularnummer
+    pcFormularnummer = form.formularnummer 
+    
+    if 'PB_ART=="Schrott"' $ Filter&pcFormularnummer..suchmakro
+    
+     if kartei->pb_art == "Schrott" .or. substr(nutzer.logik,2,1) = "0"
+
+      form.rechteck4.OnLeftMouseDown = {;}
+      form.historie.OnLeftDblClick   = {;}
+      form.not_konv.OnLeftDblClick   = {;}
+      form.prot_konv.OnLeftDblClick  = {;}
+      form.rechteck4.MousePointer = 1
+      form.historie.MousePointer  = 1
+      form.not_konv.MousePointer  = 1
+      form.not_ole.MousePointer   = 1
+      form.prot_konv.MousePointer = 1
+      form.prot_ole.MousePointer  = 1
+      
+     else
+      
+      form.rechteck4.OnLeftMouseDown = {; do pb_edi.wfm; class::berechnungen()}
+      form.historie.OnLeftDblClick   = {; class::HistorieLoeschen()}
+      form.not_konv.OnLeftDblClick   = {; this.colornormal = "WindowText/Window"; this.modify = .t.}
+      form.prot_konv.OnLeftDblClick  = {; this.colornormal = "WindowText/Window"; this.modify = .t.}
+      form.rechteck4.MousePointer = 3
+      form.historie.MousePointer  = 3
+      form.not_konv.MousePointer  = 3
+      form.not_ole.MousePointer   = 3
+      form.prot_konv.MousePointer = 3
+      form.prot_ole.MousePointer  = 3
+             
+     endif
+     
+     if substr(nutzer.logik,3,1) = "1"
+      form.schalter_pmk_neu.enabled = .t.
+     else
+      form.schalter_pmk_neu.enabled = .f.
+     endif
+     
+    endif
+   
+    do pmk_set with form   && archiv_p.prg
+   
+    do case 
+     case form.PageNo = 1
+      if .not. empty(kartei->message)
+       local f
+       f = new MESSAGE()
+       f.ReadModal()
+      endif 
+     case form.PageNo = 6
+      do WahlPlan with form   &&  -> archiv_p.prg
+    endcase
+
+    
+   
+   Procedure HistorieLoeschen
+    
+    if len(kartei->historie) = 90
+     msgbox("Die erste Zeile der Historie kann nicht gelîscht werden.","Hinweis",64)
+     return
+    endif
+
+    if msgbox("Es wird die letzte Zeile der Historie gelîscht. Die vorletz- te Zeile der Historie wird als aktuelle PrÅfmittelbewegung in die Stammdaten der PrÅfmittelkarte eingetragen.","Letzte Zeile in der Historie lîschen...",273) = 1
+
+     local lcVorletzteZeile
+   
+     if substr(kartei->historie,len(kartei->historie)-167,12) == "No Move     "
+      lcVorletzteZeile = substr(kartei->historie,len(kartei->historie)-269,90)
+     else   
+      lcVorletzteZeile = substr(kartei->historie,len(kartei->historie)-179,90)
+     endif
+
+     if substr(lcVorletzteZeile,13,12) == "Im Einsatz"
+      do while .t.
+       if msgbox("  Art der neuen PrÅfmittelbewegung -> Kalibrieren ?","Kalibrieren oder Eichen ?",36) = 6
+        repl kartei->pb_art with "Kalibrieren"
+        exit
+       else
+        if msgbox("  Art der neuen PrÅfmittelbewegung -> Eichen ?","Kalibrieren oder Eichen ?",36) = 6
+         repl kartei->pb_art with "Eichen"
+         exit
+        endif
+       endif
+      enddo
+      repl kartei->pb_datum with ctod(substr(lcVorletzteZeile,1,10)) + kartei->kfr
+     else
+      repl kartei->pb_art with substr(lcVorletzteZeile,13,12)
+      repl kartei->pb_datum with ctod(substr(lcVorletzteZeile,1,10))
+     endif
+    
+     repl kartei->pb_kost with val(substr(lcVorletzteZeile,78,8))
+     repl kartei->pb_ort  with substr(lcVorletzteZeile,26,20)
+     repl kartei->pb_bem  with substr(lcVorletzteZeile,47,30)
+
+     local lcLetzteZeile
+     lcLetzteZeile = right(kartei->historie,90)
+  
+     do case 
+      case substr(lcLetzteZeile,13,12) == "Im Einsatz"
+       repl kartei->anz_eins with kartei->anz_eins - 1
+      case substr(lcLetzteZeile,13,12) = "Reparatur"
+       repl kartei->anz_rep with kartei->anz_rep - 1
+     endcase
+    
+     if val(substr(lcLetzteZeile,78,8)) > 0
+      do case
+       case substr(lcLetzteZeile,13,12) == "Zum PrÅfen"
+        repl kartei->prÅf_kost with kartei->prÅf_kost - val(substr(lcLetzteZeile,78,8))
+       case substr(lcLetzteZeile,13,12) == "éndern"
+        repl kartei->Ñnd_kost with kartei->Ñnd_kost - val(substr(lcLetzteZeile,78,8))
+       case substr(lcLetzteZeile,13,12) == "Reparatur"
+        repl kartei->rep_kost with kartei->rep_kost - val(substr(lcLetzteZeile,78,8))
+      endcase
+     endif 
+     
+     repl kartei->historie with left(kartei->historie,len(kartei->historie)-90)   
+   
+    endif
+    
+    do pmk_set with form   && archiv_p.prg
+     
+     
+     
+  Procedure SCHALTER_SCHLIESZEN_OnClick
+   
+   privat pcFormularnummer
+   pcFormularnummer = form.formularnummer
+   
+   if type("Browser&pcFormularnummer") = "O"  && browser benutzt
+    Browser&pcFormularnummer..close()
+   endif 
+    
+   Schnellsuche&pcFormularnummer..close()
+   
+   form.close()
+   
+   rele Formular&pcFormularnummer, Filter&pcFormularnummer, Suchen&pcFormularnummer, Browser&pcFormularnummer, Schnellsuche&pcFormularnummer
+
+
+     
+ENDCLASS
+
+
+
+CLASS AUSWAHLKATALOG OF FORM
+   this.SysMenu = .f.
+   this.MDI = .f.
+   this.Visible = .f.
+   this.Top = 1
+   this.Height = 1
+   
+   this.OnOpen  = class::AUSWAHLKATALOG_OnOpen
+   this.OnClose = class::AUSWAHLKATALOG_OnClose
+
+
+    DEFINE LISTBOX KATALOG OF THIS;
+       PROPERTY; 
+         OnOpen class::KATALOG_OnOpen,;
+         ColorHighLight "HighLightText/HighLight",;
+         OnLeftMouseDown class::KATALOG_OnLeftMouseDown,;
+         Visible .f.,;
+         Left 1,;
+         Top 0.5,;
+         Height 1     
+   
+         
+   Procedure AUSWAHLKATALOG_OnOpen
+    
+    do case 
+     case gcObjektname = "BEN"
+      this.text = "Benennung"
+      this.top = 8.6
+      this.left = 13.4
+      this.width = 34
+      this.height = 8
+     case gcObjektname = "HST"
+      this.text = "Hersteller"
+      this.top = 12.4
+      this.left = 13.4
+      this.width = 34
+      this.height = 8
+     case gcObjektname = "KLASSI"
+      this.text = "Klassifikation"
+      this.top = 12.4
+      this.left = 61.5
+      this.width = 20
+      this.height = 8
+     case gcObjektname = "MERKMALE"
+      this.text = "Merkmale"
+      this.top = 14.3
+      this.left = 14
+      this.width = 48
+      this.height = 8
+     case gcObjektname = "ABW"
+      this.text = "Zul. Abweichung"
+      this.top = 14.3
+      this.left = 73
+      this.width = 26
+      this.height = 8
+     case gcObjektname = "BES"
+      this.text = "EigentÅmer"
+      this.top = 16.3
+      this.left = 14.5
+      this.width = 22
+      this.height = 8 
+     case gcObjektname = "KFR"
+      this.text = "PrÅffrist"
+      this.top = 16.3
+      this.left = 28.2
+      this.width = 10
+      this.height = 5.5
+    endcase
+    
+    this.visible = .t.
+    
+    
+    
+   Procedure AUSWAHLKATALOG_OnClose
+   
+    do case 
+     case gcObjektname = "BEN"
+      set key to in "os"
+     case gcObjektname = "MERKMALE"
+      set key to in "merkmale"
+     case gcObjektname = "ABW"
+      set key to in "abw" 
+    endcase 
+    
+    rele gcObjektname
+    
+    
+    
+   Procedure KATALOG_OnOpen
+
+    this.width  = form.width - 2
+    this.height = form.height - 1
+    
+    do case
+     case gcObjektname = "BEN"
+      sele os
+      set order to 1
+      set key to kartei->codewort
+      
+      this.datasource = "field os->ben"
+     
+     case gcObjektname = "HST"
+      sele hst
+      set order to 1
+      
+      this.datasource = "field hst->hst" 
+      
+     case gcObjektname = "KLASSI"
+      sele klassi
+      set order to 1
+      
+      this.datasource = "field klassi->klassi"  
+      
+     case gcObjektname = "MERKMALE"
+      sele merkmale
+      set order to 1
+      set key to kartei->codewort
+      
+      this.datasource = "field merkmale->merkmale" 
+
+     case gcObjektname = "ABW"
+      sele abw
+      set order to 1
+      set key to kartei->codewort
+      
+      this.datasource = "field abw->abw" 
+      
+     case gcObjektname = "BES"
+      sele bes
+      set order to 1
+      
+      this.datasource = "field bes->bes"  
+      
+     case gcObjektname = "KFR"
+      sele kfr
+      set order to 1
+      
+      this.datasource = "field kfr->kfr"   
+       
+    endcase
+          
+    this.visible = .t.
+    this.setfocus()
+    
+    
+    
+   Procedure KATALOG_OnLeftMouseDown
+   
+    local lcSelect
+    lcSelect = listselected(form.katalog)
+    
+    sele kartei
+   
+    do case
+     case gcObjektname = "BEN"
+      if .not. lcSelect == ben
+       repl ben with lcSelect
+      endif
+     case gcObjektname = "HST"
+      if .not. lcSelect == hst
+       repl hst with lcSelect
+      endif 
+     case gcObjektname = "KLASSI"
+      if .not. lcSelect == klassi
+       repl klassi with lcSelect
+      endif  
+     case gcObjektname = "MERKMALE"
+      if .not. lcSelect == merkmale
+       repl merkmale with lcSelect
+      endif   
+      case gcObjektname = "ABW"
+      if .not. lcSelect == abw
+       repl abw with lcSelect
+      endif   
+     case gcObjektname = "BES"
+      if .not. lcSelect == bes
+       repl bes with lcSelect
+      endif   
+     case gcObjektname = "KFR"
+      if .not. val(lcSelect) == kfr
+       repl kfr with val(lcSelect)
+      endif    
+    endcase  
+    
+ 
+    form.close()
+    
+
+
+
+ENDCLASS
+
+
+
+CLASS MESSAGE OF FORM
+   this.Width = 39.166
+   this.ColorNormal = "0x80ffff"
+   this.Text = "Message"
+   this.mdi = .f.
+   this.Left = 31.833
+   this.Top = 12
+   this.Height = 2.5
+
+   DEFINE TEXT MESSAGE OF THIS;
+       PROPERTY; 
+         Width 30.6689,;
+         OnOpen class::MESSAGE_OnOpen,;
+         ColorNormal "R+/0x80ffff",;
+         Left 4.3311,;
+         Text "",;
+         Visible .f.,;
+         Alignment 4,;
+         Top 0.5879,;
+         Height 1.3516
+
+
+  Procedure MESSAGE_OnOpen
+  
+   this.text = rtrim(kartei->message)
+   
+   if len(this.text) > 30
+    this.width = len(this.text) + 6
+    form.width = this.width + 8
+    form.left  = ( 105 - form.width ) / 2 
+   endif 
+   
+   this.visible = .t.
+  
+
+ENDCLASS
+
+
+CLASS SCHNELLSUCHEFORM OF FORM
+   this.Width = 47.666
+   this.TopMost = .T.
+   this.MDI = .F.
+   this.Text = "Schnellsuche"
+   this.SysMenu = .F.
+   this.Left = 28.833
+   this.Top = 8.5
+   this.Maximize = .F.
+   this.Minimize = .F.
+   this.Height = 9.8232
+   
+   this.OnOpen = CLASS::FORMULAR_ONOPEN
+   this.OnClose = CLASS::FORMULAR_ONCLOSE
+
+   DEFINE LISTBOX PRUEFMITTELART OF THIS;
+       PROPERTY; 
+         OnOpen CLASS::PRUEFMITTELART_ONOPEN,;
+         Width 34.167,;
+         OnLeftMouseDown CLASS::PRUEFMITTELART_ONLEFTMOUSEDOWN,;
+         Left 2.166,;
+         Top 0.6465,;
+         ColorHighLight "HighLightText/HighLight",;
+         ID 101,;
+         Height 6.2354
+
+   DEFINE TEXT TEXT2 OF THIS;
+       PROPERTY; 
+         OnOpen {; if os->log_lfdnr; this.visible = .t.; endif},;
+         Width 17.5,;
+         Visible .F.,;
+         Text "Laufende Nummer",;
+         Left 4,;
+         Top 8.0758,;
+         Height 0.8232
+
+   DEFINE TEXT TEXT3 OF THIS;
+       PROPERTY; 
+         OnOpen {; if .not. os->log_lfdnr; this.visible = .t.; endif},;
+         Width 17.5,;
+         Visible .F.,;
+         Text "Spezielle Nummer",;
+         Left 1.3984,;
+         Top 8.1172,;
+         Height 0.8818
+
+   DEFINE SPINBOX LAUFENDE_NR OF THIS;
+       PROPERTY; 
+         OnOpen {; if os->log_lfdnr; this.visible = .t.; endif},;
+         Width 11.1689,;
+         Visible .F.,;
+         ValidErrorMsg "UngÅltige Eingabe",;
+         Rangemax 99999,;
+         Rangemin 0,;
+         RangeRequired .T.,;
+         Left 21.8311,;
+         Value 0,;
+         Function "Z",;
+         Top 7.9,;
+         Height 1.1758
+
+   DEFINE ENTRYFIELD SPEZIELLE_NR OF THIS;
+       PROPERTY; 
+         OnOpen {; if .not. os->log_lfdnr; this.visible = .t.; endif},;
+         Width 18.6025,;
+         Visible .F.,;
+         ValidErrorMsg "UngÅltige Eingabe",;
+         Left 19.0635,;
+         Value "",;
+         MaxLength 15,;
+         Top 7.9395,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON SCHLIESZEN OF THIS;
+       PROPERTY; 
+         Width 6.667,;
+         Group .T.,;
+         Text "",;
+         UpBitmap "RESOURCE #1005",;
+         Left 38.666,;
+         OnClick {; form.close()},;
+         Top 2.8232,;
+         Height 1.9414
+
+   DEFINE PUSHBUTTON OK OF THIS;
+       PROPERTY; 
+         Width 5.167,;
+         Group .T.,;
+         Text "",;
+         UpBitmap "RESOURCE #858",;
+         Left 39.5,;
+         OnClick CLASS::OK_ONCLICK,;
+         Top 7.7051,;
+         Height 1.5889
+         
+         
+   Procedure FORMULAR_OnOpen
+
+    privat poRefSuchFormular
+    poRefSuchFormular = form.formularnummer
+    poRefSuchFormular = Formular&poRefSuchFormular
+
+    poRefSuchFormular.schalter_filter.enabled            = .f.
+    poRefSuchFormular.schalter_browser.enabled           = .f.
+    poRefSuchFormular.schalter_schnellsuche.enabled      = .f.
+    poRefSuchFormular.schalter_pmk_neu.enabled           = .f.
+    poRefSuchFormular.schalter_fensterinfo.enabled       = .f.
+    poRefSuchFormular.schalter_erste_karte.enabled       = .f.
+    poRefSuchFormular.schalter_rueckwaertssuchen.enabled = .f.
+    poRefSuchFormular.schalter_karte_vorher.enabled      = .f.
+    poRefSuchFormular.schalter_karte_danach.enabled      = .f.
+    poRefSuchFormular.schalter_vorwaertssuchen.enabled   = .f.
+    poRefSuchFormular.schalter_letzte_karte.enabled      = .f.
+   
+  
+   
+   Procedure FORMULAR_Onclose
+   
+    privat poRefSuchFormular
+    poRefSuchFormular = form.formularnummer
+    poRefSuchFormular = Formular&poRefSuchFormular
+    
+    poRefSuchFormular.schalter_filter.enabled  = .t.
+    poRefSuchFormular.schalter_browser.enabled = .t.
+    poRefSuchFormular.schalter_schnellsuche.enabled = .t.
+
+    if substr(nutzer.logik,3,1) = "1"
+    poRefSuchFormular.schalter_pmk_neu.enabled = .t.
+    endif
+   
+    poRefSuchFormular.schalter_fensterinfo.enabled       = .t.
+    poRefSuchFormular.schalter_erste_karte.enabled       = .t.
+    poRefSuchFormular.schalter_rueckwaertssuchen.enabled = .t.
+    poRefSuchFormular.schalter_karte_vorher.enabled      = .t.
+    poRefSuchFormular.schalter_karte_danach.enabled      = .t.
+    poRefSuchFormular.schalter_vorwaertssuchen.enabled   = .t.
+    poRefSuchFormular.schalter_letzte_karte.enabled      = .t.
+
+
+         
+   Procedure PRUEFMITTELART_OnOpen
+   
+    if empty(this.datasource)  && datasource wird bei erstem aufruf angelegt <-> objekt ist public definiert
+     sele os
+     set order to 0
+     set filter to log_pm_art
+     set order to 2
+     this.datasource = "field os->ben"
+    endif 
+    
+         
+         
+  Procedure PRUEFMITTELART_OnLeftMouseDown
+  
+   sele os
+   set order to 2
+   seek listselected(form.pruefmittelart)
+   
+   if os->log_lfdnr
+   
+    if form.text3.visible
+     form.text3.visible = .f.
+     form.spezielle_nr.visible = .f.
+     form.text2.visible = .t.
+     form.laufende_nr.visible = .t.
+    endif
+    
+    form.laufende_nr.setfocus()
+  
+   else
+   
+    if form.text2.visible
+     form.text2.visible = .f.
+     form.laufende_nr.visible = .f.
+     form.text3.visible = .t.
+     form.spezielle_nr.visible = .t.
+    endif
+    
+    form.spezielle_nr.setfocus()
+    
+   endif 
+   
+   
+  Procedure OK_OnClick
+  
+   if form.text2.visible  && laufende nummer
+   
+    if form.laufende_nr.value > 0
+     seek ( os->codewort + str(form.laufende_nr.value,5), 101 )
+    else 
+     seek ( os->codewort, 101 )
+    endif 
+    
+   else
+   
+    if .not. empty(form.spezielle_nr.value)
+     seek ( os->codewort + space(5) + ltrim(form.spezielle_nr.value), 101 )
+    else 
+     seek ( os->codewort, 101 )
+    endif 
+   
+   endif
+  
+   if found(101)
+    go recno(101) in kartei
+    privat poRefSuchFormular
+    poRefSuchFormular = form.formularnummer
+    poRefSuchFormular = Formular&poRefSuchFormular
+    do pmk_set with poRefSuchFormular   && archiv_p.prg
+   else
+    msgbox("Keine PrÅfmittelnummer gefunden.","Hinweis",64)
+   endif
+    
+   
+ENDCLASS

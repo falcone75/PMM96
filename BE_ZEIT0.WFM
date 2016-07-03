@@ -1,0 +1,354 @@
+*** be_zeit0.wfm
+
+create session
+
+sele 100
+use (Nutzer.Mandant) index (Nutzer.Mandant) alias kartei
+
+sele 1
+
+
+gnFormularZaehler = gnFormularZaehler + 1
+
+private pcZahl
+pcZahl = ltrim(str(gnFormularZaehler))
+
+
+
+** END HEADER -- Diese Zeile nicht lîschen*
+* Erstellt am 06.05.1996
+*
+
+privat plBerichtErstellen, pcBerichtsdatei, pcTextTipsUndTricks
+plBerichtErstellen = .f.
+pcBerichtsdatei = ""
+pcTextTipsUndTricks = 'In diesen Bericht werden  n u r  im Einsatz befindliche kalibrierpflichtige PrÅfmittel geschrieben ( Art der PrÅfmittelbewegung gleich "Kalibrieren" ). Weitere Hilfe mit Taste F1...'
+
+public Formular&pcZahl
+Formular&pcZahl = new STATISTIK_EINGABE()
+Formular&pcZahl..ReadModal()
+
+if plBerichtErstellen
+ do be_zeit2.wfm with pcZahl
+endif 
+
+CLASS STATISTIK_EINGABE OF BERICHTSEINGABE From "BASIS.CFM"
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "Zeitbedarf fÅr die Kalibrierung"
+   this.Text = "Bericht [ Zeitplanung ]"
+   
+   form.schalter_bericht.onclick = class::SCHALTER_BERICHT_OnClick
+   form.schalter_abbruch.onclick = {; form.close()}
+
+   DEFINE RECTANGLE RECHTECK1 OF THIS;
+       PROPERTY; 
+         Width 58.1689,;
+         Text "  Angaben zum Bericht  ",;
+         Left 10.8311,;
+         Top 2.293,;
+         Height 7.2354
+
+   DEFINE CHECKBOX LOG_FILTER OF THIS;
+       PROPERTY; 
+         Group .T.,;
+         Width 45.834,;
+         Text "Filter an das Ende des Berichtes schreiben",;
+         Left 17.832,;
+         Value .T.,;
+         Top 6.4111,;
+         Height 1.5889
+
+   DEFINE TEXT TEXT1 OF THIS;
+       PROPERTY; 
+         Width 26.667,;
+         Text "Auswertezeitraum [Monate]",;
+         Left 23.166,;
+         Top 4.4697,;
+         Height 1.1182
+
+   DEFINE SPINBOX ANZAHL_MONATE OF THIS;
+       PROPERTY; 
+         Width 6.834,;
+         Rangemin 1,;
+         Rangemax 12,;
+         RangeRequired .T.,;
+         Left 49.666,;
+         Value 3,;
+         Top 4.3525,;
+         Height 1.1172
+         
+         
+**************************************************************************
+
+
+   Procedure SCHALTER_BERICHT_OnClick
+   
+    plBerichtErstellen = .t.
+    
+    
+    Stermin_von = ctod( "01." + ltrim(str(month(date()))) + "." + ltrim(str(year(date()))) )
+    
+    local lnIndex
+    lnIndex = 1
+    
+    Stermin_bis = month(date())
+
+    do while lnIndex < form.anzahl_monate.value
+     if Stermin_bis < 12
+      Stermin_bis = Stermin_bis + 1
+     else 
+      Stermin_bis = 1
+     endif
+     lnIndex = lnIndex + 1
+    enddo
+    
+    if Stermin_bis < 10
+     Stermin_bis = "0" + str(Stermin_bis,1)
+    else
+     Stermin_bis = str(Stermin_bis,2)
+    endif
+    
+    if val(Stermin_bis) < month(date())   && jahreswechsel
+     Stermin_bis = Stermin_bis + "." + ltrim(str(year(date())+1))
+    else
+     Stermin_bis = Stermin_bis + "." + ltrim(str(year(date())))
+    endif
+
+    do case
+     case "31."+Stermin_bis = dtoc(ctod("31."+Stermin_bis))
+      Stermin_bis = ctod("31."+Stermin_bis)
+     case "30."+Stermin_bis = dtoc(ctod("30."+Stermin_bis))
+      Stermin_bis = ctod("30."+Stermin_bis)
+     case "29."+Stermin_bis = dtoc(ctod("29."+Stermin_bis))
+      Stermin_bis = ctod("29."+Stermin_bis)
+     case "28."+Stermin_bis = dtoc(ctod("28."+Stermin_bis))
+      Stermin_bis = ctod("28."+Stermin_bis) 
+    endcase
+    
+    
+    poRefFilter = Filter&pcZahl   && ggf. neue zuweisung ( Filter&pcZahl = filter0 ) in filter.wfm
+       
+    poRefFilter.SuchMakro = "pb_datum>={" + dtoc(Stermin_von) + "}.and.pb_datum<={" + dtoc(Stermin_bis) + "}.and." + poRefFilter.SuchMakro
+       
+    if .not. 'pb_art=="kalibrieren".and.' $ lower(poRefFilter.SuchMakro) .AND. .not. '.and.pb_art=="kalibrieren"' $ lower(poRefFilter.SuchMakro)
+     poRefFilter.SuchMakro = 'pb_art=="Kalibrieren".and.' + poRefFilter.SuchMakro
+     if empty(poRefFilter.Zeile1)  && kein filter eingegeben
+      poRefFilter.Zeile1 = '          PrÅfmittelbewegung (Art) gleich "Kalibrieren"'
+     else
+      local lnIndex
+      lnIndex = 2
+      privat pcIndex
+      pcIndex = "2"
+      do while type("poRefFilter.Zeile&pcIndex") <> "U"
+       lnIndex = lnIndex + 1
+       pcIndex = ltrim(str(lnIndex))
+      enddo
+      FilterZeile  = "poRefFilter.Zeile&pcIndex"
+      &FilterZeile = 'UND       PrÅfmittelbewegung (Art) gleich "Kalibrieren"'
+     endif
+    endif
+    
+    
+    STORE 0 TO Smin_jan,Smin_febr,Smin_mÑrz,Smin_april,Smin_mai,Smin_juni, ;
+     Smin_juli,Smin_aug,Smin_sept,Smin_okt,Smin_nov,Smin_dez
+    STORE 0 TO Spm1_jan,Spm1_febr,Spm1_mÑrz,Spm1_april,Spm1_mai,Spm1_juni, ;
+     Spm1_juli,Spm1_aug,Spm1_sept,Spm1_okt,Spm1_nov,Spm1_dez
+    STORE 0 TO Spm2_jan,Spm2_febr,Spm2_mÑrz,Spm2_april,Spm2_mai,Spm2_juni, ;
+     Spm2_juli,Spm2_aug,Spm2_sept,Spm2_okt,Spm2_nov,Spm2_dez
+   
+   
+    do suchen with form, form.formularnummer, "Gesamtsuche", "SuchArrayNein", "be_zeit1.prg"
+
+    pcBerichtsdatei = funique("$????.txt")
+   
+    set printer off
+    set device to file (pcBerichtsdatei)  && set printer to... <-> lÑ·t nur 31 zeichen fÅr pfad und dateiname zu
+   
+    @ 1,63 say dmy(date())
+    @ 3,32 say "Z E I T B E D A R F"
+    @ 4,38 say "* * *"
+    @ 5,((84-len(nutzer.mand_bez))/2) say nutzer.mand_bez
+    @ 6,12 say repl(chr(95),60)
+   
+   
+   
+***********************************************************************
+
+Sges_prÅfzeit=Smin_jan+Smin_febr+Smin_mÑrz+Smin_april+Smin_mai+Smin_juni+ ;
+ Smin_juli+Smin_aug+Smin_sept+Smin_okt+Smin_nov+Smin_dez
+ 
+Sges_prÅfzeit=ROUND(Sges_prÅfzeit/60,0)
+
+IF Sges_prÅfzeit=0
+ Sges_prÅfzeit=0.1
+ENDIF
+
+Smonat = MONTH(date())
+Sjahr  = ltrim(str(year(date())))
+Szeile = 9
+
+DO WHILE .T.
+
+ DO CASE
+  CASE Smonat=1
+   lnPrÅfzeitMonat = Smin_jan
+  CASE Smonat=2
+   lnPrÅfzeitMonat = Smin_febr
+  CASE Smonat=3
+   lnPrÅfzeitMonat = Smin_mÑrz
+  CASE Smonat=4
+   lnPrÅfzeitMonat = Smin_april
+  CASE Smonat=5
+   lnPrÅfzeitMonat = Smin_mai
+  CASE Smonat=6
+   lnPrÅfzeitMonat = Smin_juni
+  CASE Smonat=7
+   lnPrÅfzeitMonat = Smin_juli
+  CASE Smonat=8
+   lnPrÅfzeitMonat = Smin_aug
+  CASE Smonat=9
+   lnPrÅfzeitMonat = Smin_sept
+  CASE Smonat=10
+   lnPrÅfzeitMonat = Smin_okt
+  CASE Smonat=11 
+   lnPrÅfzeitMonat = Smin_nov
+  CASE Smonat=12
+   lnPrÅfzeitMonat = Smin_dez
+ ENDCASE
+ 
+ lcDatum = dmy(ctod("01."+ltrim(str(Smonat))+"."+Sjahr))
+ lcDatum = left(right(lcDatum,len(lcDatum)-3)+space(15),15)
+ 
+ lnPrÅfzeitMonat = round(lnPrÅfzeitMonat/60,0)
+ Sprozent        = 100*lnPrÅfzeitMonat/Sges_prÅfzeit
+ Sbalken         = REPL(CHR(176),ROUND(35*lnPrÅfzeitMonat/Sges_prÅfzeit,0))
+ 
+ if Sprozent = 0
+  @ Szeile,13 SAY lcDatum + "   0 h"
+ else
+  @ Szeile,13 SAY lcDatum + str(lnPrÅfzeitMonat,4) + " h  " + Sbalken + "  " + LTRIM(STR(ROUND(Sprozent,0),3)) + "%"
+ endif 
+ 
+ do case
+  case Smonat = month(Stermin_bis)
+   exit
+  case Smonat = 12
+   Smonat = 1
+   Sjahr  = ltrim(str(val(Sjahr)+1))
+  otherwise 
+   Smonat = Smonat + 1
+ endcase
+ 
+ Szeile=Szeile+2
+ 
+ENDDO
+
+Szeile=Szeile+3
+
+@ Szeile  , 7 SAY "Monat"
+@ Szeile  ,30 SAY "Anzahl PrÅfmittel          Anteil an monatlicher"
+@ Szeile+1,22 SAY "PrÅfzeit > 0  PrÅfzeit=0  Summe    Arbeitszeit von 160 h"
+@ Szeile+2, 7 SAY REPL("-",71)
+Szeile=Szeile+3
+
+Smonat = MONTH(date())
+Sjahr  = ltrim(str(year(date())))
+
+DO WHILE .T.
+
+ DO CASE
+  CASE Smonat=1
+   lnAnzPM_ZeitGroeszer0 = Spm1_jan
+   lnAnzPM_ZeitGleich0   = Spm2_jan
+   lnPrÅfzeit            = Smin_jan
+  CASE Smonat=2
+   lnAnzPM_ZeitGroeszer0 = Spm1_febr
+   lnAnzPM_ZeitGleich0   = Spm2_febr
+   lnPrÅfzeit            = Smin_febr
+  CASE Smonat=3
+   lnAnzPM_ZeitGroeszer0 = Spm1_mÑrz
+   lnAnzPM_ZeitGleich0   = Spm2_mÑrz
+   lnPrÅfzeit            = Smin_mÑrz
+  CASE Smonat=4
+   lnAnzPM_ZeitGroeszer0 = Spm1_april
+   lnAnzPM_ZeitGleich0   = Spm2_april
+   lnPrÅfzeit            = Smin_april
+  CASE Smonat=5
+   lnAnzPM_ZeitGroeszer0 = Spm1_mai
+   lnAnzPM_ZeitGleich0   = Spm2_mai
+   lnPrÅfzeit            = Smin_mai
+  CASE Smonat=6
+   lnAnzPM_ZeitGroeszer0 = Spm1_juni
+   lnAnzPM_ZeitGleich0   = Spm2_juni
+   lnPrÅfzeit            = Smin_juni
+  CASE Smonat=7
+   lnAnzPM_ZeitGroeszer0 = Spm1_juli
+   lnAnzPM_ZeitGleich0   = Spm2_juli
+   lnPrÅfzeit            = Smin_juli
+  CASE Smonat=8
+   lnAnzPM_ZeitGroeszer0 = Spm1_aug
+   lnAnzPM_ZeitGleich0   = Spm2_aug
+   lnPrÅfzeit            = Smin_aug
+  CASE Smonat=9
+   lnAnzPM_ZeitGroeszer0 = Spm1_sept
+   lnAnzPM_ZeitGleich0   = Spm2_sept
+   lnPrÅfzeit            = Smin_sept
+  CASE Smonat=10
+   lnAnzPM_ZeitGroeszer0 = Spm1_okt
+   lnAnzPM_ZeitGleich0   = Spm2_okt
+   lnPrÅfzeit            = Smin_okt
+  CASE Smonat=11
+   lnAnzPM_ZeitGroeszer0 = Spm1_nov
+   lnAnzPM_ZeitGleich0   = Spm2_nov
+   lnPrÅfzeit            = Smin_nov
+  CASE Smonat=12
+   lnAnzPM_ZeitGroeszer0 = Spm1_dez
+   lnAnzPM_ZeitGleich0   = Spm2_dez
+   lnPrÅfzeit            = Smin_dez
+ ENDCASE
+
+ lcDatum = dmy(ctod("01."+ltrim(str(Smonat))+"."+Sjahr))
+ lcDatum = left(right(lcDatum,len(lcDatum)-3)+space(19),19)
+ 
+ @ Szeile,7 SAY lcDatum + STR(lnAnzPM_ZeitGroeszer0,5) + SPACE(7) + STR(lnAnzPM_ZeitGleich0,5) + SPACE(4) + ;
+  STR(lnAnzPM_ZeitGroeszer0+lnAnzPM_ZeitGleich0,5) + SPACE(13) + STR(ROUND(100*lnPrÅfzeit/60/160,0),3) + "%"
+
+ do case
+  case Smonat = month(Stermin_bis)
+   exit
+  case Smonat = 12
+   Smonat = 1
+   Sjahr  = ltrim(str(val(Sjahr)+1))
+  otherwise 
+   Smonat = Smonat + 1
+ endcase
+ 
+ Szeile=Szeile+1
+
+ENDDO
+
+Szeile=Szeile+2
+
+@ Szeile+2, 7 SAY "Hinweis :"
+@ Szeile+2,17 SAY "Dem Bericht liegen  n u r  kalibrierpflichtige PrÅfmittel zu-"
+@ Szeile+3,17 SAY "grunde. Es wurde berÅcksichtigt, da· PrÅfmittel ggf. mehrfach"
+@ Szeile+4,17 SAY "zum PrÅfen angeliefert werden, wenn die PrÅffrist kleiner als"
+@ Szeile+5,17 SAY "der Auswertezeitraum ist."
+
+   
+***********************************************************************
+   
+   
+    if form.log_filter.value
+     do AufnFilt.prg with Filter&pcZahl, Szeile+9  && -> archiv_p.prg
+    endif 
+     
+    set device to screen
+   
+    form.close()   
+   
+   
+ENDCLASS
+
+
+

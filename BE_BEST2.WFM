@@ -1,0 +1,110 @@
+*** be_best2.wfm
+
+parameter Formularnummer
+
+
+** END HEADER -- Diese Zeile nicht lîschen*
+* Erstellt am 15.04.1996
+*
+
+* public  -> be_best0.wfm
+Formular&Formularnummer = new PRUEFMITTELBESTAND_AUSGABE()
+Formular&Formularnummer..open()
+
+CLASS PRUEFMITTELBESTAND_AUSGABE OF BERICHTSAUSGABE from basis.cfm
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "PrÅfmittelbestand"
+   this.Text = "PrÅfmittelbestand"
+   this.OnOpen = class::FORMULAR_OnOpen
+
+   
+  Procedure FORMULAR_OnOpen
+         
+   sele 20
+   if alias() <> "OS"
+    use os index os.ix1
+   else
+    set order to 1
+   endif
+   set filter to log_pm_art
+         
+   sele bericht
+   set order to Index_1
+   go top
+
+   if recno() = 1
+    skip
+   endif
+   
+   local lcCodewort
+   lcCodewort = " a b c d e"
+   
+   scan all for recno() > 1
+    if .not. codewort == lcCodewort
+     seek(codewort,"OS")
+     lcCodewort = os->codewort
+    endif 
+    repl hst with os->ben
+   endscan
+
+   set printer off
+   set device to file (this.Berichtsdatei)  && set printer to... <-> lÑ·t nur 31 zeichen fÅr pfad und dateiname zu
+   
+   @ 1,63 say dmy(date())
+   @ 3,25 say "P R ö F M I T T E L B E S T A N D"
+   @ 4,38 say "* * *"
+   @ 5,((84-len(nutzer.mand_bez))/2) say nutzer.mand_bez
+   @ 6,12 say repl(chr(95),60)
+
+   set order to Index_2
+   go top
+   
+   if recno() = 1
+    skip
+   endif
+   
+   local lcHersteller, lnZeile, lcAnzeige
+   lnZeile = 9
+
+   scan all for recno() > 1
+    if lower(key(1)) == "codewort"
+     @ lnZeile,20 say ltrim(str(lfdnr)) + "x " + rtrim(hst) + " ( " + rtrim(codewort) + " )"
+    else
+     @ lnZeile,20 say rtrim(hst) + " ( " + rtrim(codewort) + " )"
+     lnZeile = lnZeile + 2
+     lcHersteller = hst
+     do while .not. eof() .and. hst == lcHersteller
+      if lower(key(1)) == "codewort+ben"
+       lcAnzeige = ben
+      else
+       lcAnzeige = merkmale
+      endif
+      if empty(lcAnzeige)
+       @ lnZeile,22 say ltrim(str(lfdnr)) + "x Keine Eingabe"
+      else
+       @ lnZeile,22 say ltrim(str(lfdnr)) + "x " + lcAnzeige
+      endif 
+      lnZeile = lnZeile + 1
+      skip
+     enddo
+     skip-1
+    endif
+    lnZeile = lnZeile + 2
+   endscan
+
+   go 1
+   
+   if bes = "Filterausgabe"
+    do AufnFilt.prg with Filter&Formularnummer, lnZeile + 1   && -> archiv_p.prg
+   endif 
+    
+   set device to screen
+
+   
+   use  && lîscht mit nosave in be_list0.wfm angelegte datei einschlie·lich mdx-datei
+   
+   form.ausgabe.datalink = "file " + form.Berichtsdatei
+   
+
+
+ENDCLASS

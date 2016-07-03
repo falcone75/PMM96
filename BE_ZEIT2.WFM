@@ -1,0 +1,25 @@
+*** be_zeit2.wfm
+
+
+parameter Formularnummer
+
+
+** END HEADER -- Diese Zeile nicht l”schen*
+* Erstellt am 15.04.1996
+*
+
+* public  -> be_zeit0.wfm
+Formular&Formularnummer = new ZEITBEDARF_AUSGABE()
+Formular&Formularnummer..open()
+
+CLASS ZEITBEDARF_AUSGABE OF BERICHTSAUSGABE from basis.cfm
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "Zeitbedarf fr die Kalibrierung"
+   this.Text = "Zeitbedarf"
+   
+   this.Berichtsdatei = pcBerichtsdatei   && -> be_zeit0.wfm
+   
+   this.ausgabe.datalink = "file " + this.Berichtsdatei  
+
+
+ENDCLASS

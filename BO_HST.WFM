@@ -1,0 +1,186 @@
+*** bo_hst.wfm
+
+create session
+
+use hst index hst
+
+
+
+** END HEADER -- Diese Zeile nicht lîschen*
+* Erstellt am 16.03.1996
+*
+
+local f
+f = new KATALOG_HST()
+f.ReadModal()
+
+CLASS KATALOG_HST OF KATALOGFORM From "BASIS.CFM"
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "Hersteller"
+   this.Text = "BOSS [ Katalog - Hersteller ]"
+   
+   this.schalter_loeschen.onclick    = class::schalter_loeschen_onclick
+   this.schalter_korrigieren.onclick = class::schalter_korrigieren_onclick
+   this.schalter_hinzufuegen.onclick = class::schalter_hinzufuegen_onclick
+   
+
+   DEFINE TEXT TEXT1 OF THIS;
+       PROPERTY; 
+         Width 9.335,;
+         Text "Hersteller",;
+         Left 12.665,;
+         Top 3.4102,;
+         Height 0.8809
+
+   DEFINE COMBOBOX HST OF THIS;
+       PROPERTY; 
+         Width 35.335,;
+         Style 1,;
+         DropDownHeight 8,;
+         Left 22.665,;
+         DataSource "FIELD hst->hst",;
+         Top 3.1758,;
+         Height 1.1768
+
+   DEFINE TEXT KORREKTUR_TEXT OF THIS;
+       PROPERTY; 
+         Width 20.833,;
+         Text "Korrigierter Hersteller",;
+         Visible .f.,;
+         Left 9.333,;
+         Top 6.7051,;
+         Height 0.9414
+
+   DEFINE ENTRYFIELD KORREKTUR_EINGABE OF THIS;
+       PROPERTY; 
+         Width 30.5,;
+         Left 30.5,;
+         MaxLength 25,;
+         Visible .f.,;
+         Valid class::KORREKTUR_EINGABE_Valid,;
+         ValidRequired .t.,;
+         Top 6.4697,;
+         Height 1.3535
+         
+         
+*************************************************************************         
+         
+
+   Procedure SCHALTER_LOESCHEN_OnClick
+   
+     if .not. empty(form.hst.value)
+      sele hst
+      set order to 1
+      set exact on
+      seek ltrim(form.hst.value)
+      set exact off
+      if .not. found()
+       msgbox("  Fehler: Der Hersteller ist nicht vorhanden.","Achtung",48)
+      else
+       if msgbox('Den Hersteller "' + form.hst.value + '" wirklich lîschen ?',"Hersteller lîschen ?",292) = 6
+        dele
+        form.hst.datasource = "field hst->hst"
+        form.hst.value = ""
+       endif
+      endif
+     endif    
+    
+   
+   
+   Procedure SCHALTER_KORRIGIEREN_OnClick
+   
+     if .not. empty(form.hst.value)
+      sele hst
+      set order to 1
+      set exact on
+      seek ltrim(form.hst.value)
+      set exact off
+      if .not. found()
+       msgbox("Fehler: Der Hersteller ist nicht vorhanden.","Achtung",48)
+      else
+       form.korrektur_text.visible  = .t.
+       form.korrektur_eingabe.value   = form.hst.value
+       form.korrektur_eingabe.visible = .t.
+       form.korrektur_eingabe.setfocus()
+      endif
+     endif
+    
+   
+   
+    Procedure KORREKTUR_EINGABE_Valid
+   
+      do case
+       case empty(this.value)
+        this.value = form.hst.value
+        return .t.
+       case this.value == form.hst.value
+        this.visible = .f.
+        form.korrektur_text.visible = .f.
+        form.hst.setfocus()
+        return .t.
+       otherwise
+        sele hst
+        local lcRettenSatznummer
+        lcRettenSatznummer = recno()
+        set order to 1
+        set exact on
+        seek ltrim(this.value)
+        set exact off
+        if found()
+         this.ValidErrorMsg = " Fehler: Der Hersteller ist schon vorhanden."
+         return .f.
+        else
+         local lnWeiter
+         lnWeiter = msgbox("Soll auch die PrÅfmittelkartei ( alle Mandanten ) korrigiert werden ?","PrÅfmittelkartei korrigieren ?",547)
+         if lnWeiter <> 2  && kein abbruch
+          go lcRettenSatznummer
+          repl hst with ltrim(this.value)
+          if lnWeiter = 6  && ja
+           local lcDatei
+           sele 5
+           if alias() <> "MANDANT"
+            use mandant
+           endif
+           scan all
+            sele 10
+            use (rtrim(mandant))
+            repl all hst with ltrim(this.value) for hst == this.value
+            sele 5
+           endscan    
+           sele 10
+           use
+          endif
+          form.hst.datasource = "field hst->hst"
+          form.hst.value = form.korrektur_eingabe.value
+         endif 
+        endif 
+        form.korrektur_text.visible    = .f.
+        form.korrektur_eingabe.visible = .f.
+        form.hst.setfocus()         
+        return .t.
+      endcase
+      
+     
+    
+    Procedure SCHALTER_HINZUFUEGEN_OnClick
+   
+     if .not. empty(form.hst.value)
+      sele hst
+      set order to 1
+      set exact on
+      seek ltrim(form.hst.value)
+      set exact off
+      if found()
+       msgbox("  Fehler: Der Hersteller ist schon vorhanden.","Achtung",48)
+      else
+       set order to 0
+       append blank
+       repl hst with ltrim(form.hst.value)
+       form.hst.datasource = "FIELD hst->hst"
+       form.hst.value = ""
+      endif
+     endif
+    
+    
+    
+ENDCLASS

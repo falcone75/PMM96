@@ -1,0 +1,728 @@
+*** bo_paszw.wfm
+
+create session
+
+use paszwort index paszwort.ix1, paszwort.ix2
+
+sele 2
+use mandant index mandant
+
+
+
+** END HEADER -- Diese Zeile nicht l”schen*
+* Erstellt am 13.03.1996
+*
+
+local f
+f = new PASZWORTFORM()
+f.ReadModal()
+
+CLASS PASZWORTFORM OF FORM
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "Paáwort"
+   this.Width  = 70.833
+   this.Text   = "BOSS [ Paáw”rter ]"
+   this.mdi    = .f. 
+   this.Left   = 16.166
+   this.Top    = 7
+   this.Height = 11.8818
+
+   DEFINE TEXT TEXT1 OF THIS;
+       PROPERTY; 
+         Width 7.167,;
+         Text "Nutzer",;
+         Left 20.833,;
+         Top 2.1172,;
+         Height 0.8232
+
+   DEFINE COMBOBOX PW_NAME OF THIS;
+       PROPERTY; 
+         Width 20.666,;
+         OnOpen {; this.value=""; this.visible=.t.; this.setfocus()},;
+         Visible .f.,;
+         Style 1,;
+         Left 29,;
+         DataSource "FIELD PASZWORT->NAME",;
+         Top 1.9404,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON SCHALTER_LOESCHEN OF THIS;
+       PROPERTY; 
+         Width 18,;
+         Text "L”schen",;
+         OnClick {; if .not.empty(form.pw_name.value); class::SCHALTER_LOESCHEN_OnClick(); endif},;
+         UpBitmap "RESOURCE #24",;
+         Left 5.5,;
+         Top 5.6465,;
+         Group .T.,;
+         SpeedBar .T.,;
+         Height 1.5293
+
+   DEFINE PUSHBUTTON SCHALTER_BEARBEITEN OF THIS;
+       PROPERTY; 
+         Width 18,;
+         Text "Bearbeiten",;
+         OnClick {; if .not.empty(form.pw_name.value); class::SCHALTER_BEARBEITEN_OnClick(); endif},;
+         UpBitmap "RESOURCE #148",;
+         Left 26.5,;
+         Top 5.5879,;
+         Group .T.,;
+         SpeedBar .T.,;
+         Height 1.5293
+
+   DEFINE PUSHBUTTON SCHALTER_HINZUFUEGEN OF THIS;
+       PROPERTY; 
+         Width 18,;
+         Text "Hinzufgen",;
+         OnClick {; if .not.empty(form.pw_name.value); class::SCHALTER_HINZUFUEGEN_OnClick(); endif},;
+         UpBitmap "RESOURCE #855",;
+         Left 47.5,;
+         Top 5.5293,;
+         Group .T.,;
+         SpeedBar .T.,;
+         Height 1.5293
+
+   DEFINE PUSHBUTTON SCHALTER_SCHLIESZEN OF THIS;
+       PROPERTY; 
+         Width 22.834,;
+         Text "Schlieáen",;
+         OnClick {; form.close()},;
+         UpBitmap "RESOURCE #1005",;
+         Left 24.166,;
+         Top 8.7051,;
+         Group .T.,;
+         SpeedBar .T.,;
+         Height 1.8242
+         
+
+**********************************************************************         
+         
+         
+  Procedure SCHALTER_LOESCHEN_OnClick
+  
+   sele paszwort
+   set order to 2
+   set exact on
+   seek form.pw_name.value
+   set exact off
+   if .not. found()
+    msgbox("   Der Nutzer ist nicht vorhanden.","Hinweis",64)
+   else
+    if msgbox(' Den Nutzer "' + form.pw_name.value + '" wirklich l”schen ?',"Nutzer l”schen ?",292) = 6
+     dele
+     form.pw_name.datasource = "field paszwort->name"
+    endif
+   endif
+         
+
+         
+  Procedure SCHALTER_BEARBEITEN_OnClick
+  
+   sele paszwort
+   set order to 2
+   set exact on
+   seek form.pw_name.value
+   set exact off
+   if .not. found()
+    msgbox("   Der Nutzer ist nicht vorhanden.","Hinweis",64)
+   else
+    local f
+    f = new PW_NEU_EDI("BOSS [ Paáwort bearbeiten ]")
+    f.readmodal()   
+   endif         
+  
+         
+    
+  Procedure SCHALTER_HINZUFUEGEN_OnClick
+  
+   sele paszwort
+   set order to 2
+   set exact on
+   seek form.pw_name.value
+   set exact off
+   if found()
+    msgbox("   Der Nutzer ist schon vorhanden.","Hinweis",64)
+   else
+    sele mandant
+    set order to 0
+    go top
+    local lcMandanten
+    lcMandanten = ""
+    scan all
+     lcMandanten = lcMandanten + "_" + mand_nr
+    endscan
+    sele paszwort
+    append blank
+    repl name with form.pw_name.value, mandanten with lcMandanten, logik with repl("1",17)
+    form.pw_name.datasource = "field paszwort->name"
+    
+    local f
+    f = new PW_NEU_EDI("BOSS [ Paáwort hinzufgen ]")
+    f.readmodal()   
+    
+   endif                
+         
+         
+         
+ENDCLASS
+
+
+
+CLASS PW_NEU_EDI(zweck) OF FORM
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "Paáwort"
+   this.Width = 101.5
+   this.Text = zweck
+   this.mdi = .f. 
+   this.EscExit = .f.
+   this.Left = 1.666
+   this.Top = 3
+   this.Height = 21.1758
+
+   DEFINE TEXT TEXT1 OF THIS;
+       PROPERTY; 
+         Width 6.502,;
+         Text "Nutzer",;
+         Left 21.3311,;
+         Top 0.8223,;
+         Height 0.9395
+
+   DEFINE TEXT NAME OF THIS;
+       PROPERTY; 
+         Width 15.335,;
+         ColorNormal "N/W+",;
+         Text paszwort->name,;
+         Left 28.8311,;
+         Top 0.6465,;
+         Alignment 3,;
+         Height 1.0586
+
+   DEFINE TEXT TEXT2 OF THIS;
+       PROPERTY; 
+         Width 7.835,;
+         Text "Paáwort",;
+         Left 53.3311,;
+         Top 0.8223,;
+         Height 0.8223
+
+   DEFINE ENTRYFIELD PASZWORT OF THIS;
+       PROPERTY; 
+         Width 14.835,;
+         OnOpen class::PASZWORT_OnOpen,;
+         Valid CLASS::PASZWORT_VALID,;
+         ValidRequired .T.,;
+         Left 62.3311,;
+         Value paszwort->paszwort,;
+         Top 0.5879,;
+         Height 1.2354
+
+   DEFINE RECTANGLE RECHTECK1 OF THIS;
+       PROPERTY; 
+         FontItalic .T.,;
+         Width 96.502,;
+         FontSize 10,;
+         ColorNormal "G/BtnFace",;
+         Text " Zugriffsrechte ",;
+         Left 2.1641,;
+         Top 2.3516,;
+         Height 16.585
+
+   DEFINE RECTANGLE RECHTECK2 OF THIS;
+       PROPERTY; 
+         Width 31.502,;
+         ColorNormal "RB/BtnFace",;
+         Text " Prfmittelkarte / Berichte ",;
+         Left 4.8311,;
+         Top 4.0586,;
+         Height 5.7012
+
+   DEFINE RECTANGLE RECHTECK4 OF THIS;
+       PROPERTY; 
+         Width 91.6689,;
+         ColorNormal "RB/BtnFace",;
+         Text " BOSS ",;
+         Left 4.6641,;
+         Top 10.3516,;
+         Height 7.8799
+
+   DEFINE RECTANGLE RECHTECK5 OF THIS;
+       PROPERTY; 
+         Width 56.335,;
+         ColorNormal "RB/BtnFace",;
+         Text " Mandanten ",;
+         Left 39.8311,;
+         Top 3,;
+         Height 6.7637
+
+   DEFINE LISTBOX MANDANTEN OF THIS;
+       PROPERTY; 
+         OnOpen CLASS::MANDANTEN_ONOPEN,;
+         Width 49.335,;
+         ColorHighLight "HighLightText/HighLight",;
+         Left 43.3311,;
+         Enabled .F.,;
+         Top 4.0586,;
+         Multiple .T.,;
+         ID 111,;
+         Height 4.293
+         
+   DEFINE CHECKBOX MANDANT_AENDERN OF THIS;
+       PROPERTY; 
+         Width 28.002,;
+         Text "Mandanten neu festlegen",;
+         Left 55.3311,;
+         Group .T.,;
+         Value .F.,;
+         OnChange CLASS::MANDANT_AENDERN_ONCHANGE,;
+         Top 8.6465,;
+         Height 0.8223      
+
+   DEFINE CHECKBOX LOG_PMK_SUCHEN OF THIS;
+       PROPERTY; 
+         OnOpen {; if substr(paszwort->logik,1,1) = "1"; this.value = .t.; endif},;
+         Width 16.5,;
+         Text "Karte suchen",;
+         OnChange class::LOG_PMK_SUCHEN_OnChange,;
+         Left 9,;
+         Group .T.,;
+         Value .F.,;
+         Top 5.1172,;
+         Height 1.1768
+
+   DEFINE CHECKBOX LOG_PMK_BEARBEITEN OF THIS;
+       PROPERTY; 
+         OnOpen {; if substr(paszwort->logik,2,1) = "1"; this.value = .t.; endif},;
+         Width 19.666,;
+         Text "Karte bearbeiten",;
+         Left 9,;
+         Group .T.,;
+         Value .F.,;
+         Top 6.1172,;
+         Height 1.1768
+
+   DEFINE CHECKBOX LOG_PMK_HINZUFUEGEN OF THIS;
+       PROPERTY; 
+         OnOpen {; if substr(paszwort->logik,3,1) = "1"; this.value = .t.; endif},;
+         Width 22.5,;
+         Text "Neue Karte anlegen",;
+         Left 9,;
+         Group .T.,;
+         Value .F.,;
+         Top 7.1172,;
+         Height 1.1172
+
+   DEFINE CHECKBOX LOG_BERICHTE OF THIS;
+       PROPERTY; 
+         OnOpen {; if substr(paszwort->logik,4,1) = "1"; this.value = .t.; endif},;
+         Width 20.166,;
+         Text "Berichte erstellen",;
+         Left 9,;
+         Group .T.,;
+         Value .F.,;
+         Top 8.1172,;
+         Height 1.1768
+
+   DEFINE RECTANGLE RECHTECK6 OF THIS;
+       PROPERTY; 
+         Width 87.502,;
+         ColorNormal "RG/BtnFace",;
+         Text " Kataloge ",;
+         Left 6.6641,;
+         Top 12.8223,;
+         Height 4.6465
+
+   DEFINE CHECKBOX LOG_PASZWORT OF THIS;
+       PROPERTY; 
+         OnOpen {; if substr(paszwort->logik,5,1) = "1"; this.value = .t.; endif},;
+         Width 13.666,;
+         Text "Paáw”rter",;
+         Left 27.5,;
+         Group .T.,;
+         Value .F.,;
+         Top 11.5996,;
+         Height 0.9395
+
+   DEFINE CHECKBOX LOG_SONDERFUNKTIONEN OF THIS;
+       PROPERTY; 
+         OnOpen {; if substr(paszwort->logik,17,1) = "1"; this.value = .t.; endif},;
+         Width 20.666,;
+         Text "Sonderfunktionen",;
+         Left 54.5,;
+         Group .T.,;
+         Value .F.,;
+         Top 11.5996,;
+         Height 0.9395
+
+   DEFINE CHECKBOX LOG_OS OF THIS;
+       PROPERTY; 
+         OnOpen {; if substr(paszwort->logik,6,1) = "1"; this.value = .t.; endif},;
+         Width 19.666,;
+         Text "Ordnungssystem",;
+         Left 9.5,;
+         Group .T.,;
+         Value .F.,;
+         Top 14,;
+         Height 0.8994
+
+   DEFINE CHECKBOX LOG_ABW OF THIS;
+       PROPERTY; 
+         OnOpen {; if substr(paszwort->logik,10,1) = "1"; this.value = .t.; endif},;
+         Width 22.333,;
+         Text "Zul. Abweichungen",;
+         Left 9.5,;
+         Group .T.,;
+         Value .F.,;
+         Top 15,;
+         Height 0.8994
+
+   DEFINE CHECKBOX LOG_ART OF THIS;
+       PROPERTY; 
+         OnOpen {; if substr(paszwort->logik,13,1) = "1"; this.value = .t.; endif},;
+         Width 21.166,;
+         Text "Art der Bewegung",;
+         Left 9.5,;
+         Group .T.,;
+         Value .F.,;
+         Top 16,;
+         Height 0.8809
+
+   DEFINE CHECKBOX LOG_HST OF THIS;
+       PROPERTY; 
+         OnOpen {; if substr(paszwort->logik,7,1) = "1"; this.value = .t.; endif},;
+         Width 13.166,;
+         Text "Hersteller",;
+         Left 33.5,;
+         Group .T.,;
+         Value .F.,;
+         Top 14,;
+         Height 0.9395
+
+   DEFINE CHECKBOX LOG_STANDORT OF THIS;
+       PROPERTY; 
+         OnOpen {; if substr(paszwort->logik,14,1) = "1"; this.value = .t.; endif},;
+         Width 14.666,;
+         Text "Standorte",;
+         Left 33.5,;
+         Group .T.,;
+         Value .F.,;
+         Top 15,;
+         Height 0.9395
+
+   DEFINE CHECKBOX LOG_MERKMALE OF THIS;
+       PROPERTY; 
+         OnOpen {; if substr(paszwort->logik,9,1) = "1"; this.value = .t.; endif},;
+         Width 13.666,;
+         Text "Merkmale",;
+         Left 33.5,;
+         Group .T.,;
+         Value .F.,;
+         Top 16,;
+         Height 0.9395
+
+   DEFINE CHECKBOX LOG_BES OF THIS;
+       PROPERTY; 
+         OnOpen {; if substr(paszwort->logik,8,1) = "1"; this.value = .t.; endif},;
+         Width 18.166,;
+         Text "Eigentmer",;
+         Left 49.5,;
+         Group .T.,;
+         Value .F.,;
+         Top 14,;
+         Height 0.8809
+
+   DEFINE CHECKBOX LOG_KLASSI OF THIS;
+       PROPERTY; 
+         OnOpen {; if substr(paszwort->logik,12,1) = "1"; this.value = .t.; endif},;
+         Width 18.666,;
+         Text "Klassifikation",;
+         Left 49.5,;
+         Group .T.,;
+         Value .F.,;
+         Top 15,;
+         Height 1
+
+   DEFINE CHECKBOX LOG_KFR OF THIS;
+       PROPERTY; 
+         OnOpen {; if substr(paszwort->logik,11,1) = "1"; this.value = .t.; endif},;
+         Width 19.333,;
+         Text "Prffristen",;
+         Left 49.5,;
+         Group .T.,;
+         Value .F.,;
+         Top 16,;
+         Height 1.0586
+
+   DEFINE CHECKBOX LOG_MUSTER OF THIS;
+       PROPERTY; 
+         OnOpen {; if substr(paszwort->logik,15,1) = "1"; this.value = .t.; endif},;
+         Width 22.334,;
+         Text "Musterprfprotokolle",;
+         Left 68.832,;
+         Group .T.,;
+         Value .F.,;
+         Top 14,;
+         Height 1.1143
+
+   DEFINE CHECKBOX LOG_P_PLAN OF THIS;
+       PROPERTY; 
+         OnOpen {; if substr(paszwort->logik,16,1) = "1"; this.value = .t.; endif},;
+         Width 13.334,;
+         Text "Prfpl„ne",;
+         Left 68.832,;
+         Group .T.,;
+         Value .F.,;
+         Top 15,;
+         Height 0.9404
+
+   DEFINE PUSHBUTTON ABBRUCH_SCHALTER OF THIS;
+       PROPERTY; 
+         OnOpen {; if "hinzufgen" $ form.text; this.enabled = .f.; else; this.enabled = .t.; endif},;
+         Width 16,;
+         Text "Abbruch",;
+         UpBitmap "RESOURCE #28",;
+         DisabledBitmap "RESOURCE #29",;
+         Left 28,;
+         OnClick {; form.close()},;
+         Group .T.,;
+         Top 19.45,;
+         Height 1.35
+
+   DEFINE PUSHBUTTON OK_SCHALTER OF THIS;
+       PROPERTY; 
+         Width 16,;
+         Text "OK",;
+         UpBitmap "RESOURCE #20",;
+         Left 57,;
+         OnClick CLASS::OK_SCHALTER_ONCLICK,;
+         Group .T.,;
+         Top 19.45,;
+         Height 1.35
+         
+
+************************************************************************
+ 
+ 
+   Procedure MANDANTEN_OnOpen
+
+    sele mandant
+    set filter to mand_nr $ paszwort->mandanten
+    go top
+    set order to 1
+    this.datasource = "field mandant->mand_bez"
+    
+
+
+   Procedure PASZWORT_OnOpen
+   
+    privat pcPaszwort
+    pcPaszwort = ""
+    do ManiPW with rtrim(paszwort->paszwort)
+    this.value = pcPaszwort
+    
+    
+    
+   Procedure PASZWORT_Valid
+   
+    if empty(this.value)
+    
+     this.ValidErrorMsg = "  Fehler: Es muá ein Paáwort festgelegt werden."
+     return .f.
+    
+    else   
+        
+     privat pcPaszwort
+     pcPaszwort = ""
+     
+     do ManiPW with this.value
+           
+     sele paszwort
+     set order to 1
+     local lcRettenSatznummer, lcAktuellesPaszwort
+     lcRettenSatznummer  = recno()
+     lcAktuellesPaszwort = paszwort
+     set exact on
+     if seek(pcPaszwort) .and. .not. paszwort == lcAktuellesPaszwort
+      set exact off
+      this.ValidErrorMsg = "  Fehler: Das Paáwort wurde schon vergeben."
+      return .f.
+     else
+      set exact off
+      go lcRettenSatznummer
+      return .t.
+     endif
+    endif 
+    
+    
+
+   Procedure MANDANT_AENDERN_OnChange
+   
+    if glTipsUndTricks .and. this.value
+     msgbox("Mehrere Mandanten k”nnen durch gedrckhalten der Strg-Taste ausgew„hlt werden.","Tips & Tricks",64)
+    endif
+
+    sele paszwort
+    set order to 2
+    seek form.name.text
+   
+    sele mandant
+    set order to 1
+   
+    if this.value
+     set filter to
+     form.mandanten.enabled = .t.
+    else
+     set filter to mand_nr $ paszwort->mandanten   
+     form.mandanten.enabled = .f.
+    endif
+    
+    form.mandanten.datasource = "field mandant->mand_bez"
+
+   
+   
+  Procedure LOG_PMK_SUCHEN_OnChange
+  
+   if this.value
+    form.log_pmk_bearbeiten.enabled  = .t.
+    form.log_pmk_hinzufuegen.enabled = .t.
+   else
+    form.log_pmk_bearbeiten.value  = .f.
+    form.log_pmk_hinzufuegen.value = .f.
+    form.log_pmk_bearbeiten.enabled  = .f.
+    form.log_pmk_hinzufuegen.enabled = .f.
+   endif 
+  
+  
+  
+  Procedure OK_SCHALTER_OnClick
+   
+    sele paszwort
+    set order to 2
+    set exact on
+    seek form.name.text
+    set exact off
+    
+    privat pcPaszwort
+    pcPaszwort = ""
+    
+    do ManiPW with form.paszwort.value
+        
+    repl paszwort with pcPaszwort
+
+    if form.mandant_aendern.value
+     local lcMandanten
+     lcMandanten = ""
+     sele mandant
+     set order to 1
+     set exact on
+     for i=1 to listcount(form.mandanten)
+      if .not. empty(listselected(form.mandanten,i))
+       seek listselected(form.mandanten,i)
+       lcMandanten = lcMandanten + "_" + mand_nr
+      endif      
+     next
+     set exact off
+     if empty(lcMandanten)
+      msgbox("Fehler: Es muá mindestens ein Mandant festgelegt werden.","Achtung",48)
+      form.mandanten.setfocus()
+      return
+     else
+      sele paszwort
+      repl mandanten with lcMandanten
+     endif 
+    endif 
+
+    local lcLogik
+    
+    if form.log_pmk_suchen.value
+     lcLogik = "1"
+    else 
+     lcLogik = "0"
+    endif
+    if form.log_pmk_bearbeiten.value
+     lcLogik = lcLogik + "1"
+    else 
+     lcLogik = lcLogik + "0"
+    endif
+    if form.log_pmk_hinzufuegen.value
+     lcLogik = lcLogik + "1"
+    else 
+     lcLogik = lcLogik + "0"
+    endif
+    if form.log_berichte.value
+     lcLogik = lcLogik + "1"
+    else 
+     lcLogik = lcLogik + "0"
+    endif
+    if form.log_paszwort.value
+     lcLogik = lcLogik + "1"
+    else 
+     lcLogik = lcLogik + "0"
+    endif
+    if form.log_os.value
+     lcLogik = lcLogik + "1"
+    else 
+     lcLogik = lcLogik + "0"
+    endif
+    if form.log_hst.value
+     lcLogik = lcLogik + "1"
+    else 
+     lcLogik = lcLogik + "0"
+    endif
+    if form.log_bes.value
+     lcLogik = lcLogik + "1"
+    else 
+     lcLogik = lcLogik + "0"
+    endif
+    if form.log_merkmale.value
+     lcLogik = lcLogik + "1"
+    else 
+     lcLogik = lcLogik + "0"
+    endif
+    if form.log_abw.value
+     lcLogik = lcLogik + "1"
+    else 
+     lcLogik = lcLogik + "0"
+    endif
+    if form.log_kfr.value
+     lcLogik = lcLogik + "1"
+    else 
+     lcLogik = lcLogik + "0"
+    endif
+    if form.log_klassi.value
+     lcLogik = lcLogik + "1"
+    else 
+     lcLogik = lcLogik + "0"
+    endif
+    if form.log_art.value
+     lcLogik = lcLogik + "1"
+    else 
+     lcLogik = lcLogik + "0"
+    endif
+    if form.log_standort.value
+     lcLogik = lcLogik + "1"
+    else 
+     lcLogik = lcLogik + "0"
+    endif
+    if form.log_muster.value
+     lcLogik = lcLogik + "1"
+    else 
+     lcLogik = lcLogik + "0"
+    endif
+    if form.log_p_plan.value
+     lcLogik = lcLogik + "1"
+    else 
+     lcLogik = lcLogik + "0"
+    endif
+    if form.log_sonderfunktionen.value
+     lcLogik = lcLogik + "1"
+    else 
+     lcLogik = lcLogik + "0"
+    endif
+   
+    repl logik with lcLogik   
+
+    form.close()
+
+    
+   
+ENDCLASS

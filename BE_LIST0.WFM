@@ -1,0 +1,429 @@
+*** be_list0.wfm
+
+parameter liste
+
+create session
+
+sele 100
+use (Nutzer.Mandant) index (Nutzer.Mandant) alias kartei
+
+local lcDateiname
+lcDateiname = funique("$????")
+copy structure to (lcDateiname)
+   
+sele 10
+use (lcDateiname) nosave alias bericht
+append blank
+
+sele 1
+
+
+gnFormularZaehler = gnFormularZaehler + 1
+
+private pcZahl
+pcZahl = ltrim(str(gnFormularZaehler))
+
+
+
+** END HEADER -- Diese Zeile nicht lîschen*
+* Erstellt am 22.04.1996
+*
+
+privat plBerichtErstellen, pcTextTipsUndTricks
+plBerichtErstellen = .f.
+pcTextTipsUndTricks = 'In den Bericht werden  n u r  PrÅfmittel geschrieben, die auch im Einsatz sind ( Art der PrÅfmittelbewegung gleich "Kalibrieren" oder "Eichen" ). Weitere Hilfe mit Taste F1...'
+
+public Formular&pcZahl
+Formular&pcZahl = new LISTE_EINGABE()
+Formular&pcZahl..ReadModal()
+
+if plBerichtErstellen
+ do be_list2.wfm with pcZahl, liste
+endif 
+
+CLASS LISTE_EINGABE OF BERICHTSEINGABE From "BASIS.CFM"
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "FÑlligkeitsliste"
+   this.Text = "Bericht [ " + liste + " ]"
+   
+   form.schalter_bericht.onclick = class::SCHALTER_BERICHT_OnClick
+   form.schalter_abbruch.onclick = {; use in bericht; form.close()}
+
+   DEFINE RECTANGLE RECHTECK1 OF THIS;
+       PROPERTY; 
+         Width 73.835,;
+         Text "  Angaben zum Bericht  ",;
+         Left 3.165,;
+         Top 0.7051,;
+         Height 11.8232
+
+   DEFINE TEXT TEXT1 OF THIS;
+       PROPERTY; 
+         Width 10.6689,;
+         Text "EmpfÑnger",;
+         Left 4.8311,;
+         Top 2.5293,;
+         Height 0.9395
+
+   DEFINE TEXT TEXT2 OF THIS;
+       PROPERTY; 
+         Width 9.335,;
+         Text "Absender",;
+         Left 41.8311,;
+         Top 2.5879,;
+         Height 1.1172
+
+   DEFINE TEXT TEXT3 OF THIS;
+       PROPERTY; 
+         Width 21.667,;
+         Text "Datum der Anlieferung",;
+         Left 20.666,;
+         Top 4.3525,;
+         Height 1.0586
+
+   DEFINE RECTANGLE RECHTECK2 OF THIS;
+       PROPERTY; 
+         Width 65.6689,;
+         Text "  Inhalt des Berichtes  ",;
+         Left 7.3311,;
+         Top 6.293,;
+         Height 5.3516
+
+   DEFINE ENTRYFIELD EMPFAENGER OF THIS;
+       PROPERTY; 
+         Width 24,;
+         Left 15.5,;
+         Value "",;
+         Top 2.4102,;
+         Height 1.1768
+
+   DEFINE ENTRYFIELD ABSENDER OF THIS;
+       PROPERTY; 
+         Width 24,;
+         Left 51.5,;
+         Value "",;
+         Top 2.4102,;
+         Height 1.1768
+
+   DEFINE SPINBOX ANLIEFERUNGSDATUM OF THIS;
+       PROPERTY; 
+         OnOpen CLASS::ANLIEFERUNGSDATUM_ONOPEN,;
+         Width 16.167,;
+         Left 42.666,;
+         Top 4.2344,;
+         Height 1.1768
+
+   DEFINE CHECKBOX KONTROLLFELD1 OF THIS;
+       PROPERTY; 
+         Group .T.,;
+         Width 14.833,;
+         Enabled .F.,;
+         Text "Benennung",;
+         Left 10.833,;
+         Value .T.,;
+         Top 7.4102,;
+         Height 1
+
+   DEFINE CHECKBOX KONTROLLFELD2 OF THIS;
+       PROPERTY; 
+         Group .T.,;
+         Width 19.833,;
+         Enabled .F.,;
+         Text "PrÅfmittelnummer",;
+         Left 10.833,;
+         Value .T.,;
+         Top 8.7051,;
+         Height 1
+
+   DEFINE CHECKBOX KONTROLLFELD3 OF THIS;
+       PROPERTY; 
+         Group .T.,;
+         Width 12.5,;
+         Enabled .F.,;
+         Text "Merkmale",;
+         Left 35,;
+         Value .T.,;
+         Top 7.4102,;
+         Height 1
+
+   DEFINE CHECKBOX LOG_STANDORT OF THIS;
+       PROPERTY; 
+         Group .T.,;
+         Width 12.166,;
+         Text "Standort",;
+         Left 35,;
+         Value .F.,;
+         Top 8.7051,;
+         Height 1
+
+   DEFINE CHECKBOX LOG_DATUM OF THIS;
+       PROPERTY; 
+         Group .T.,;
+         Width 18.833,;
+         Text "FÑlligkeitsdatum",;
+         Left 52,;
+         Value .F.,;
+         Top 7.4102,;
+         Height 1
+
+   DEFINE CHECKBOX LOG_NUMMER OF THIS;
+       PROPERTY; 
+         Group .T.,;
+         Width 17.5,;
+         Text "GerÑtenummer",;
+         Left 52,;
+         Value .F.,;
+         Top 8.7051,;
+         Height 1
+         
+   DEFINE CHECKBOX LOG_STEMPELUNG OF THIS;
+       PROPERTY; 
+         Group .T.,;
+         Width 38.833,;
+         Text "Stempelung auszugebender PrÅfmittel",;
+         Left 10.833,;
+         OnChange class::LOG_STEMPELUNG_OnChange,;
+         Value .F.,;
+         Top 9.9404,;
+         Height 1.1182         
+
+   DEFINE CHECKBOX LOG_FILTER OF THIS;
+       PROPERTY; 
+         Group .T.,;
+         Width 9.333,;
+         Text "Filter",;
+         Left 52,;
+         Value .T.,;
+         Top 9.9404,;
+         Height 1.1182
+
+
+*************************************************************************
+
+
+   Procedure ANLIEFERUNGSDATUM_OnOpen
+   
+    local ldDatum
+    ldDatum = date() + 3
+    
+    do case
+     case cdow(ldDatum) = "Samstag" 
+      ldDatum = ldDatum + 2
+     case cdow(ldDatum) = "Sonntag"
+      ldDatum = ldDatum + 1     
+    endcase
+    
+    this.value = ldDatum
+       
+      
+      
+   Procedure LOG_STEMPELUNG_OnChange 
+     
+    if this.value  
+     local f
+     f = new AbfrageStempelung()
+     f.readmodal()
+    endif
+    
+   
+   
+   Procedure SCHALTER_BERICHT_OnClick
+   
+    plBerichtErstellen = .t.
+   
+    local lcLogik
+    
+    if form.log_standort.value
+     lcLogik = "1"
+    else
+     lcLogik = "0"
+    endif
+    if form.log_datum.value
+     lcLogik = lcLogik + "1"
+    else
+     lcLogik = lcLogik + "0"
+    endif
+    if form.log_nummer.value
+     lcLogik = lcLogik + "1"
+    else 
+     lcLogik = lcLogik + "0"
+    endif
+    if form.log_stempelung.value
+     lcLogik = lcLogik + "1"
+    else 
+     lcLogik = lcLogik + "0"
+    endif
+    if form.log_filter.value
+     lcLogik = lcLogik + "1"
+    else 
+     lcLogik = lcLogik + "0"
+    endif
+   
+    sele bericht
+    go 1
+    
+    repl hst with ltrim(form.empfaenger.value), sonstiges with ltrim(form.absender.value), erst_eins with form.anlieferungsdatum.value, klassi with lcLogik
+
+    poRefFilter = Filter&pcZahl  && ggf. neue zuweisung ( Filter&pcZahl = filter0 ) in filter.wfm
+       
+    if .not. 'pb_art=="eichen"' $ lower(poRefFilter.SuchMakro)
+     if .not. 'pb_art=="kalibrieren".and.' $ lower(poRefFilter.SuchMakro) .AND. .not. '.and.pb_art=="kalibrieren"' $ lower(poRefFilter.SuchMakro)
+      poRefFilter.SuchMakro = '(pb_art=="Eichen".or.pb_art=="Kalibrieren").and.' + poRefFilter.SuchMakro
+      
+      if empty(poRefFilter.Zeile1)  && kein filter eingegeben
+       poRefFilter.Zeile1 = '          PrÅfmittelbewegung (Art) gleich "Eichen" oder "Kalibrieren"'
+      else
+       local lnIndex
+       lnIndex = 2
+       privat pcIndex
+       pcIndex = "2"
+       do while type("poRefFilter.Zeile&pcIndex") <> "U"
+        lnIndex = lnIndex + 1
+        pcIndex = ltrim(str(lnIndex))
+       enddo
+       FilterZeile  = "poRefFilter.Zeile&pcIndex"
+       &FilterZeile = 'UND       PrÅfmittelbewegung (Art) gleich "Eichen" oder "Kalibrieren"'
+      endif
+     endif
+    else
+     if .not. 'pb_art=="eichen".and.' $ lower(poRefFilter.SuchMakro) .AND. .not. '.and.pb_art=="eichen"' $ lower(poRefFilter.SuchMakro)
+      poRefFilter.SuchMakro = 'pb_art=="Eichen".and.' + poRefFilter.SuchMakro
+     endif
+    endif
+    
+    do suchen with form, form.formularnummer, "Gesamtsuche", "SuchArrayNein", "be_list1.prg"
+   
+    form.close()   
+   
+   
+ENDCLASS
+
+
+CLASS AbfrageStempelung OF FORM
+   this.Width = 56.666
+   this.Text = "Stempelung von PrÅfmitteln ..."
+   this.MDI = .F.
+   this.Left = 24
+   this.Top = 11.5
+   this.Height = 12.1758
+
+   DEFINE TEXT TEXT1 OF THIS;
+       PROPERTY; 
+         Width 27.666,;
+         Text "Ausgabedatum der PrÅfmittel",;
+         Left 6.5,;
+         Top 1.3525,;
+         Height 1
+
+   DEFINE SPINBOX DATUM_STEMPELUNG OF THIS;
+       PROPERTY; 
+         OnOpen CLASS::DATUM_STEMPELUNG_ONOPEN,;
+         Width 14.833,;
+         ValidErrorMsg "UngÅltige Eingabe",;
+         Rangemax 100,;
+         Rangemin 1,;
+         Left 34.5,;
+         Value 1,;
+         Top 1.2344,;
+         Height 1.1182
+
+   DEFINE RECTANGLE RECHTECK1 OF THIS;
+       PROPERTY; 
+         Width 45.666,;
+         Text "  Stempelung  ",;
+         Left 5,;
+         Top 3.4111,;
+         Height 4.8232
+
+   DEFINE RADIOBUTTON LOG_TAG OF THIS;
+       PROPERTY; 
+         Group .T.,;
+         Width 7.667,;
+         Text "Tag",;
+         Left 11.166,;
+         Value .T.,;
+         Top 4.5293,;
+         Height 1.2354
+
+   DEFINE RADIOBUTTON LOG_WOCHE OF THIS;
+       PROPERTY; 
+         Group .F.,;
+         Width 10.5,;
+         Text "Woche",;
+         Left 21.833,;
+         Value .F.,;
+         Top 4.4697,;
+         Height 1.3535
+
+   DEFINE RADIOBUTTON LOG_MONAT OF THIS;
+       PROPERTY; 
+         Group .F.,;
+         Width 9.833,;
+         Text "Monat",;
+         Left 35.5,;
+         Value .F.,;
+         Top 4.5293,;
+         Height 1.2354
+         
+   DEFINE CHECKBOX LOG_VIERSTELLIG OF THIS;
+       PROPERTY; 
+         Group .T.,;
+         Width 26.667,;
+         Text "vierstellige Jahreszahl",;
+         Left 15.333,;
+         Value .F.,;
+         Top 6.5293,;
+         Height 0.8818      
+
+   DEFINE PUSHBUTTON OK OF THIS;
+       PROPERTY; 
+         Group .T.,;
+         Width 15.001,;
+         Text "OK",;
+         UpBitmap "RESOURCE #20",;
+         Left 20.832,;
+         OnClick CLASS::OK_ONCLICK,;
+         Top 9.9404,;
+         Height 1.5293
+
+
+   Procedure DATUM_STEMPELUNG_OnOpen
+   
+    local ldDatum
+    ldDatum = date() + 3
+    
+    do case
+     case cdow(ldDatum) = "Samstag" 
+      ldDatum = ldDatum + 2
+     case cdow(ldDatum) = "Sonntag"
+      ldDatum = ldDatum + 1     
+    endcase
+    
+    this.value = ldDatum         
+   
+         
+         
+   Procedure OK_OnClick
+   
+    sele bericht
+    go 1
+    
+    do case
+     case form.log_tag.value
+      repl message with dtoc(form.datum_stempelung.value) + "Tag   "
+     case form.log_woche.value
+      repl message with dtoc(form.datum_stempelung.value) + "Woche "
+     case form.log_monat.value
+      repl message with dtoc(form.datum_stempelung.value) + "Monat " 
+    endcase
+    
+    if form.log_vierstellig.value
+     repl message with rtrim(message) + "vierstellig"
+    endif 
+    
+         
+    form.close()         
+         
+         
+   
+ENDCLASS

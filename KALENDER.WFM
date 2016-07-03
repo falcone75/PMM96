@@ -1,0 +1,583 @@
+*** kalender.wfm
+
+
+
+** END HEADER -- Diese Zeile nicht l”schen*
+* Erstellt am 23.03.1996
+*
+
+local f
+f = new KALENDERFORM()
+f.Open()
+
+CLASS KALENDERFORM OF FORM
+   this.Width = 46.333
+   this.Text = "Kalender"
+   this.Left = 55
+   this.mdi = .f. 
+   this.TopMost = .t.
+   this.Top = 1.5
+   this.Height = 13.7646
+   this.OnOpen = CLASS::FORMULAR_OnOpen
+   
+   DEFINE RECTANGLE RECHTECK1 OF THIS;
+       PROPERTY; 
+         Width 39.166,;
+         Left 3.5,;
+         ColorNormal "RB/W+",;
+         Top 1.1172,;
+         Height 8.8232
+
+   DEFINE TEXT TEXT1 OF THIS;
+       PROPERTY; 
+         Width 6.333,;
+         Text "Monat",;
+         Left 7.8,;
+         Top 11.47,;
+         Height 1
+
+   DEFINE SPINBOX MONAT OF THIS;
+       PROPERTY; 
+         Width 6.667,;
+         Left 14.26,;
+         RangeRequired .T.,;
+         OnChange CLASS::BERECHNUNG,;
+         Rangemax 12,;
+         Rangemin 1,;
+         Top 11.35,;
+         Height 1.1172
+
+   DEFINE TEXT TEXT2 OF THIS;
+       PROPERTY; 
+         Width 4.833,;
+         Text "Jahr",;
+         Left 24.133,;
+         Top 11.47,;
+         Height 0.8828
+
+   DEFINE SPINBOX JAHR OF THIS;
+       PROPERTY; 
+         Width 9.2,;
+         Left 28.8311,;
+         OnChange CLASS::BERECHNUNG,;
+         Top 11.35,;
+         Height 1.1172
+
+   DEFINE TEXT TEXT3 OF THIS;
+       PROPERTY; 
+         Width 3.666,;
+         ColorNormal "R+/W+",;
+         Text "So",;
+         Left 7,;
+         Top 2.5,;
+         Height 1
+
+   DEFINE TEXT TEXT4 OF THIS;
+       PROPERTY; 
+         Width 3,;
+         ColorNormal "RG/W+",;
+         Text "Mo",;
+         Left 12,;
+         Top 2.5,;
+         Height 0.9102
+
+   DEFINE TEXT TEXT5 OF THIS;
+       PROPERTY; 
+         Width 3,;
+         ColorNormal "RG/W+",;
+         Text "Di",;
+         Left 17,;
+         Top 2.5,;
+         Height 0.9688
+
+   DEFINE TEXT TEXT6 OF THIS;
+       PROPERTY; 
+         Width 3.5,;
+         ColorNormal "RG/W+",;
+         Text "Mi",;
+         Left 22,;
+         Top 2.5,;
+         Height 1.0596
+
+   DEFINE TEXT TEXT7 OF THIS;
+       PROPERTY; 
+         Width 3.833,;
+         ColorNormal "RG/W+",;
+         Text "Do",;
+         Left 27,;
+         Top 2.5,;
+         Height 1.2354
+
+   DEFINE TEXT TEXT8 OF THIS;
+       PROPERTY; 
+         Width 4,;
+         ColorNormal "RG/W+",;
+         Text "Fr",;
+         Left 32,;
+         Top 2.5,;
+         Height 1.2354
+         
+   DEFINE TEXT TEXT9 OF THIS;
+       PROPERTY; 
+         Width 3,;
+         ColorNormal "B+/W+",;
+         Text "Sa",;
+         Left 37,;
+         Top 2.5,;
+         Height 1.0596
+   
+
+   DEFINE TEXT POS1 OF THIS;
+       PROPERTY; 
+         Width 2.833,;
+         Text "",;
+         ColorNormal "R/W+",;
+         Left 7,;
+         Top 3.5977,;
+         Height 0.8809
+
+   DEFINE TEXT POS2 OF THIS;
+       PROPERTY; 
+         Width 3,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 12,;
+         Top 3.5977,;
+         Height 1
+
+   DEFINE TEXT POS3 OF THIS;
+       PROPERTY; 
+         Width 2.833,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 17,;
+         Top 3.5977,;
+         Height 0.9395
+
+   DEFINE TEXT POS4 OF THIS;
+       PROPERTY; 
+         Width 3.166,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 22,;
+         Top 3.5977,;
+         Height 0.9395
+
+   DEFINE TEXT POS5 OF THIS;
+       PROPERTY; 
+         Width 3.5,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 27,;
+         Top 3.5977,;
+         Height 0.9395
+
+   DEFINE TEXT POS6 OF THIS;
+       PROPERTY; 
+         Width 3,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 32,;
+         Top 3.5977,;
+         Height 0.8809
+
+   DEFINE TEXT POS7 OF THIS;
+       PROPERTY; 
+         Width 3.5,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 37,;
+         Top 3.5977,;
+         Height 0.8809
+
+   DEFINE TEXT POS8 OF THIS;
+       PROPERTY; 
+         Width 3,;
+         Text "",;
+         ColorNormal "R/W+",;
+         Left 7,;
+         Top 4.5977,;
+         Height 0.9395
+
+   DEFINE TEXT POS9 OF THIS;
+       PROPERTY; 
+         Width 2.833,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 12,;
+         Top 4.5977,;
+         Height 1.0596
+
+   DEFINE TEXT POS10 OF THIS;
+       PROPERTY; 
+         Width 3.333,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 17,;
+         Top 4.5977,;
+         Height 0.9395
+
+   DEFINE TEXT POS11 OF THIS;
+       PROPERTY; 
+         Width 3.333,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 22,;
+         Top 4.5977,;
+         Height 1
+
+   DEFINE TEXT POS12 OF THIS;
+       PROPERTY; 
+         Width 3,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 27,;
+         Top 4.5977,;
+         Height 1
+
+   DEFINE TEXT POS13 OF THIS;
+       PROPERTY; 
+         Width 3,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 32,;
+         Top 4.5977,;
+         Height 0.8809
+
+   DEFINE TEXT POS14 OF THIS;
+       PROPERTY; 
+         Width 3.166,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 37,;
+         Top 4.5977,;
+         Height 1.0586
+
+   DEFINE TEXT POS15 OF THIS;
+       PROPERTY; 
+         Width 2.833,;
+         Text "",;
+         ColorNormal "R/W+",;
+         Left 7,;
+         Top 5.5977,;
+         Height 1.0596
+
+   DEFINE TEXT POS16 OF THIS;
+       PROPERTY; 
+         Width 2.833,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 12,;
+         Top 5.5977,;
+         Height 0.9395
+
+   DEFINE TEXT POS17 OF THIS;
+       PROPERTY; 
+         Width 2.833,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 17,;
+         Top 5.5977,;
+         Height 0.8809
+
+   DEFINE TEXT POS18 OF THIS;
+       PROPERTY; 
+         Width 2.833,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 22,;
+         Top 5.5977,;
+         Height 0.9395
+
+   DEFINE TEXT POS19 OF THIS;
+       PROPERTY; 
+         Width 3,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 27,;
+         Top 5.5977,;
+         Height 0.9395
+
+   DEFINE TEXT POS20 OF THIS;
+       PROPERTY; 
+         Width 3,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 32,;
+         Top 5.5977,;
+         Height 0.9395
+
+   DEFINE TEXT POS21 OF THIS;
+       PROPERTY; 
+         Width 2.833,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 37,;
+         Top 5.5977,;
+         Height 0.9395
+
+   DEFINE TEXT POS22 OF THIS;
+       PROPERTY; 
+         Width 2.833,;
+         Text "",;
+         ColorNormal "R/W+",;
+         Left 7,;
+         Top 6.5977,;
+         Height 0.9395
+
+   DEFINE TEXT POS23 OF THIS;
+       PROPERTY; 
+         Width 3.166,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 12,;
+         Top 6.5977,;
+         Height 1
+
+   DEFINE TEXT POS24 OF THIS;
+       PROPERTY; 
+         Width 3.166,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 17,;
+         Top 6.5977,;
+         Height 1.1172
+
+   DEFINE TEXT POS25 OF THIS;
+       PROPERTY; 
+         Width 3.166,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 22,;
+         Top 6.5977,;
+         Height 0.9395
+
+   DEFINE TEXT POS26 OF THIS;
+       PROPERTY; 
+         Width 4,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 27,;
+         Top 6.5977,;
+         Height 1
+
+   DEFINE TEXT POS27 OF THIS;
+       PROPERTY; 
+         Width 3.333,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 32,;
+         Top 6.5977,;
+         Height 0.9395
+
+   DEFINE TEXT POS28 OF THIS;
+       PROPERTY; 
+         Width 3.666,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 37,;
+         Top 6.5977,;
+         Height 1.1172
+
+   DEFINE TEXT POS29 OF THIS;
+       PROPERTY; 
+         Width 2.833,;
+         Text "",;
+         ColorNormal "R/W+",;
+         Left 7,;
+         Top 7.5977,;
+         Height 0.8809
+
+   DEFINE TEXT POS30 OF THIS;
+       PROPERTY; 
+         Width 2.833,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 12,;
+         Top 7.5977,;
+         Height 0.9395
+
+   DEFINE TEXT POS31 OF THIS;
+       PROPERTY; 
+         Width 3.5,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 17,;
+         Top 7.5977,;
+         Height 0.9395
+
+   DEFINE TEXT POS32 OF THIS;
+       PROPERTY; 
+         Width 3.333,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 22,;
+         Top 7.5996,;
+         Height 0.8809
+
+   DEFINE TEXT POS33 OF THIS;
+       PROPERTY; 
+         Width 3.5,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 27,;
+         Top 7.5996,;
+         Height 1
+
+   DEFINE TEXT POS34 OF THIS;
+       PROPERTY; 
+         Width 4.166,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 32,;
+         Top 7.5996,;
+         Height 1.1172
+
+   DEFINE TEXT POS35 OF THIS;
+       PROPERTY; 
+         Width 3.833,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 37,;
+         Top 7.5996,;
+         Height 1.0586
+
+   DEFINE TEXT POS36 OF THIS;
+       PROPERTY; 
+         Width 3,;
+         Text "",;
+         ColorNormal "R/W+",;
+         Left 7,;
+         Top 8.6,;
+         Height 0.8232
+
+   DEFINE TEXT POS37 OF THIS;
+       PROPERTY; 
+         Width 3.667,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 12,;
+         Top 8.6,;
+         Height 1
+
+   DEFINE TEXT POS38 OF THIS;
+       PROPERTY; 
+         Width 3,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 17,;
+         Top 8.6,;
+         Height 1.0586
+
+   DEFINE TEXT POS39 OF THIS;
+       PROPERTY; 
+         Width 3.333,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 22,;
+         Top 8.6,;
+         Height 1
+
+   DEFINE TEXT POS40 OF THIS;
+       PROPERTY; 
+         Width 3.5,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 27,;
+         Top 8.6,;
+         Height 1.0596
+
+   DEFINE TEXT POS41 OF THIS;
+       PROPERTY; 
+         Width 3.667,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 32,;
+         Top 8.6,;
+         Height 1
+
+   DEFINE TEXT POS42 OF THIS;
+       PROPERTY; 
+         Width 3,;
+         Text "",;
+         ColorNormal "N+/W+",;
+         Left 37,;
+         Top 8.6,;
+         Height 0.9414
+         
+
+*************************************************************************         
+
+
+   Procedure FORMULAR_OnOpen
+   
+    form.monat.value = month(date())
+    form.jahr.keyboard(ltrim(str(year(date()))))
+
+    class::BERECHNUNG()
+    
+    
+
+   Procedure BERECHNUNG
+   
+    privat pcPositionAktuellerTag
+
+    local ldErsterMonatstag, lnStart
+    
+    ldErsterMonatstag = ctod("01."+substr(dtoc(date()),4,3)+right(dtoc(date()),4))
+    form.rechteck1.text = " " + cmonth(ldErsterMonatstag) + " " + str(year(ldErsterMonatstag),4) + " "
+    pcPositionAktuellerTag = ltrim( str( dow(ldErsterMonatstag) + day(date()) - 1 ) )
+    ref = form.pos&pcPositionAktuellerTag
+    ref.colornormal = "N+/W+"
+    
+    ldErsterMonatstag = ctod("01."+ltrim(str(form.monat.value))+"."+ltrim(str(form.jahr.value)))
+
+    form.rechteck1.text = " " + cmonth(ldErsterMonatstag) + " " + str(year(ldErsterMonatstag),4) + " "
+    
+    lnStart =  dow(ldErsterMonatstag)
+
+    do case
+     case cmonth(ldErsterMonatstag) = "Februar"
+      if year(ldErsterMonatstag)/4 = int(year(ldErsterMonatstag)/4)  && schaltjahr
+       lnAnzahlTage = 29
+      else
+       lnAnzahlTage = 28
+      endif
+     case cmonth(ldErsterMonatstag) $ "April Juni September November"
+      lnAnzahlTage = 30
+     otherwise
+      lnAnzahlTage = 31
+    endcase  
+
+    privat pcIndex
+
+    for i=1 to lnStart - 1
+     pcIndex = ltrim(str(i))
+     ref = form.pos&pcIndex
+     ref.text = ""
+    next 
+   
+    for i=28+lnStart to 42   
+     pcIndex = ltrim(str(i))
+     ref = form.pos&pcIndex
+     ref.text = ""
+    next 
+   
+    local lnTag
+    lnTag = 1
+    
+    for i=lnStart to lnStart + lnAnzahlTage - 1
+     pcIndex = ltrim(str(i))
+     ref = form.pos&pcIndex
+     ref.text = str(lnTag,2)
+     lnTag = lnTag + 1
+    next
+
+    if month(ldErsterMonatstag) = month(date()) .and. year(ldErsterMonatstag) = year(date())
+     ref = form.pos&pcPositionAktuellerTag
+     ref.colornormal = "GB+/W+"
+    endif     
+
+   
+ENDCLASS
+

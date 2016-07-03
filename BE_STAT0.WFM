@@ -1,0 +1,112 @@
+*** be_stat0.wfm
+
+create session
+
+sele 100
+use (Nutzer.Mandant) index (Nutzer.Mandant) alias kartei
+
+sele 1
+
+
+gnFormularZaehler = gnFormularZaehler + 1
+
+private pcZahl
+pcZahl = ltrim(str(gnFormularZaehler))
+
+
+
+** END HEADER -- Diese Zeile nicht l”schen*
+* Erstellt am 02.05.1996
+*
+
+privat plBerichtErstellen, pcTextTipsUndTricks
+plBerichtErstellen = .f.
+pcTextTipsUndTricks = ""
+
+public Formular&pcZahl
+Formular&pcZahl = new STATISTIK_EINGABE()
+Formular&pcZahl..ReadModal()
+
+if plBerichtErstellen
+ do be_stat2.wfm with pcZahl
+endif 
+
+CLASS STATISTIK_EINGABE OF BERICHTSEINGABE From "BASIS.CFM"
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "Statistik"
+   this.Width = 80
+   this.Text = "Bericht [ Statistik ]"
+   this.Left = 12
+   this.Top = 6
+   this.Height = 14.4697
+   
+   form.schalter_bericht.onclick = class::SCHALTER_BERICHT_OnClick
+   form.schalter_abbruch.onclick = {; form.close()}
+   
+   
+   REDEFINE PUSHBUTTON SCHALTER_BERICHT OF THIS;
+       PROPERTY; 
+         Left 28,;
+         Group .T.,;
+         Top 9.2344
+
+   REDEFINE PUSHBUTTON SCHALTER_FILTER OF THIS;
+       PROPERTY; 
+         Left 7.5,;
+         Group .T.,;
+         Top 10.2
+
+   REDEFINE PUSHBUTTON SCHALTER_ABBRUCH OF THIS;
+       PROPERTY; 
+         Left 56,;
+         Group .T.,;
+         Top 10.2
+
+   DEFINE RECTANGLE RECHTECK1 OF THIS;
+       PROPERTY; 
+         Width 58.167,;
+         Text "  Angaben zum Bericht  ",;
+         Left 10.833,;
+         Top 2.2939,;
+         Height 3.7061
+
+   DEFINE CHECKBOX LOG_FILTER OF THIS;
+       PROPERTY; 
+         Group .T.,;
+         Width 45.834,;
+         Text "Filter an das Ende des Berichtes schreiben",;
+         Left 18.166,;
+         Value .t.,;
+         Top 3.5293,;
+         Height 1.5879
+
+
+   Procedure SCHALTER_BERICHT_OnClick
+   
+    plBerichtErstellen = .t.
+
+    sele kartei
+   
+    local lcDateiname
+    lcDateiname = funique("$????")
+    copy structure to (lcDateiname)
+   
+    sele 10
+    use (lcDateiname) nosave alias bericht
+    append blank
+
+    if form.log_filter.value
+     repl ben with "Filterausgabe"
+    endif 
+   
+    append blank
+    
+    do suchen with form, form.formularnummer, "Gesamtsuche", "SuchArrayNein", "be_stat1.prg"
+   
+    form.close()   
+   
+   
+ENDCLASS
+
+
+

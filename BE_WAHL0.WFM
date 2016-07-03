@@ -1,0 +1,1365 @@
+*** be_wahl0.wfm
+
+create session
+
+sele 100
+use (Nutzer.Mandant) index (Nutzer.Mandant) alias kartei
+
+sele 1
+
+
+gnFormularZaehler = gnFormularZaehler + 1
+
+private pcZahl, poRefFilter
+pcZahl = ltrim(str(gnFormularZaehler))
+
+public Filter&pcZahl
+Filter&pcZahl = new object() 
+
+poRefFilter = Filter&pcZahl
+
+poRefFilter.KeyString       = ""
+poRefFilter.FilterMakro     = ".t."
+poRefFilter.SuchMakro       = ".t."
+poRefFilter.ErweiterteSuche = .f.
+poRefFilter.Zeile1          = ""
+
+
+public ArraySortierung, ArrayAnzeige
+ArrayAnzeige = new array(1,3)
+ArrayAnzeige.fill("")
+ArraySortierung = new array(1,3)
+ArraySortierung.fill("")
+
+
+
+** END HEADER -- Diese Zeile nicht lîschen*
+* Erstellt am 23.04.1996
+*
+
+privat plBerichtErstellen
+plBerichtErstellen = .f.
+
+public Formular&pcZahl
+Formular&pcZahl = new WAHLFREIE_LISTE_EINGABE()
+Formular&pcZahl..Formularnummer = pcZahl
+Formular&pcZahl..ReadModal()
+
+if plBerichtErstellen
+ do be_wahl2.wfm with pcZahl
+endif
+
+rele ArraySortierung, ArrayAnzeige
+
+CLASS WAHLFREIE_LISTE_EINGABE OF FORM
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "Wahlfreie Liste"
+   this.Width = 97.5
+   this.MDI = .F.
+   this.Text = "Bericht [ Wahlfreie Liste ]"
+   this.Left = 4.166
+   this.Top = 2.5
+   this.Height = 22.2
+   
+   this.OnOpen = {; if glTipsUndTricks; msgbox("Durch Angabe von Buchstaben in alphabetischer Reihenfolge werden Inhalt und Anordnung der Spalten des Berichtes festgelegt. Weitere Hilfe mit Taste F1...","Tips & Tricks",64); endif}
+   
+   
+   DEFINE RECTANGLE RECHTECK1 OF THIS;
+       PROPERTY; 
+         Width 94.333,;
+         ColorNormal "R/BtnFace",;
+         Text "  PrÅfmittelnummer  ",;
+         Left 1.5,;
+         Top 0.4688,;
+         Height 2.7061
+
+   DEFINE TEXT TEXT1 OF THIS;
+       PROPERTY; 
+         Width 11.1689,;
+         Text "Benennung",;
+         Left 6.3311,;
+         Top 1.5293,;
+         Height 1
+
+   DEFINE TEXT TEXT2 OF THIS;
+       PROPERTY; 
+         Width 9.6689,;
+         Text "Codewort",;
+         Left 37.6641,;
+         Top 1.6465,;
+         Height 0.8809
+
+   DEFINE TEXT TEXT3 OF THIS;
+       PROPERTY; 
+         Width 8.502,;
+         Text "Nummer",;
+         Left 68.3311,;
+         Top 1.6465,;
+         Height 1
+
+   DEFINE SPINBOX SORT_BEN OF THIS;
+       PROPERTY; 
+         Rangemin 0,;
+         Rangemax 9,;
+         RangeRequired .t.,;
+         Width 4.5,;
+         OnChange class::EINGABE_OnChange,;
+         Left 18,;
+         Function "Z",;
+         Value 0,;
+         Top 1.4688,;
+         Height 1;
+       CUSTOM;
+         NameLang "Benennung"
+
+   DEFINE COMBOBOX ANZ_BEN OF THIS;
+       PROPERTY; 
+         Width 7.1,;
+         Style 1,;
+         OnChange class::EINGABE_OnChange,;
+         Left 23.6641,;
+         Value "",;
+         DataSource 'ARRAY {" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}',;
+         Top 1.3516,;
+         Height 1.1768;
+       CUSTOM;
+         NameLang "*25Benennung"
+
+   DEFINE SPINBOX SORT_CODEWORT OF THIS;
+       PROPERTY; 
+         Rangemin 0,;
+         RangeRequired .t.,;
+         OnChange class::EINGABE_OnChange,;
+         Width 4.5,;
+         Rangemax 9,;
+         Function "Z",;
+         Left 47.5,;
+         Value 0,;
+         Top 1.5293,;
+         Height 1;
+       CUSTOM;
+         NameLang "Codewort"
+
+   DEFINE COMBOBOX ANZ_CODEWORT OF THIS;
+       PROPERTY; 
+         Width 7.1,;
+         Style 1,;
+         DataSource 'ARRAY {" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}',;
+         Left 53.3311,;
+         OnChange class::EINGABE_OnChange,;
+         Value "",;
+         Top 1.4102,;
+         Height 1.1768;
+       CUSTOM;
+         NameLang "*10Codewort"
+
+   DEFINE SPINBOX SORT_NUMMER OF THIS;
+       PROPERTY; 
+         Rangemin 0,;
+         RangeRequired .t.,;
+         Width 4.5,;
+         Rangemax 9,;
+         OnChange class::EINGABE_OnChange,;
+         Function "Z",;
+         Left 77,;
+         Value 0,;
+         Top 1.5293,;
+         Height 1;
+       CUSTOM;
+         NameLang "Nummer"
+         
+   DEFINE COMBOBOX ANZ_NUMMER OF THIS;
+       PROPERTY; 
+         Width 7.1,;
+         Style 1,;
+         DataSource 'ARRAY {" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}',;
+         Left 82.8311,;
+         OnChange class::EINGABE_OnChange,;
+         Value "",;
+         Top 1.4102,;
+         Height 1.1768;
+       CUSTOM;
+         NameLang "*15Nummer"      
+
+   DEFINE RECTANGLE RECHTECK2 OF THIS;
+       PROPERTY; 
+         Width 94.333,;
+         ColorNormal "G/BtnFace",;
+         Text "  Stammdaten  ",;
+         Left 1.5,;
+         Top 3.4102,;
+         Height 8.6475
+
+   DEFINE TEXT TEXT4 OF THIS;
+       PROPERTY; 
+         Width 9.8359,;
+         Text "Hersteller",;
+         Left 2.6641,;
+         Top 4.4688,;
+         Height 0.8809
+
+   DEFINE TEXT TEXT5 OF THIS;
+       PROPERTY; 
+         Width 13.3359,;
+         Text "Klassifikation",;
+         Left 29.1641,;
+         Top 4.5293,;
+         Height 0.8223
+
+   DEFINE TEXT TEXT6 OF THIS;
+       PROPERTY; 
+         Width 8.002,;
+         Text "PrÅfzeit",;
+         Left 73.6641,;
+         Top 6.0586,;
+         Height 1.0586
+
+   DEFINE TEXT TEXT7 OF THIS;
+       PROPERTY; 
+         Width 9.502,;
+         Text "Merkmale",;
+         Left 2.6641,;
+         Top 6.0586,;
+         Height 0.9395
+
+   DEFINE TEXT TEXT8 OF THIS;
+       PROPERTY; 
+         Width 21.8359,;
+         Text "ZulÑssige Abweichung",;
+         Left 59.1641,;
+         Top 4.4688,;
+         Height 1
+
+   DEFINE TEXT TEXT9 OF THIS;
+       PROPERTY; 
+         Width 11,;
+         Text "EigentÅmer",;
+         Left 25.833,;
+         Top 6.0586,;
+         Height 1
+
+   DEFINE TEXT TEXT10 OF THIS;
+       PROPERTY; 
+         Width 10.3359,;
+         Text "GerÑte-Nr.",;
+         Left 50.1641,;
+         Top 6.0586,;
+         Height 1.0586
+
+   DEFINE TEXT TEXT11 OF THIS;
+       PROPERTY; 
+         Width 11.502,;
+         Text "Ersteinsatz",;
+         Left 6.8311,;
+         Top 7.6465,;
+         Height 0.8809
+
+   DEFINE TEXT TEXT12 OF THIS;
+       PROPERTY; 
+         Width 12,;
+         Text "PrÅffrist",;
+         Left 37.4,;
+         Top 7.5879,;
+         Height 0.9395
+
+   DEFINE TEXT TEXT13 OF THIS;
+       PROPERTY; 
+         Width 10.002,;
+         Text "Sonstiges",;
+         Left 66.8311,;
+         Top 7.6465,;
+         Height 1
+
+   DEFINE RECTANGLE RECHTECK3 OF THIS;
+       PROPERTY; 
+         Width 91.502,;
+         ColorNormal "GB/BtnFace",;
+         Text "  PrÅfmittelbewegung  ",;
+         Left 2.8311,;
+         Top 8.9395,;
+         Height 2.6475
+
+   DEFINE TEXT TEXT14 OF THIS;
+       PROPERTY; 
+         Width 3.002,;
+         Text "Art",;
+         Left 4.3311,;
+         Top 10.0586,;
+         Height 1
+
+   DEFINE TEXT TEXT15 OF THIS;
+       PROPERTY; 
+         Width 6.5,;
+         Text "Datum",;
+         Left 21.5,;
+         Top 10.0586,;
+         Height 0.9395
+
+   DEFINE TEXT TEXT16 OF THIS;
+       PROPERTY; 
+         Width 7.333,;
+         Text "Kosten",;
+         Left 42.5,;
+         Top 10.0586,;
+         Height 0.8809
+
+   DEFINE TEXT TEXT17 OF THIS;
+       PROPERTY; 
+         Width 3.6689,;
+         Text "Ort",;
+         Left 63.3311,;
+         Top 10.0586,;
+         Height 1
+
+   DEFINE TEXT TEXT18 OF THIS;
+       PROPERTY; 
+         Width 5.3359,;
+         Text "Bem.",;
+         Left 80.6641,;
+         Top 10.0586,;
+         Height 0.8809
+
+   DEFINE RECTANGLE RECHTECK4 OF THIS;
+       PROPERTY; 
+         Width 94.002,;
+         ColorNormal "RG/BtnFace",;
+         Text "  Historie / Kosten  ",;
+         Left 1.6641,;
+         Top 12.2344,;
+         Height 5.7061
+
+   DEFINE TEXT TEXT19 OF THIS;
+       PROPERTY; 
+         Width 15.668,;
+         Text "Anzahl EinsÑtze",;
+         Left 3.332,;
+         Top 13.293,;
+         Height 0.9395
+
+   DEFINE TEXT TEXT20 OF THIS;
+       PROPERTY; 
+         Width 19.166,;
+         Text "Anzahl Reparaturen",;
+         Left 34.5,;
+         Top 13.3516,;
+         Height 0.8809
+
+   DEFINE TEXT TEXT21 OF THIS;
+       PROPERTY; 
+         Width 12.166,;
+         Text "Zeitwert [%]",;
+         Left 69.5,;
+         Top 13.3516,;
+         Height 0.9404
+
+   DEFINE TEXT TEXT22 OF THIS;
+       PROPERTY; 
+         Width 8.668,;
+         Text "Neuwert",;
+         Left 5.665,;
+         Top 14.8223,;
+         Height 1.1172
+
+   DEFINE TEXT TEXT23 OF THIS;
+       PROPERTY; 
+         Width 11.166,;
+         Text "PrÅfkosten",;
+         Left 3.5,;
+         Top 16.293,;
+         Height 0.8809
+
+   DEFINE TEXT TEXT24 OF THIS;
+       PROPERTY; 
+         Width 16.166,;
+         Text "Reparaturkosten",;
+         Left 31.5,;
+         Top 16.3516,;
+         Height 1.0586
+
+   DEFINE TEXT TEXT25 OF THIS;
+       PROPERTY; 
+         Width 16.833,;
+         Text "énderungskosten",;
+         Left 64.5,;
+         Top 16.4102,;
+         Height 1
+
+   DEFINE TEXT TEXT26 OF THIS;
+       PROPERTY; 
+         Width 14,;
+         Text "Zeitwert [DM]",;
+         Left 32.166,;
+         Top 14.8232,;
+         Height 0.8818
+
+   DEFINE TEXT TEXT27 OF THIS;
+       PROPERTY; 
+         Width 14.833,;
+         Text "Nutzungsdauer",;
+         Left 64,;
+         Top 14.8809,;
+         Height 1
+
+   DEFINE SPINBOX SORT_HST OF THIS;
+       PROPERTY; 
+         Rangemin 0,;
+         RangeRequired .t.,;
+         Width 4.5,;
+         OnChange class::EINGABE_OnChange,;
+         Rangemax 9,;
+         Function "Z",;
+         Left 12.5,;
+         Value 0,;
+         Top 4.4102,;
+         Height 1;
+       CUSTOM;
+         NameLang "Hersteller"
+
+   DEFINE COMBOBOX ANZ_HST OF THIS;
+       PROPERTY; 
+         Width 7.1,;
+         Style 1,;
+         DataSource 'ARRAY {" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}',;
+         Left 17.8311,;
+         OnChange class::EINGABE_OnChange,;
+         Value "",;
+         Top 4.293,;
+         Height 1.1758;
+       CUSTOM;
+         NameLang "*25Hersteller"
+
+   DEFINE SPINBOX SORT_KLASSI OF THIS;
+       PROPERTY; 
+         Rangemin 0,;
+         RangeRequired .t.,;
+         Width 4.502,;
+         OnChange class::EINGABE_OnChange,;
+         Rangemax 9,;
+         Function "Z",;
+         Left 42.6641,;
+         Value 0,;
+         Top 4.4102,;
+         Height 1;
+       CUSTOM;
+         NameLang "Klassifikation"
+
+   DEFINE COMBOBOX ANZ_KLASSI OF THIS;
+       PROPERTY; 
+         Width 7.1,;
+         Style 1,;
+         DataSource 'ARRAY {" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}',;
+         Left 48,;
+         OnChange class::EINGABE_OnChange,;
+         Value "",;
+         Top 4.293,;
+         Height 1.1758;
+       CUSTOM;
+         NameLang "*14Klassifikation"
+
+   DEFINE SPINBOX SORT_ABW OF THIS;
+       PROPERTY; 
+         Rangemin 0,;
+         RangeRequired .t.,;
+         Width 4.502,;
+         OnChange class::EINGABE_OnChange,;
+         Rangemax 9,;
+         Function "Z",;
+         Left 81.3311,;
+         Value 0,;
+         Top 4.3516,;
+         Height 1;
+       CUSTOM;
+         NameLang "ZulÑssige_Abweichung"
+
+   DEFINE COMBOBOX ANZ_ABW OF THIS;
+       PROPERTY; 
+         Width 7.1,;
+         Style 1,;
+         DataSource 'ARRAY {" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}',;
+         Left 86.8311,;
+         OnChange class::EINGABE_OnChange,;
+         Value "",;
+         Top 4.2344,;
+         Height 1.1768;
+       CUSTOM;
+         NameLang "*20ZulÑssige_Abweichung"
+
+   DEFINE SPINBOX SORT_MERKMALE OF THIS;
+       PROPERTY; 
+         Rangemin 0,;
+         RangeRequired .t.,;
+         Width 4.502,;
+         Rangemax 9,;
+         OnChange class::EINGABE_OnChange,;
+         Function "Z",;
+         Left 12.3311,;
+         Value 0,;
+         Top 6,;
+         Height 1;
+       CUSTOM;
+         NameLang "Merkmale"
+
+   DEFINE COMBOBOX ANZ_MERKMALE OF THIS;
+       PROPERTY; 
+         Width 7.1,;
+         Style 1,;
+         DataSource 'ARRAY {" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}',;
+         Left 17.5,;
+         OnChange class::EINGABE_OnChange,;
+         Value "",;
+         Top 5.9395,;
+         Height 1.1768;
+       CUSTOM;
+         NameLang "*35Merkmale"
+
+   DEFINE SPINBOX SORT_BES OF THIS;
+       PROPERTY; 
+         Rangemin 0,;
+         RangeRequired .t.,;
+         Width 4.5,;
+         Rangemax 9,;
+         OnChange class::EINGABE_OnChange,;
+         Function "Z",;
+         Left 37,;
+         Value 0,;
+         Top 6,;
+         Height 1;
+       CUSTOM;
+         NameLang "EigentÅmer"
+
+   DEFINE COMBOBOX ANZ_BES OF THIS;
+       PROPERTY; 
+         Width 7.1,;
+         Style 1,;
+         DataSource 'ARRAY {" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}',;
+         Left 42.166,;
+         OnChange class::EINGABE_OnChange,;
+         Value "",;
+         Top 5.8809,;
+         Height 1.1768;
+       CUSTOM;
+         NameLang "*15EigentÅmer"
+
+   DEFINE SPINBOX SORT_GERAETE_NR OF THIS;
+       PROPERTY; 
+         Rangemin 0,;
+         RangeRequired .t.,;
+         Width 4.502,;
+         Rangemax 9,;
+         OnChange class::EINGABE_OnChange,;
+         Left 60.3311,;
+         Function "Z",;
+         Value 0,;
+         Top 5.9395,;
+         Height 1;
+       CUSTOM;
+         NameLang "GerÑte-Nr."
+
+   DEFINE COMBOBOX ANZ_GERAETE_NR OF THIS;
+       PROPERTY; 
+         Width 7.1,;
+         Style 1,;
+         DataSource 'ARRAY {" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}',;
+         Left 65.5,;
+         OnChange class::EINGABE_OnChange,;
+         Value "",;
+         Top 5.8223,;
+         Height 1.1768;
+       CUSTOM;
+         NameLang "*15GerÑte-Nr."
+
+   DEFINE SPINBOX SORT_P_ZEIT OF THIS;
+       PROPERTY; 
+         Rangemin 0,;
+         RangeRequired .t.,;
+         Width 4.5,;
+         Rangemax 9,;
+         OnChange class::EINGABE_OnChange,;
+         Function "Z",;
+         Left 81.5,;
+         Value 0,;
+         Top 5.8809,;
+         Height 1;
+       CUSTOM;
+         NameLang "PrÅfzeit"
+
+   DEFINE COMBOBOX ANZ_P_ZEIT OF THIS;
+       PROPERTY; 
+         Width 7.1,;
+         Style 1,;
+         DataSource 'ARRAY {" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}',;
+         Left 86.8311,;
+         OnChange class::EINGABE_OnChange,;
+         Value "",;
+         Top 5.7637,;
+         Height 1.1758;
+       CUSTOM;
+         NameLang "*08PrÅfzeit"
+
+   DEFINE SPINBOX SORT_ERST_EINS OF THIS;
+       PROPERTY; 
+         Rangemin 0,;
+         RangeRequired .t.,;
+         Width 4.5,;
+         OnChange class::EINGABE_OnChange,;
+         Rangemax 9,;
+         Function "Z",;
+         Left 18,;
+         Value 0,;
+         Top 7.5879,;
+         Height 1;
+       CUSTOM;
+         NameLang "Ersteinsatz"
+
+   DEFINE COMBOBOX ANZ_ERST_EINS OF THIS;
+       PROPERTY; 
+         Width 7.1,;
+         Style 1,;
+         DataSource 'ARRAY {" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}',;
+         Left 23.6641,;
+         OnChange class::EINGABE_OnChange,;
+         Value "",;
+         Top 7.4688,;
+         Height 1.1768;
+       CUSTOM;
+         NameLang "*11Ersteinsatz"
+
+   DEFINE SPINBOX SORT_KFR OF THIS;
+       PROPERTY; 
+         Rangemin 0,;
+         RangeRequired .t.,;
+         Width 4.5,;
+         OnChange class::EINGABE_OnChange,;
+         Rangemax 9,;
+         Function "Z",;
+         Left 45.6,;
+         Value 0,;
+         Top 7.5293,;
+         Height 1;
+       CUSTOM;
+         NameLang "PrÅffrist"
+
+   DEFINE COMBOBOX ANZ_KFR OF THIS;
+       PROPERTY; 
+         Width 7.1,;
+         Style 1,;
+         DataSource 'ARRAY {" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}',;
+         Left 51.2641,;
+         OnChange class::EINGABE_OnChange,;
+         Value "",;
+         Top 7.4102,;
+         Height 1.1768;
+       CUSTOM;
+         NameLang "*09PrÅffrist"
+
+   DEFINE SPINBOX SORT_SONSTIGES OF THIS;
+       PROPERTY; 
+         Rangemin 0,;
+         RangeRequired .t.,;
+         Width 4.502,;
+         Rangemax 9,;
+         Function "Z",;
+         OnChange class::EINGABE_OnChange,;
+         Left 76.8311,;
+         Value 0,;
+         Top 7.5293,;
+         Height 1;
+       CUSTOM;
+         NameLang "Sonstiges"
+
+   DEFINE COMBOBOX ANZ_SONSTIGES OF THIS;
+       PROPERTY; 
+         Width 7.1,;
+         Style 1,;
+         DataSource 'ARRAY {" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}',;
+         Left 82.3311,;
+         OnChange class::EINGABE_OnChange,;
+         Value "",;
+         Top 7.4102,;
+         Height 1.1768;
+       CUSTOM;
+         NameLang "*50Sonstiges"
+
+   DEFINE SPINBOX SORT_PB_ART OF THIS;
+       PROPERTY; 
+         Rangemin 0,;
+         RangeRequired .t.,;
+         Width 4.5,;
+         Rangemax 9,;
+         OnChange class::EINGABE_OnChange,;
+         Function "Z",;
+         Left 7.666,;
+         Value 0,;
+         Top 9.9404,;
+         Height 1;
+       CUSTOM;
+         NameLang "Bewegung_(Art)"
+
+   DEFINE COMBOBOX ANZ_PB_ART OF THIS;
+       PROPERTY; 
+         Width 7.1,;
+         Style 1,;
+         DataSource 'ARRAY {" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}',;
+         Left 13,;
+         OnChange class::EINGABE_OnChange,;
+         Value "",;
+         Top 9.8818,;
+         Height 1.1768;
+       CUSTOM;
+         NameLang "*14Bewegung_(Art)"
+
+   DEFINE SPINBOX SORT_PB_DATUM OF THIS;
+       PROPERTY; 
+         Rangemin 0,;
+         RangeRequired .t.,;
+         Width 4.5,;
+         Rangemax 9,;
+         OnChange class::EINGABE_OnChange,;
+         Function "Z",;
+         Left 28.5,;
+         Value 0,;
+         Top 10,;
+         Height 1;
+       CUSTOM;
+         NameLang "Bewegung_(Datum)"
+
+   DEFINE COMBOBOX ANZ_PB_DATUM OF THIS;
+       PROPERTY; 
+         Width 7.1,;
+         Style 1,;
+         DataSource 'ARRAY {" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}',;
+         Left 33.8311,;
+         OnChange class::EINGABE_OnChange,;
+         Value "",;
+         Top 9.8809,;
+         Height 1.1768;
+       CUSTOM;
+         NameLang "*16Bewegung_(Datum)"
+
+   DEFINE SPINBOX SORT_PB_KOST OF THIS;
+       PROPERTY; 
+         Rangemin 0,;
+         RangeRequired .t.,;
+         Width 4.5,;
+         Rangemax 9,;
+         OnChange class::EINGABE_OnChange,;
+         Function "Z",;
+         Left 49.833,;
+         Value 0,;
+         Top 10,;
+         Height 1;
+       CUSTOM;
+         NameLang "Bewegung_(Kosten)"
+
+   DEFINE COMBOBOX ANZ_PB_KOST OF THIS;
+       PROPERTY; 
+         Width 7.1,;
+         Style 1,;
+         DataSource 'ARRAY {" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}',;
+         Left 55,;
+         OnChange class::EINGABE_OnChange,;
+         Value "",;
+         Top 9.8818,;
+         Height 1.1768;
+       CUSTOM;
+         NameLang "*17Bewegung_(Kosten)"
+
+   DEFINE SPINBOX SORT_PB_ORT OF THIS;
+       PROPERTY; 
+         Rangemin 0,;
+         RangeRequired .t.,;
+         Width 4.5,;
+         Rangemax 9,;
+         Function "Z",;
+         OnChange class::EINGABE_OnChange,;
+         Left 66.833,;
+         Value 0,;
+         Top 9.9404,;
+         Height 1;
+       CUSTOM;
+         NameLang "Bewegung_(Standort)"
+
+   DEFINE COMBOBOX ANZ_PB_ORT OF THIS;
+       PROPERTY; 
+         Width 7.1,;
+         Style 1,;
+         DataSource 'ARRAY {" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}',;
+         Left 72,;
+         OnChange class::EINGABE_OnChange,;
+         Value "",;
+         Top 9.8232,;
+         Height 1.1768;
+       CUSTOM;
+         NameLang "*20Bewegung_(Standort)"
+
+   DEFINE COMBOBOX ANZ_PB_BEM OF THIS;
+       PROPERTY; 
+         Width 7.1,;
+         Style 1,;
+         DataSource 'ARRAY {" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}',;
+         Left 86,;
+         OnChange class::EINGABE_OnChange,;
+         Value "",;
+         Top 9.8809,;
+         Height 1.1768;
+       CUSTOM;
+         NameLang "*30Bewegung_(Bemerkung)"
+
+   DEFINE SPINBOX SORT_ANZ_EINS OF THIS;
+       PROPERTY; 
+         Rangemin 0,;
+         RangeRequired .t.,;
+         Width 4.5,;
+         Rangemax 9,;
+         Function "Z",;
+         OnChange class::EINGABE_OnChange,;
+         Left 19,;
+         Value 0,;
+         Top 13.2344,;
+         Height 1;
+       CUSTOM;
+         NameLang "EinsÑtze"
+
+   DEFINE COMBOBOX ANZ_ANZ_EINS OF THIS;
+       PROPERTY; 
+         Width 7.1,;
+         Style 1,;
+         DataSource 'ARRAY {" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}',;
+         Left 24.5,;
+         Value "",;
+         OnChange class::EINGABE_OnChange,;
+         Top 13.1758,;
+         Height 1.1768;
+       CUSTOM;
+         NameLang "*08EinsÑtze"
+
+   DEFINE SPINBOX SORT_ANZ_REP OF THIS;
+       PROPERTY; 
+         Rangemin 0,;
+         RangeRequired .t.,;
+         Width 4.501,;
+         OnChange class::EINGABE_OnChange,;
+         Rangemax 9,;
+         Function "Z",;
+         Left 54.165,;
+         Value 0,;
+         Top 13.293,;
+         Height 1;
+       CUSTOM;
+         NameLang "Reparaturen"
+
+   DEFINE COMBOBOX ANZ_ANZ_REP OF THIS;
+       PROPERTY; 
+         Width 7.1,;
+         Style 1,;
+         DataSource 'ARRAY {" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}',;
+         Left 59.5,;
+         OnChange class::EINGABE_OnChange,;
+         Value "",;
+         Top 13.1758,;
+         Height 1.1768;
+       CUSTOM;
+         NameLang "*11Reparaturen"
+
+   DEFINE SPINBOX SORT_ZW_P OF THIS;
+       PROPERTY; 
+         Rangemin 0,;
+         RangeRequired .t.,;
+         Width 4.5,;
+         Rangemax 9,;
+         OnChange class::EINGABE_OnChange,;
+         Function "Z",;
+         Left 81.5,;
+         Value 0,;
+         Top 13.2344,;
+         Height 1;
+       CUSTOM;
+         NameLang "Zeitwert_[%]"
+
+   DEFINE COMBOBOX ANZ_ZW_P OF THIS;
+       PROPERTY; 
+         Width 7.1,;
+         Style 1,;
+         DataSource 'ARRAY {" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}',;
+         Left 86.832,;
+         OnChange class::EINGABE_OnChange,;
+         Value "",;
+         Top 13.1172,;
+         Height 1.1768;
+       CUSTOM;
+         NameLang "*12Zeitwert_[%]"
+
+   DEFINE SPINBOX SORT_NEUWERT OF THIS;
+       PROPERTY; 
+         Rangemin 0,;
+         RangeRequired .t.,;
+         Width 4.501,;
+         Rangemax 9,;
+         OnChange class::EINGABE_OnChange,;
+         Function "Z",;
+         Left 14.332,;
+         Value 0,;
+         Top 14.7637,;
+         Height 1;
+       CUSTOM;
+         NameLang "Neuwert"
+
+   DEFINE COMBOBOX ANZ_NEUWERT OF THIS;
+       PROPERTY; 
+         Width 7.1,;
+         Style 1,;
+         DataSource 'ARRAY {" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}',;
+         Left 19.832,;
+         OnChange class::EINGABE_OnChange,;
+         Value "",;
+         Top 14.7051,;
+         Height 1.1768;
+       CUSTOM;
+         NameLang "*13Neuwert"
+
+   DEFINE SPINBOX SORT_ZW_DM OF THIS;
+       PROPERTY; 
+         Rangemin 0,;
+         RangeRequired .t.,;
+         Width 4.501,;
+         Rangemax 9,;
+         OnChange class::EINGABE_OnChange,;
+         Function "Z",;
+         Left 45.832,;
+         Value 0,;
+         Top 14.7637,;
+         Height 1;
+       CUSTOM;
+         NameLang "Zeitwert_[DM]"
+
+   DEFINE COMBOBOX ANZ_ZW_DM OF THIS;
+       PROPERTY; 
+         Width 7.1,;
+         Style 1,;
+         DataSource 'ARRAY {" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}',;
+         Left 51.165,;
+         OnChange class::EINGABE_OnChange,;
+         Value "",;
+         Top 14.6465,;
+         Height 1.1768;
+       CUSTOM;
+         NameLang "*13Zeitwert_[DM]"
+
+   DEFINE SPINBOX SORT_ND OF THIS;
+       PROPERTY; 
+         Rangemin 0,;
+         RangeRequired .t.,;
+         Width 4.501,;
+         Rangemax 9,;
+         OnChange class::EINGABE_OnChange,;
+         Function "Z",;
+         Left 78.832,;
+         Value 0,;
+         Top 14.8223,;
+         Height 1;
+       CUSTOM;
+         NameLang "Nutzungsdauer"
+
+   DEFINE COMBOBOX ANZ_ND OF THIS;
+       PROPERTY; 
+         Width 7.1,;
+         Style 1,;
+         DataSource 'ARRAY {" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}',;
+         Left 84,;
+         OnChange class::EINGABE_OnChange,;
+         Value "",;
+         Top 14.7051,;
+         Height 1.1768;
+       CUSTOM;
+         NameLang "*13Nutzungsdauer"
+
+   DEFINE SPINBOX SORT_PRöF_KOST OF THIS;
+       PROPERTY; 
+         Rangemin 0,;
+         RangeRequired .t.,;
+         Width 4.5,;
+         Rangemax 9,;
+         Function "Z",;
+         OnChange class::EINGABE_OnChange,;
+         Left 14.5,;
+         Value 0,;
+         Top 16.293,;
+         Height 1;
+       CUSTOM;
+         NameLang "PrÅfkosten"
+
+   DEFINE COMBOBOX ANZ_PRöF_KOST OF THIS;
+       PROPERTY; 
+         Width 7.1,;
+         Style 1,;
+         DataSource 'ARRAY {" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}',;
+         Left 20.332,;
+         OnChange class::EINGABE_OnChange,;
+         Value "",;
+         Top 16.2344,;
+         Height 1.1768;
+       CUSTOM;
+         NameLang "*13PrÅfkosten"
+
+   DEFINE SPINBOX SORT_REP_KOST OF THIS;
+       PROPERTY; 
+         Rangemin 0,;
+         RangeRequired .t.,;
+         Width 4.5,;
+         Rangemax 9,;
+         Function "Z",;
+         OnChange class::EINGABE_OnChange,;
+         Left 47.833,;
+         Value 0,;
+         Top 16.3516,;
+         Height 1;
+       CUSTOM;
+         NameLang "Reparaturkosten"
+
+   DEFINE COMBOBOX ANZ_REP_KOST OF THIS;
+       PROPERTY; 
+         Width 7.1,;
+         Style 1,;
+         DataSource 'ARRAY {" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}',;
+         Left 53.333,;
+         OnChange class::EINGABE_OnChange,;
+         Value "",;
+         Top 16.2344,;
+         Height 1.1768;
+       CUSTOM;
+         NameLang "*15Reparaturkosten"
+
+   DEFINE SPINBOX SORT_éND_KOST OF THIS;
+       PROPERTY; 
+         Rangemin 0,;
+         RangeRequired .t.,;
+         Width 4.501,;
+         Rangemax 9,;
+         OnChange class::EINGABE_OnChange,;
+         Function "Z",;
+         Left 81.665,;
+         Value 0,;
+         Top 16.3516,;
+         Height 1;
+       CUSTOM;
+         NameLang "énderungskosten"
+
+   DEFINE COMBOBOX ANZ_éND_KOST OF THIS;
+       PROPERTY; 
+         Width 7.1,;
+         Style 1,;
+         DataSource 'ARRAY {" ","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"}',;
+         Left 86.832,;
+         OnChange class::EINGABE_OnChange,;
+         Value "",;
+         Top 16.2344,;
+         Height 1.1768;
+       CUSTOM;
+         NameLang "*15énderungskosten"
+         
+   DEFINE PUSHBUTTON SCHALTER_FILTER OF THIS;
+       PROPERTY; 
+         Width 16,;
+         Text "Filter",;
+         UpBitmap "RESOURCE #858",;
+         Left 14.6592,;
+         OnClick CLASS::SCHALTER_FILTER_ONCLICK,;
+         Group .T.,;
+         Top 19.4,;
+         Height 1.7
+         
+   DEFINE PUSHBUTTON SCHALTER_ABBRUCH OF THIS;
+       PROPERTY; 
+         Width 16,;
+         OnOpen {; this.setfocus()},;
+         Text "Abbruch",;
+         UpBitmap "RESOURCE #28",;
+         Left 65.833,;
+         OnClick {; form.close()},;
+         Group .T.,;
+         Top 19.4,;
+         Height 1.7
+         
+   DEFINE PUSHBUTTON SCHALTER_BERICHT OF THIS;
+       PROPERTY; 
+         Width 23.3369,;
+         Text "Bericht erstellen",;
+         UpBitmap "RESOURCE #308",;
+         Left 36.6631,;
+         OnClick CLASS::SCHALTER_BERICHT_ONCLICK,;
+         Group .T.,;
+         Top 18.5293,;
+         Height 3.5293
+         
+    
+
+**************************************************************************
+
+
+  Procedure SCHALTER_FILTER_OnClick
+
+   if alias(20) <> "OS"
+    do databas
+   endif 
+   do filter.wfm with form.formularnummer
+ 
+
+   
+  Procedure EINGABE_OnChange
+   
+   local lcFeld, lnArrayZeile, lcEingabe, laArray
+   
+   if left(this.name,4) = "SORT"
+    lcEingabe = this.value
+    lcFeld  = upper(right(this.name,len(this.name)-5))
+    laArray = ArraySortierung
+   else
+    lcEingabe = upper(this.value)
+    lcFeld  = upper(right(this.name,len(this.name)-4))
+    laArray = ArrayAnzeige
+   endif 
+
+   lnArrayZeile = 0
+   
+   for i=1 to laArray.size/3
+    if laArray[i,3] == this.NameLang
+     lnArrayZeile = i
+     exit
+    endif
+   next 
+
+   if lnArrayZeile > 0
+    laArray[lnArrayZeile,2] = lcEingabe
+    if empty(lcEingabe)
+     laArray.delete(lnArrayZeile)
+     if laArray.size > 3
+      laArray.resize(laArray.size/3-1)
+     else 
+      laArray.fill("")
+     endif 
+    endif 
+   else
+    if laArray.size > 3 .or. .not. empty(laArray[1,1])
+     laArray.grow(1)
+    endif  
+    lnArrayZeile = laArray.size/3
+    laArray[lnArrayZeile,1] = lcFeld
+    laArray[lnArrayZeile,2] = lcEingabe
+    laArray[lnArrayZeile,3] = this.NameLang
+   endif
+   
+   
+
+  Procedure SCHALTER_BERICHT_OnClick
+
+   if empty(ArrayAnzeige[1,1])
+    msgbox(" Fehler: Die Liste enthÑhlt keine Angaben.","Achtung",48)
+    return
+   endif 
+   
+   
+   local lnASCII_Code, lcAnzeigeListe
+   lnASCII_Code = 65
+   Privat pcFeldListe, pcReplaceMakro
+   store "" to pcReplaceMakro, lcAnzeigeListe
+   pcFeldListe = "not_konv,prot_konv,"
+   
+   ArrayAnzeige.sort(2)
+ 
+   for i=1 to ArrayAnzeige.size/3
+    if asc(ArrayAnzeige[i,2]) <> lnASCII_Code
+     msgbox("Fehler: Die alphabethische Reihenfolge wurde nicht eingehalten.","Achtung",48)
+     return
+    else
+     lcAnzeigeListe = lcAnzeigeListe + ArrayAnzeige[i,3]
+     do case
+      case ArrayAnzeige[i,1] = "NUMMER"
+       pcFeldListe = pcFeldListe + "LFDNR,SPEZINR,"
+       pcReplaceMakro = pcReplaceMakro + "lfdnr with kartei->lfdnr,spezinr with kartei->spezinr,"
+      case ArrayAnzeige[i,1] = "PB_BEM"
+       pcFeldListe = pcFeldListe + "HISTORIE,"
+       pcReplaceMakro = pcReplaceMakro + "historie with kartei->pb_bem,"
+      case ArrayAnzeige[i,1] = "ZW_DM"
+       pcFeldListe = pcFeldListe + "MESSAGE,"
+       pcReplaceMakro = pcReplaceMakro + "message with pcZeitwertDM,"
+      case ArrayAnzeige[i,1] = "ZW_P"
+       pcFeldListe = pcFeldListe + "PB_BEM,"
+       pcReplaceMakro = pcReplaceMakro + "pb_bem with pcZeitwertProzent," 
+      otherwise 
+       pcFeldListe = pcFeldListe + ArrayAnzeige[i,1] + ","
+       pcReplaceMakro = pcReplaceMakro + ArrayAnzeige[i,1] + " with kartei->" + ArrayAnzeige[i,1] + ","
+     endcase
+    endif
+    lnASCII_Code = lnASCII_Code + 1
+   next 
+
+
+   if .not. empty(ArraySortierung[1,1])
+
+    local lnASCII_Code, lcSortierungListe, lnIndexLaenge
+    lnASCII_Code = 49
+    lnIndexLaenge = 0
+    
+    Privat pcIndexMakro
+    store "" to pcIndexMakro, lcSortierungListe
+ 
+    ArraySortierung.sort(2)
+    
+    for i=1 to ArraySortierung.size/3
+    
+     if asc(str(ArraySortierung[i,2],1)) <> lnASCII_Code
+    
+      msgbox("Fehler: Die numerische Reihenfolge wurde nicht eingehalten.","Achtung",48)
+      return
+      
+     else 
+
+      lcSortierungListe = lcSortierungListe + ArraySortierung[i,3] + " + "
+      
+      do case
+       case ArraySortierung[i,1] = "BEN"
+        pcIndexMakro = pcIndexMakro + ArraySortierung[i,1] + "+"
+        lnIndexLaenge = lnIndexLaenge + 25
+       case ArraySortierung[i,1] = "CODEWORT"
+        pcIndexMakro = pcIndexMakro + ArraySortierung[i,1] + "+"
+        lnIndexLaenge = lnIndexLaenge + 10
+       case ArraySortierung[i,1] = "NUMMER"
+        pcIndexMakro = pcIndexMakro + "str(lfdnr,5)+spezinr+"
+        lnIndexLaenge = lnIndexLaenge + 20
+       case ArraySortierung[i,1] = "HST"
+        pcIndexMakro = pcIndexMakro + ArraySortierung[i,1] + "+"
+        lnIndexLaenge = lnIndexLaenge + 25 
+       case ArraySortierung[i,1] = "KLASSI"
+        pcIndexMakro = pcIndexMakro + ArraySortierung[i,1] + "+"
+        lnIndexLaenge = lnIndexLaenge + 10
+       case ArraySortierung[i,1] = "P_ZEIT" 
+        pcIndexMakro = pcIndexMakro + "str(p_zeit,3)+"
+        lnIndexLaenge = lnIndexLaenge + 3 
+       case ArraySortierung[i,1] = "ABW"
+        pcIndexMakro = pcIndexMakro + ArraySortierung[i,1] + "+"
+        lnIndexLaenge = lnIndexLaenge + 20
+       case ArraySortierung[i,1] = "MERKMALE"
+        pcIndexMakro = pcIndexMakro + ArraySortierung[i,1] + "+"
+        lnIndexLaenge = lnIndexLaenge + 35
+       case ArraySortierung[i,1] = "BES"
+        pcIndexMakro = pcIndexMakro + ArraySortierung[i,1] + "+"
+        lnIndexLaenge = lnIndexLaenge + 15
+       case ArraySortierung[i,1] = "GERAETE_NR"
+        pcIndexMakro = pcIndexMakro + ArraySortierung[i,1] + "+"
+        lnIndexLaenge = lnIndexLaenge + 15
+       case ArraySortierung[i,1] = "SONSTIGES"
+        pcIndexMakro = pcIndexMakro + ArraySortierung[i,1] + "+"
+        lnIndexLaenge = lnIndexLaenge + 50
+       case ArraySortierung[i,1] = "ERST_EINS" 
+        pcIndexMakro = pcIndexMakro + "dtoc(erst_eins)+"
+        lnIndexLaenge = lnIndexLaenge + 10
+       case ArraySortierung[i,1] = "KFR" 
+        pcIndexMakro = pcIndexMakro + "str(kfr,4)+"
+        lnIndexLaenge = lnIndexLaenge + 4
+       case ArraySortierung[i,1] = "PB_ART"
+        pcIndexMakro = pcIndexMakro + ArraySortierung[i,1] + "+"
+        lnIndexLaenge = lnIndexLaenge + 12
+       case ArraySortierung[i,1] = "PB_DATUM" 
+        pcIndexMakro = pcIndexMakro + "dtoc(pb_datum)+"
+        lnIndexLaenge = lnIndexLaenge + 10
+       case ArraySortierung[i,1] = "PB_KOST" 
+        pcIndexMakro = pcIndexMakro + "str(pb_kost,8,2)+"
+        lnIndexLaenge = lnIndexLaenge + 8
+       case ArraySortierung[i,1] = "PB_ORT"
+        pcIndexMakro = pcIndexMakro + ArraySortierung[i,1] + "+"
+        lnIndexLaenge = lnIndexLaenge + 20 
+       case ArraySortierung[i,1] = "ANZ_EINS" 
+        pcIndexMakro = pcIndexMakro + "str(anz_eins,4)+" 
+        lnIndexLaenge = lnIndexLaenge + 4
+       case ArraySortierung[i,1] = "ANZ_REP" 
+        pcIndexMakro = pcIndexMakro + "str(anz_rep,3)+" 
+        lnIndexLaenge = lnIndexLaenge + 3
+       case ArraySortierung[i,1] = "NEUWERT" 
+        pcIndexMakro = pcIndexMakro + "str(neuwert,10,2)+"  
+        lnIndexLaenge = lnIndexLaenge + 10
+       case ArraySortierung[i,1] = "ND" 
+        pcIndexMakro = pcIndexMakro + "str(nd,2)+"  
+        lnIndexLaenge = lnIndexLaenge + 2
+       case ArraySortierung[i,1] = "PRöF_KOST" 
+        pcIndexMakro = pcIndexMakro + "str(prÅf_kost,10,2)+" 
+        lnIndexLaenge = lnIndexLaenge + 10
+       case ArraySortierung[i,1] = "REP_KOST" 
+        pcIndexMakro = pcIndexMakro + "str(rep_kost,10,2)+" 
+        lnIndexLaenge = lnIndexLaenge + 10
+       case ArraySortierung[i,1] = "éND_KOST" 
+        pcIndexMakro = pcIndexMakro + "str(Ñnd_kost,10,2)+"
+        lnIndexLaenge = lnIndexLaenge + 10
+       case ArraySortierung[i,1] = "ZW_DM"
+        pcIndexMakro = pcIndexMakro + "rtrim(message)+"
+        lnIndexLaenge = lnIndexLaenge + 10
+       case ArraySortierung[i,1] = "ZW_P"
+        pcIndexMakro = pcIndexMakro + "rtrim(pb_bem)+"
+        lnIndexLaenge = lnIndexLaenge + 5
+      endcase
+      
+      do case
+       case ArraySortierung[i,1] = "NUMMER"
+        if .not. "LFDNR," $ pcFeldListe
+         pcFeldListe = pcFeldListe + "LFDNR,SPEZINR,"
+        endif
+       case ArraySortierung[i,1] = "ZW_DM"
+        if .not. "MESSAGE," $ pcFeldListe
+         pcFeldListe = pcFeldListe + "MESSAGE,"
+         pcReplaceMakro = pcReplaceMakro + "message with pcZeitwertDM,"
+        endif
+       case ArraySortierung[i,1] = "ZW_P"
+        if .not. "PB_BEM," $ pcFeldListe
+         pcFeldListe = pcFeldListe + "PB_BEM,"
+         pcReplaceMakro = pcReplaceMakro + "pb_bem with pcZeitwertProzent,"  
+        endif 
+       otherwise 
+        if .not. ArraySortierung[i,1] $ pcFeldListe
+         pcFeldListe = pcFeldListe + ArraySortierung[i,1] + ","
+         pcReplaceMakro = pcReplaceMakro + ArraySortierung[i,1] + " with kartei->" + ArraySortierung[i,1] + ","
+        endif
+      endcase
+      
+     endif
+
+     lnASCII_Code = lnASCII_Code + 1
+     
+    next
+
+    if lnIndexLaenge > 99
+     msgbox("   Fehler : Zu viele Sortierfelder.","Achtung",48)
+     return
+    else 
+     pcIndexMakro = left(pcIndexMakro,len(pcIndexMakro)-1)
+    endif
+
+   endif
+
+
+   pcFeldListe = left(pcFeldListe,len(pcFeldListe)-1)
+   
+   pcReplaceMakro = left(pcReplaceMakro,len(pcReplaceMakro)-1)
+  
+   sele kartei
+   privat pcDateiname
+   pcDateiname = funique("$????")
+   copy structure to (pcDateiname)  fields &pcFeldListe
+   
+   sele 10
+   use (pcDateiname) nosave alias bericht
+   append blank
+   repl prot_konv with lcAnzeigeListe
+   
+   if .not. empty(ArraySortierung[1,1])
+    repl not_konv with lcSortierungListe
+    index on  &pcIndexMakro  to  (pcDateiname)
+    set order to 0
+   endif
+
+   do suchen with form, form.formularnummer, "Gesamtsuche", "SuchArrayNein", "be_wahl1.prg"
+   
+   plBerichtErstellen = .t.
+   
+   form.close()   
+
+
+ENDCLASS

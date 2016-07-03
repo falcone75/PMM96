@@ -1,0 +1,1858 @@
+*** pmk_neu.wfm
+
+** bei ABBRUCH wird der mit append blank angehÑngte datensatz mit DELE ge-
+*  lîscht <-> PACK wegen erforderlichen exclusiv-modus nicht mîglich
+
+** ACHTUNG : Valid-Methoden bei NUMMER, ERST_EINS, PB_DATUM wurden on OnChange-Methoden umgewandelt ( da valid nicht zuverlÑssig <-> gibt trotz false focus frei bei wechsel nach combobox )
+*            siehe u.a. auch procedure ok_onclick  und  pb_edi.wfm
+
+** korrekte Åbergabe der formularnummer :
+* formularnummer wird fÅr rÅckkehr zum aufrufenden formular
+parameter pcNummer
+privat pcAufrufendeSuchformularNummer
+pcAufrufendeSuchformularNummer = pcNummer
+rele pcNummer
+
+
+gnFormularZaehler = gnFormularZaehler + 1
+
+private pcZahl
+pcZahl = ltrim(str(gnFormularZaehler))
+
+
+if val(pcAufrufendeSuchformularNummer) > 0  && null, wenn noch keine karte angelegt -> pmk_su.wfm
+ privat plAbbruchAbfrage, pnAktuelleSatznummer
+ plAbbruchAbfrage = .f.
+ pnAktuelleSatznummer = recno("kartei")  && notwendig bei abbruch
+ 
+ local f
+ f = new ABFRAGEFENSTER()
+ f.readmodal()
+ 
+ if plAbbruchAbfrage
+  return
+ else
+  rele plAbbruchAbfrage
+  Formular&pcAufrufendeSuchformularNummer..close()
+ endif
+else
+ sele kartei
+ set order to 0
+ append blank
+ repl ben with "?", codewort with "?", pb_art with "?"
+endif
+
+** END HEADER -- Diese Zeile nicht lîschen*
+* Erstellt am 07.03.96
+*
+
+public Formular&pcZahl
+Formular&pcZahl = new PMK_NEUFORM()
+Formular&pcZahl..Open()  && formular nach beenden wieder lîschen
+
+if glTipsUndTricks
+ msgbox("Eine neue PrÅfmittelkarte kann nur gespeichert werden, wenn zumindest das Codewort, die Nummer sowie Art und Datum der PrÅfmittelbewegung eingetragen sind. Neuwert und Nutzungsdauer kînnen nur beim Anlegen einer neuen Karte eingegeben werden. Weitere Hilfe mit F1-Taste...","Tips & Tricks",64)
+endif
+
+
+CLASS PMK_NEUFORM OF KARTE From "BASIS.CFM"
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "Neue PrÅfmittelkarte anlegen"
+
+   this.OnOpen  = class::FORMULAR_OnOpen
+   this.OnClose = class::FORMULAR_OnClose
+
+   if val(pcAufrufendeSuchformularNummer) = 0
+    this.text = "Neue PrÅfmittelkarte anlegen"
+   else
+    if "[" $ Formular&pcAufrufendeSuchformularNummer..text
+     local lcFormulartext
+     lcFormulartext = Formular&pcAufrufendeSuchformularNummer..text
+     this.text = "Neue PrÅfmittelkarte anlegen" + right(lcFormulartext,len(lcFormulartext)-22)
+    else
+     this.text = "Neue PrÅfmittelkarte anlegen"
+    endif
+    this.AktuelleSatznummer = pnAktuelleSatznummer 
+   endif
+   
+   this.name = "PMK_NEU"
+   
+   this.formularnummer = pcZahl
+   this.AufrufendeSuchformularNummer = pcAufrufendeSuchformularNummer
+   
+   this.schalter_filteranzeige.enabled = .f.
+   
+   this.schalter_ausgabe.onclick = {;form.print()}
+
+   this.schalter_ok.speedtip = "Neue Karte speichern"
+   this.schalter_ok.onclick  = class::Schalter_OK_OnClick
+   
+   this.schalter_abbruch.enabled  = .t.
+   this.schalter_abbruch.speedtip = "Neue Karte verwerfen"
+   this.schalter_abbruch.onclick  = class::Schalter_ABBRUCH_OnClick
+
+   
+   DEFINE TABBOX REGISTER1 OF THIS;
+       PROPERTY; 
+         Width 103.8311,;
+         ColorHighLight "BtnText/BtnFace",;
+         OnSelChange CLASS::REGISTER1_ONSELCHANGE,;
+         ColorNormal "BtnFace",;
+         DataSource 'ARRAY {"Stammdaten","Kosten","Notizen","PrÅfprotokoll","PrÅfplan","Message"}',;
+         Top 21.2939,;
+         Height 1
+         
+   DEFINE RECTANGLE RECHTECK2 OF THIS;
+       PROPERTY; 
+         Width 103.0674,;
+         FontSize 10,;
+         ColorNormal "0x400080/W",;
+         Text "  PrÅfmittel  ",;
+         Left 0.2656,;
+         Top 2.0195,;
+         PageNo 0,;
+         FontItalic .T.,;
+         Height 3.2793
+
+   DEFINE RECTANGLE RECHTECK3 OF THIS;
+       PROPERTY; 
+         Width 100.666,;
+         FontSize 10,;
+         ColorNormal "G/BtnFace",;
+         Text "  Stammdaten  ",;
+         Left 1.5,;
+         Top 5.7051,;
+         FontItalic .T.,;
+         Height 14.9414
+
+   DEFINE RECTANGLE RECHTECK4 OF THIS;
+       PROPERTY; 
+         Width 96.6689,;
+         ColorNormal "GB/BtnFace",;
+         Text "  PrÅfmittelbewegung  ",;
+         Left 3.3311,;
+         Top 15.1758,;
+         FontItalic .T.,;
+         Height 4.8242
+         
+   DEFINE RECTANGLE RECHTECK5 OF THIS;
+       PROPERTY; 
+         Width 90.333,;
+         Left 6.5,;
+         BorderStyle 1,;
+         Top 8.8818,;
+         PageNo 6,;
+         Height 8.7061            
+
+   DEFINE RECTANGLE RECHTECK6 OF THIS;
+       PROPERTY; 
+         Width 89.5,;
+         Text "",;
+         Left 6.666,;
+         BorderStyle 1,;
+         Top 8.5879,;
+         PageNo 2,;
+         Height 9.2939
+
+   DEFINE RECTANGLE RECHTECK_KOSTEN OF THIS;
+       PROPERTY; 
+         Width 75.667,;
+         ColorNormal "GB+/BtnFace",;
+         Text "  Kosten  ",;
+         Left 13.333,;
+         Top 10.2939,;
+         PageNo 2,;
+         FontSize 10,;
+         FontItalic .T.,;
+         Height 4.1172
+         
+    DEFINE RECTANGLE RECHTECK_NOTIZEN OF THIS;
+       PROPERTY; 
+         Width 95.5,;
+         FontSize 10,;
+         ColorNormal "RG+/BtnFace",;
+         Text "",;
+         Left 4,;
+         Top 5.8799,;
+         PageNo 3,;
+         FontItalic .T.,;
+         Height 14.5293
+
+   DEFINE RECTANGLE RECHTECK_PROTOKOLL OF THIS;
+       PROPERTY; 
+         Width 95.5,;
+         FontSize 10,;
+         ColorNormal "B+/BtnFace",;
+         Text "",;
+         Left 4,;
+         Top 5.8799,;
+         PageNo 4,;
+         Height 14.5293
+         
+   DEFINE RECTANGLE RECHTECK_PRUEFPLAN OF THIS;
+       PROPERTY; 
+         Width 95.5,;
+         FontSize 10,;
+         ColorNormal "0x408000/BtnFace",;
+         Text "  PrÅfplan  ",;
+         Left 4,;
+         Top 5.8799,;
+         PageNo 5,;
+         FontItalic .T.,;
+         Height 14.5293
+         
+   DEFINE RECTANGLE RECHTECK_MESSAGE OF THIS;
+       PROPERTY; 
+         Width 76.5,;
+         FontSize 10,;
+         ColorNormal "R+/BtnFace",;
+         Text "  Message  ",;
+         Left 13.166,;
+         Top 11,;
+         PageNo 6,;
+         FontItalic .T.,;
+         Height 4.0586
+         
+         
+   DEFINE TEXT TEXT_BEN OF THIS;
+       PROPERTY; 
+         Width 11.001,;
+         Text "Benennung",;
+         Left 5.332,;
+         Top 3.3498,;
+         Left 1.83,;
+         PageNo 0,;
+         Height 0.8809
+
+   DEFINE TEXT TEXT_CODEWORT OF THIS;
+       PROPERTY; 
+         Width 9.5332,;
+         Text "Codewort",;
+         Left 49.16,;
+         Top 3.3498,;
+         PageNo 0,;
+         Height 0.9395
+
+   DEFINE TEXT TEXT_NUMMER OF THIS;
+       PROPERTY; 
+         Width 8.1338,;
+         Text "Nummer",;
+         Left 83.1,;
+         Top 3.3498,;
+         PageNo 0,;
+         Height 0.8809
+
+   DEFINE TEXT TEXT_HST OF THIS;
+       PROPERTY; 
+         Width 9.5,;
+         Text "Hersteller",;
+         Left 3.166,;
+         Top 7.4111,;
+         Height 1
+  
+   DEFINE TEXT TEXT_KLASSI OF THIS;
+       PROPERTY; 
+         Width 13,;
+         Text "Klassifikation",;
+         Left 50,;
+         Top 7.4111,;
+         Height 0.8232
+
+   DEFINE TEXT TEXT_P_ZEIT OF THIS;
+       PROPERTY; 
+         Width 8.5,;
+         Text " PrÅfzeit ",;
+         Left 83.666,;
+         Top 7.4111,;
+         Height 0.9414
+
+   DEFINE TEXT TEXT_MERKMALE OF THIS;
+       PROPERTY; 
+         Width 10.167,;
+         Text "Merkmale",;
+         Left 3.666,;
+         Top 9.3525,;
+         Height 0.9414
+
+   DEFINE TEXT TEXT_ABW OF THIS;
+       PROPERTY; 
+         Width 9.833,;
+         Text "Zul. Abw.",;
+         Left 61,;
+         Top 9.3525,;
+         Height 0.8232
+
+   DEFINE TEXT TEXT_BES OF THIS;
+       PROPERTY; 
+         Width 11,;
+         Text "EigentÅmer",;
+         Left 4.17,;
+         Top 11.3525,;
+         Height 0.9414
+
+   DEFINE TEXT TEXT_GERAETE_NR OF THIS;
+       PROPERTY; 
+         Width 10.333,;
+         Text "GerÑte-Nr.",;
+         Left 41.67,;
+         Top 11.3525,;
+         Height 1.0586
+
+   DEFINE TEXT TEXT_ERST_EINS OF THIS;
+       PROPERTY; 
+         Width 10.666,;
+         Text "Ersteinsatz",;
+         Left 73.5,;
+         Top 11.3525,;
+         Height 0.9414
+
+   DEFINE TEXT TEXT_KFR OF THIS;
+       PROPERTY; 
+         Width 15,;
+         Text "PrÅffrist [Tage]",;
+         Left 3.466,;
+         Top 13.3525,;
+         Height 0.9414
+
+   DEFINE TEXT TEXT_SONSTIGES OF THIS;
+       PROPERTY; 
+         Width 9.667,;
+         Text "Sonstiges",;
+         Left 30.633,;
+         Top 13.3525,;
+         Height 1.0586
+
+   DEFINE TEXT TEXT_ART OF THIS;
+       PROPERTY; 
+         Width 3.166,;
+         Text "Art",;
+         Left 14.5,;
+         Top 16.6465,;
+         Height 0.9414
+
+   DEFINE TEXT TEXT_PB_DATUM OF THIS;
+       PROPERTY; 
+         Width 6.666,;
+         Text "Datum",;
+         Left 41.5,;
+         Top 16.6465,;
+         Height 0.9414
+
+   DEFINE TEXT TEXT_PB_KOST OF THIS;
+       PROPERTY; 
+         Width 12.166,;
+         Text "Kosten [DM]",;
+         Left 67.5,;
+         Top 16.6465,;
+         Height 1
+
+   DEFINE TEXT TEXT_PB_ORT OF THIS;
+       PROPERTY; 
+         Width 8.5,;
+         Text "Standort",;
+         Left 5.333,;
+         Top 18.4111,;
+         Height 0.8828
+
+   DEFINE TEXT TEXT_PB_BEM OF THIS;
+       PROPERTY; 
+         Width 11.166,;
+         Text "Bemerkung",;
+         Left 43.5,;
+         Top 18.4111,;
+         Height 1      
+
+   DEFINE TEXT TEXT19 OF THIS;
+       PROPERTY; 
+         Width 13.667,;
+         Text "Neuwert [DM]",;
+         Left 19.666,;
+         Top 12.1172,;
+         PageNo 2,;
+         Height 1.0586
+
+   DEFINE TEXT TEXT20 OF THIS;
+       PROPERTY; 
+         Width 22.667,;
+         Text "Nutzungsdauer [Jahre]",;
+         Left 53.333,;
+         Top 12.1172,;
+         PageNo 2,;
+         Height 0.9414
+
+   DEFINE TEXT TEXT21 OF THIS;
+       PROPERTY; 
+         Width 77,;
+         ColorNormal "RG/BtnFace",;
+         Text "Diese Angaben kînnen nur beim Anlegen einer neuen Karte eingegeben werden.",;
+         Left 13.166,;
+         Top 15.4111,;
+         PageNo 2,;
+         Height 0.9414
+         
+         
+   DEFINE COMBOBOX BEN OF THIS;
+       PROPERTY; 
+         OnOpen CLASS::BEN_ONOPEN,;
+         Width 33.666,;
+         Visible .F.,;
+         DropDownHeight 8,;
+         Left 13.33,;
+         OnChange CLASS::BEN_ONCHANGE,;
+         Style 1,;
+         Top 3.1691,;
+         FontName "Arial",;
+         PageNo 0,;
+         Height 1.2354
+         
+   DEFINE ENTRYFIELD NUMMER OF THIS;
+       PROPERTY;
+         Width 10.8,;
+         Value "",;
+         ValidRequired .t.,;
+         OnChange Class::NUMMER_Valid,;
+         Left 91.3,;
+         Function "B",;
+         Top 3.1691,;
+         PageNo 0,;
+         Height 1.2354
+         
+   DEFINE COMBOBOX CODEWORT OF THIS;
+       PROPERTY; 
+         OnOpen CLASS::CODEWORT_ONOPEN,;
+         Width 22.1709,;
+         Visible .F.,;
+         Left 58.8291,;
+         DropDownHeight 13,;
+         Style 1,;
+         Top 3.1691,;
+         FontName "Arial",;
+         PageNo 0,;
+         Height 1.2354
+
+   DEFINE COMBOBOX HST OF THIS;
+       PROPERTY; 
+         OnOpen {; this.value = kartei->hst; this.visible=.t.},;
+         Width 35.167,;
+         Visible .F.,;
+         Left 12.833,;
+         OnChange CLASS::HST_ONCHANGE,;
+         DropDownHeight 10,;
+         Style 1,;
+         DataSource "FIELD hst->hst",;
+         Top 7.1758,;
+         FontName "Arial",;
+         Height 1.2354
+
+   DEFINE COMBOBOX KLASSI OF THIS;
+       PROPERTY; 
+         OnOpen {; this.value = kartei->klassi; this.visible=.t.},;
+         Width 19.167,;
+         Visible .F.,;
+         DropDownHeight 5,;
+         Left 63.333,;
+         OnChange CLASS::KLASSI_ONCHANGE,;
+         Style 1,;
+         DataSource "FIELD klassi->klassi",;
+         Top 7.1758,;
+         FontName "Arial",;
+         Height 1.2354
+
+   DEFINE SPINBOX P_ZEIT OF THIS;
+       PROPERTY; 
+         Width 8,;
+         Step 5,;
+         Rangemin 0,;
+         Rangemax 999,;
+         RangeRequired .T.,;
+         Left 92.333,;
+         Value kartei->p_zeit,;
+         Picture "999",;
+         Function "BZ",;
+         Top 7.1758,;
+         Height 1.2354
+
+   DEFINE COMBOBOX MERKMALE OF THIS;
+       PROPERTY; 
+         OnOpen CLASS::MERKMALE_ONOPEN,;
+         Width 46.834,;
+         Visible .F.,;
+         DropDownHeight 9,;
+         Left 13.166,;
+         OnChange CLASS::MERKMALE_ONCHANGE,;
+         Style 1,;
+         Top 9.1758,;
+         FontName "Arial",;
+         Height 1.2354
+
+   DEFINE COMBOBOX ABW OF THIS;
+       PROPERTY; 
+         OnOpen CLASS::ABW_ONOPEN,;
+         Width 29,;
+         Visible .F.,;
+         DropDownHeight 7,;
+         Left 70.5,;
+         OnChange CLASS::ABW_ONCHANGE,;
+         Style 1,;
+         Top 9.1758,;
+         FontName "Arial",;
+         Height 1.2354
+
+   DEFINE COMBOBOX BES OF THIS;
+       PROPERTY; 
+         OnOpen {; this.value = kartei->bes; this.visible=.t.},;
+         Width 23.834,;
+         DropDownHeight 10,;
+         Left 15.5,;
+         Visible .f.,;
+         OnChange CLASS::BES_ONCHANGE,;
+         Style 1,;
+         DataSource "FIELD bes->bes",;
+         Top 11.1758,;
+         FontName "Arial",;
+         Height 1.2354
+         
+   DEFINE ENTRYFIELD GERAETE_NR OF THIS;
+       PROPERTY; 
+         Width 19.166,;
+         Left 52.17,;
+         Value kartei->geraete_nr,;
+         MaxLength 15,;
+         Top 11.1758,;
+         Height 1.2354
+         
+   DEFINE SPINBOX ERST_EINS OF THIS;
+       PROPERTY; 
+         Width 15.0039,;
+         OnChange CLASS::ERST_EINS_VALID,;
+         ValidRequired .T.,;
+         Left 84.8291,;
+         Value kartei->erst_eins,;
+         Top 11.1172,;
+         Height 1.2354      
+         
+   DEFINE COMBOBOX KFR OF THIS;
+       PROPERTY; 
+         OnOpen {; if kartei->kfr > 0; this.value = ltrim(str(kartei->kfr)); else; this.value=""; endif; this.visible=.t.},;
+         Width 10.167,;
+         Visible .F.,;
+         Left 18.466,;
+         OnChange CLASS::KFR_ONCHANGE,;
+         Style 1,;
+         DataSource "FIELD kfr->kfr",;
+         Top 13.2344,;
+         Height 1.1768
+
+   DEFINE ENTRYFIELD SONSTIGES OF THIS;
+       PROPERTY; 
+         Width 59.834,;
+         Left 40.466,;
+         Value kartei->sonstiges,;
+         MaxLength 50,;
+         Top 13.2344,;
+         FontName "Arial",;
+         Height 1.2354
+
+   DEFINE COMBOBOX PB_ART OF THIS;
+       PROPERTY; 
+         OnOpen {; this.value = kartei->pb_art; this.visible=.t.; do SetOrt with form,"OnOpen"},;
+         Width 19.667,;
+         Visible .F.,;
+         Left 18.166,;
+         OnChange {; do PbArtCH with form},;
+         Style 1,;
+         DataSource "FIELD pb_art->pb_art",;
+         Top 16.4111,;
+         FontName "Arial",;
+         Height 1.2354
+
+   DEFINE SPINBOX PB_DATUM OF THIS;
+       PROPERTY; 
+         Width 15,;
+         OnChange CLASS::PB_DATUM_VALID,;
+         Rangemin 1,;
+         ValidRequired .T.,;
+         Rangemax 100,;
+         Left 48.666,;
+         Value kartei->pb_datum,;
+         Top 16.4111,;
+         Height 1.2354
+
+   DEFINE SPINBOX PB_KOST OF THIS;
+       PROPERTY; 
+         Width 13.334,;
+         Step 10,;
+         Rangemin 0,;
+         Rangemax 99999.99,;
+         RangeRequired .T.,;
+         Left 80.166,;
+         Value kartei->pb_kost,;
+         Picture "#####.##",;
+         Function "BZ",;
+         Top 16.4111,;
+         Height 1.2354
+
+   DEFINE COMBOBOX PB_ORT OF THIS;
+       PROPERTY; 
+         Width 27.167,;
+         Left 14.333,;
+         OnChange class::PbOrtCH,;
+         Style 1,;
+         DropDownHeight 9,;
+         Value "",;
+         Top 18.2344,;
+         FontName "Arial",;
+         Height 1.2354
+
+   DEFINE ENTRYFIELD PB_BEM OF THIS;
+       PROPERTY; 
+         Width 42.833,;
+         Left 55,;
+         Value kartei->pb_bem,;
+         MaxLength 30,;
+         Top 18.2344,;
+         FontName "Arial",;
+         Height 1.2354
+
+   DEFINE SPINBOX NEUWERT OF THIS;
+       PROPERTY; 
+         Width 15.667,;
+         Step 10,;
+         Rangemin 0,;
+         Rangemax 9999999.99,;
+         RangeRequired .T.,;
+         Left 33.833,;
+         Value kartei->neuwert,;
+         Picture "########## ",;
+         Function "BZ",;
+         Top 11.9404,;
+         PageNo 2,;
+         Height 1.1768
+
+   DEFINE SPINBOX ND OF THIS;
+       PROPERTY; 
+         Width 7,;
+         Rangemin 0,;
+         Rangemax 99,;
+         RangeRequired .T.,;
+         Left 75.833,;
+         Value kartei->nd,;
+         Picture "99",;
+         Function "BZ",;
+         Top 11.8818,;
+         PageNo 2,;
+         Height 1.1768
+         
+   DEFINE EDITOR NOT_KONV OF THIS;
+       PROPERTY; 
+         OnOpen CLASS::NOTIZEN_ONOPEN,;
+         Width 87.166,;
+         Visible .F.,;
+         Left 8,;
+         Top 7.2998,;
+         CUATab .T.,;
+         PageNo 3,;
+         Height 12
+
+   DEFINE OLE NOT_OLE OF THIS;
+       PROPERTY; 
+         Width 87.166,;
+         Visible .F.,;
+         Left 8,;
+         Top 7.2998,;
+         PageNo 3,;
+         Height 12
+
+   DEFINE EDITOR PROT_KONV OF THIS;
+       PROPERTY; 
+         OnOpen CLASS::PROTOKOLL_ONOPEN,;
+         Width 87.166,;
+         Visible .F.,;
+         Left 8,;
+         Top 7.2998,;
+         CUATab .T.,;
+         PageNo 4,;
+         Height 12
+
+   DEFINE OLE PROT_OLE OF THIS;
+       PROPERTY; 
+         Width 87.166,;
+         Visible .F.,;
+         Left 8,;
+         Top 7.2998,;
+         PageNo 4,;
+         Height 12
+
+   DEFINE EDITOR PLAN_KONV OF THIS;
+       PROPERTY; 
+         Width 87.166,;
+         Modify .F.,;
+         Left 8,;
+         Value "",;
+         Top 7.2998,;
+         CUATab .T.,;
+         PageNo 5,;
+         Height 12
+
+   DEFINE OLE PLAN_OLE OF THIS;
+       PROPERTY; 
+         Width 87.166,;
+         Visible .F.,;
+         Left 8,;
+         Top 7.2998,;
+         PageNo 5,;
+         Height 12
+
+   DEFINE ENTRYFIELD MESSAGE OF THIS;
+       PROPERTY; 
+         Width 66.667,;
+         Left 18.333,;
+         Value kartei->message,;
+         Top 12.5879,;
+         PageNo 6,;
+         Height 1.2354      
+
+
+*************************************************************************
+
+
+   Procedure FORMULAR_OnOpen
+   
+    if kartei->codewort == "?"
+     form.ben.enabled        = .f.
+     form.nummer.enabled     = .f.
+     form.hst.enabled        = .f.
+     form.klassi.enabled     = .f.
+     form.p_zeit.enabled     = .f.
+     form.merkmale.enabled   = .f.
+     form.abw.enabled        = .f.
+     form.bes.enabled        = .f.
+     form.geraete_nr.enabled = .f.
+     form.erst_eins.enabled  = .f.
+     form.kfr.enabled        = .f.
+     form.sonstiges.enabled  = .f.
+     form.pb_art.enabled     = .f.
+     form.pb_datum.enabled   = .f.
+     form.pb_kost.enabled    = .f.
+     form.pb_ort.enabled     = .f.
+     form.pb_bem.enabled     = .f.
+     form.neuwert.enabled    = .f.
+     form.nd.enabled         = .f.
+     form.not_konv.enabled   = .f.
+     form.not_ole.enabled    = .f.
+     form.prot_konv.enabled  = .f.
+     form.prot_ole.enabled   = .f.
+     form.message.enabled    = .f.
+    endif 
+
+
+
+   Procedure FORMULAR_OnClose
+  
+    sele pb_ort
+    set key to
+    set filter to mand_nr = nutzer.mand_nr
+
+    if val(form.AufrufendeSuchformularNummer) > 0    
+     sele kartei
+     set order to 1  && zerstîrt set key to...
+     privat pcAufrufendeSuchformularNummer
+     pcAufrufendeSuchformularNummer = form.AufrufendeSuchformularNummer
+     set key to Filter&pcAufrufendeSuchformularNummer..KeyString
+    endif
+    
+    privat pcFormularnummer
+    pcFormularnummer = form.formularnummer
+    rele Formular&pcFormularnummer
+
+    
+   
+   
+   Procedure REGISTER1_OnSelChange
+    
+    if this.CurSel = 1   && aufruf seite 1
+     form.codewort.enabled = .t.
+     if form.hst.enabled
+      form.ben.enabled    = .t.
+      form.nummer.enabled = .t.
+     else
+      form.ben.enabled    = .f.
+      form.nummer.enabled = .f.
+     endif
+    else
+     form.ben.enabled      = .f.
+     form.codewort.enabled = .f.
+     form.nummer.enabled   = .f.
+    endif
+    
+    if this.CurSel = 3 .or. this.CurSel = 4
+     form.schalter_ole.enabled = .t.
+    else
+     form.schalter_ole.enabled = .f.
+    endif
+    
+    if form.pageno = 2  &&  -> verlassen seite 2
+     do case
+      case form.neuwert.value > 0 .and. form.nd.value = 0
+       msgbox("  Fehler: Fehlende Nutzungsdauer.","Achtung",48)
+       form.nd.setfocus()
+       return
+      case form.neuwert.value = 0 .and. form.nd.value > 0
+       msgbox("   Fehler: Fehlender Neuwert.","Achtung",48)
+       form.neuwert.setfocus()
+       return 
+     endcase
+    endif
+
+    do case
+     case this.cursel = 2
+      form.neuwert.setfocus()
+     case this.cursel = 3
+      if form.not_ole.oletype = 0
+       form.not_konv.setfocus()
+      endif 
+     case this.cursel = 4
+      if form.prot_ole.oletype = 0
+       form.prot_konv.setfocus()
+      endif 
+     case this.cursel = 6
+      form.message.setfocus()
+    endcase  
+
+    form.PageNo = this.CurSel  && umschalten auf die seite
+
+    if form.PageNo = 5
+     if empty(form.plan_konv.value)
+      do WahlPlan with form   &&  -> archiv_p.prg
+     endif
+    endif 
+ 
+ 
+ 
+   Procedure BEN_OnOpen
+  
+   if .not. empty(kartei->codewort)
+    sele os
+    set order to 1
+    set key to kartei->codewort
+    this.datasource = "field os->ben"
+    set key to
+   endif 
+   
+   this.value=kartei->ben
+   this.visible=.t.
+   
+  
+  
+  Procedure BEN_OnChange
+
+   do case
+    case kartei->ben == this.value
+     *
+    case empty(this.value)
+     *
+    otherwise
+     local lcCodewort
+     lcCodewort = left(ltrim(form.codewort.value)+space(10),10)
+     sele os
+     set order to 1
+     if seek(lcCodewort+ltrim(this.value))
+      this.value = ben
+     else 
+      if msgbox("  Nicht im Katalog enthalten - Aufnehmen ?","Katalog - Ordnungssystem",292) = 6
+       set order to 0
+       append blank
+       repl codewort with lcCodewort, ben with ltrim(this.value), log_pm_art with .f.
+       if type("form.nummer.value") = "N"
+        repl log_lfdnr with .t.
+       else
+        repl log_lfdnr with .f.
+       endif
+       set order to 1
+       set key to lcCodewort
+       this.datasource = "FIELD os->ben"
+       set key to
+      endif
+     endif
+   endcase
+
+
+
+   Procedure CODEWORT_OnOpen
+
+     sele os
+     set order to 2
+     set filter to log_pm_art
+     this.datasource = "field os->ben"
+     set filter to
+
+     sele kartei
+     set order to 0
+     go bottom
+  
+     this.setfocus()
+     this.keyboard(rtrim(codewort))
+          
+     if this.value == "?"
+      repl lfdnr with 0, spezinr with ""
+      form.nummer.value = "?"
+      this.setfocus()
+     else 
+      if lfdnr > 0
+       repl lfdnr with 0, spezinr with ""
+       class::SetzenNummer(.t.)
+      else
+       repl lfdnr with 0, spezinr with ""
+       class::SetzenNummer(.f.)
+      endif
+     endif
+
+     sele p_plan
+     if this.value == "?"
+      set filter to .f.
+     else
+      privat pcMakro
+      pcMakro = '"' + ltrim(rtrim(this.value)) + '"'
+      set filter to &pcMakro $ pm_arten     
+     endif
+  
+     this.visible=.t.
+     
+     this.OnChange = CLASS::CODEWORT_ONCHANGE
+     
+     
+   
+   Procedure CODEWORT_OnChange
+
+     if empty(this.value) .or. ltrim(this.value) == "?"
+      msgbox("Fehler: Es besteht Eingabepflicht.","Achtung",48)
+      this.value = "?"
+      this.setfocus()
+      return
+     else
+      sele os
+      set order to 2
+      set exact on
+      seek ltrim(this.value)
+      set exact off
+      if .not. found()
+       set order to 1
+       set exact off
+       if .not. seek(ltrim(this.value)) .or. .not. codewort == ltrim(this.value)
+        msgbox("Fehler: Die Eingabe ist nicht im Katalog enthalten.","Achtung",48)
+        this.setfocus()
+        return
+       endif
+      endif
+     endif
+     
+     local llLogLfdnr
+     llLogLfdnr = log_lfdnr
+
+     this.keyboard(codewort) 
+     
+     form.ben.value = ben     
+     
+     form.plan_konv.value = ""
+     
+     sele os
+      set order to 1
+      set key to this.value
+      local lcRettenBen
+      lcRettenBen = form.ben.value
+      form.ben.visible = .f.
+      form.ben.DataSource = "FIELD os->ben"
+      set key to
+      form.ben.value = lcRettenBen
+      form.ben.visible = .t.   
+
+     if .not. empty(form.merkmale.value) .or. .not. empty(form.abw.value)
+      msgbox("EintrÑge bei Merkmale und Zul. Abweichung werden gelîscht.","Hinweis",64)
+     endif
+     
+     sele merkmale
+      set order to 1
+      set key to this.value
+      form.merkmale.visible = .f.
+      form.merkmale.DataSource = "FIELD merkmale->merkmale"
+      set key to
+      form.merkmale.value = ""
+      form.merkmale.visible = .t.   
+     sele abw
+      set order to 1
+      set key to this.value      
+      form.abw.visible = .f.
+      form.abw.DataSource = "FIELD abw->abw"
+      set key to
+      form.abw.value = ""
+      form.abw.visible = .t.
+     sele p_plan
+      privat pcMakro
+      pcMakro = '"' + ltrim(rtrim(this.value)) + '"'
+      set filter to &pcMakro $ pm_arten  
+
+     if .not. form.ben.enabled
+      form.ben.enabled        = .t.
+      form.nummer.enabled     = .t.
+      form.hst.enabled        = .t.
+      form.klassi.enabled     = .t.
+      form.p_zeit.enabled     = .t.
+      form.merkmale.enabled   = .t.
+      form.abw.enabled        = .t.
+      form.bes.enabled        = .t.
+      form.geraete_nr.enabled = .t.
+      form.erst_eins.enabled  = .t.
+      form.kfr.enabled        = .t.
+      form.sonstiges.enabled  = .t.
+      form.pb_art.enabled     = .t.
+      form.pb_datum.enabled   = .t.
+      form.pb_kost.enabled    = .t.
+      form.pb_ort.enabled     = .t.
+      form.pb_bem.enabled     = .t.
+      form.neuwert.enabled    = .t.
+      form.nd.enabled         = .t.
+      form.message.enabled    = .t.
+      
+      if form.not_ole.oletype = 0
+       form.not_konv.enabled = .t.
+      else
+       form.not_ole.enabled  = .t.
+      endif
+      
+      if form.prot_ole.oletype = 0
+       form.prot_konv.enabled = .t.
+      else
+       form.prot_ole.enabled  = .t.
+      endif
+      
+     endif   
+
+     class::SetzenNummer(llLogLfdnr)
+
+   
+
+   Procedure NUMMER_Valid
+
+     set dele on
+    
+   * bei aufruf mit VALID "this.ValidErrorMsg" anstelle von "msgbox()"
+   * llZeiger wird bei aufruf mit ONCHANGE in Procedure Schalter_OK_OnClick privat definiert <-> siehe dort
+   
+*    local llZeiger
+    
+    if type("form.nummer.value") = "N"
+     if form.nummer.value < 1
+      msgbox("Fehler: Diese Laufende Nummer ist nicht zulÑssig.","Achtung",48)
+*      this.ValidErrorMsg = "Fehler: Diese Laufende Nummer ist nicht zulÑssig."
+      llZeiger = .f.
+     else
+      sele kartei
+      set order to 1
+      local lnRettenSatznummer
+      lnRettenSatznummer = recno()
+      if seek(left(form.codewort.value+space(10),10)+str(form.nummer.value,5))
+       msgbox("Fehler: Diese Laufende Nummer ist schon vorhanden.","Achtung",48)
+*       this.ValidErrorMsg = "Fehler: Diese Laufende Nummer ist schon vorhanden."
+       llZeiger = .f.
+      else 
+       llZeiger = .t.
+      endif
+      go lnRettenSatznummer
+     endif
+    else
+     do case
+      case empty(form.nummer.value) .or. form.nummer.value = "?"
+       msgbox("Fehler: Fehlende Spezielle Nummer.","Achtung",48)
+*       this.ValidErrorMsg = "Fehler: Fehlende Spezielle Nummer."
+       llZeiger = .f.
+      case ";" $ form.nummer.value
+       msgbox("Fehler: Ein Semikolon ist in der Speziellen Nummer nicht zulÑssig.","Achtung",48)
+*       this.ValidErrorMsg = "Fehler: Ein Semikolon ist in der Speziellen Nummer nicht zulÑssig."
+       llZeiger = .f.
+      otherwise
+       sele kartei
+       set order to 1
+       local lnRettenSatznummer
+       lnRettenSatznummer = recno()
+       set exact on
+       if seek(left(form.codewort.value+space(10),10)+str(val("0"),5)+ltrim(form.nummer.value))
+        msgbox("Fehler: Die Spezielle Nummer ist schon vorhanden.","Achtung",48)
+*        this.ValidErrorMsg = "Fehler: Die Spezielle Nummer ist schon vorhanden."
+        llZeiger = .f.
+       else
+        llZeiger = .t.
+       endif
+       set exact off
+       go lnRettenSatznummer
+     endcase
+    endif
+    
+    if .not. llZeiger
+     form.nummer.setfocus()  && nur bei aufruf mit OnChange notwendig
+    endif 
+    
+    return llZeiger
+
+
+
+   Procedure HST_OnChange
+   
+    if .not. empty(this.value) .and. .not. kartei->hst == this.value
+     sele hst
+     set order to 1
+     if seek(ltrim(this.value))
+      this.value = hst
+     else
+      if msgbox("  Nicht im Katalog enthalten - Aufnehmen ?","Katalog - Hersteller",292) = 6
+       append blank
+       repl hst with ltrim(this.value)
+       this.datasource = "FIELD hst->hst"
+      endif
+     endif
+    endif
+   
+
+   
+   Procedure KLASSI_OnChange
+
+    if .not. empty(this.value) .and. .not. kartei->klassi == this.value
+     sele klassi
+     set order to 1
+     if seek(ltrim(this.value))
+      this.value = klassi     
+     else
+      if msgbox("  Nicht im Katalog enthalten - Aufnehmen ?","Katalog - Klassifikation",292) = 6
+       append blank
+       repl klassi with ltrim(this.value)
+       this.datasource = "FIELD klassi->klassi"
+      endif
+     endif
+    endif
+  
+   
+   
+   Procedure MERKMALE_OnOpen
+  
+    if .not. empty(kartei->codewort)   && leer nur bei pmk_neu mîglich
+     sele merkmale
+     set order to 1
+     set key to kartei->codewort
+     this.datasource = "field merkmale->merkmale"
+     set key to
+    endif 
+    
+    this.value=kartei->merkmale
+    this.visible=.t.
+   
+      
+   
+   Procedure MERKMALE_OnChange
+
+    if .not. empty(this.value) .and. .not. kartei->merkmale == this.value
+     local lcCodewort
+     lcCodewort = left(ltrim(form.codewort.value)+space(10),10)
+     sele merkmale
+     set order to 1
+     if seek(lcCodewort + ltrim(this.value))
+      this.value = merkmale      
+     else
+      if msgbox("  Nicht im Katalog enthalten - Aufnehmen ?","Katalog - Merkmale",292) = 6
+       set order to 0
+       append blank
+       repl codewort with lcCodewort, merkmale with ltrim(this.value)
+       set order to 1
+       set key to lcCodewort
+       this.datasource = "FIELD merkmale->merkmale"
+       set key to
+      endif
+     endif
+    endif
+   
+   
+
+  Procedure ABW_OnOpen
+  
+   if .not. empty(kartei->codewort)   && leer nur bei pmk_neu mîglich
+    sele abw
+    set order to 1
+    set key to kartei->codewort
+    this.datasource = "field abw->abw"
+    set key to 
+   endif 
+   
+   this.value=kartei->abw
+   this.visible=.t.
+   
+   
+   
+  Procedure ABW_OnChange
+
+   if .not. empty(this.value) .and. .not. kartei->abw == this.value
+    local lcCodewort
+    lcCodewort = left(ltrim(form.codewort.value)+space(10),10)
+    sele abw
+    set order to 1
+    if seek(lcCodewort + ltrim(this.value))
+     this.value = abw
+    else
+     if msgbox("  Nicht im Katalog enthalten - Aufnehmen ?","Katalog - ZulÑssige Abweichungen",292) = 6
+      set order to 0
+      append blank
+      repl codewort with lcCodewort, abw with ltrim(this.value)
+      set order to 1
+      set key to lcCodewort
+      this.datasource = "FIELD abw->abw"
+      set key to
+     endif
+    endif
+   endif
+
+
+
+   Procedure BES_OnChange
+
+    if .not. empty(this.value) .and. .not. kartei->bes == this.value
+     sele bes
+     set order to 1
+     if seek(nutzer.mand_nr + ltrim(this.value))
+      this.value = bes
+     else 
+      if msgbox("  Nicht im Katalog enthalten - Aufnehmen ?","Katalog - EigentÅmer",292) = 6
+       append blank
+       repl mand_nr with nutzer.mand_nr, bes with ltrim(this.value)
+       this.datasource = "FIELD bes->bes"
+      endif
+     endif
+    endif
+
+
+    
+   Procedure ERST_EINS_Valid
+   
+   * bei aufruf mit VALID "this.ValidErrorMsg" anstelle von "msgbox()"
+   
+*    local llZeiger
+    
+    if empty(form.erst_eins.value)
+     if lower(ltrim(rtrim(form.pb_art.value))) $ "eichen kalibrieren"
+      msgbox("Das PrÅfmittel wird eingesetzt. Es wird das aktuelle Datum eingetragen.","Hinweis",64)
+      form.erst_eins.value = date()
+     endif
+     llZeiger = .t.
+    else   
+     do case
+      case form.erst_eins.value > date()
+       msgbox("Fehler: Das Ersteinsatzdatum liegt nach dem aktuellen Datum.","Achtung",48)
+*       this.ValidErrorMsg = "Fehler: Das Ersteinsatzdatum liegt nach dem aktuellen Datum."
+       llZeiger = .f.
+      case form.erst_eins.value > form.pb_datum.value
+       msgbox("Fehler: Das Ersteinsatzdatum liegt nach dem Datum der Bewegung.","Achtung",48)
+*       this.ValidErrorMsg = "Fehler: Das Ersteinsatzdatum liegt nach dem Datum der Bewegung."
+       llZeiger = .f.
+      otherwise 
+       if cdow(form.erst_eins.value) = "Sonntag" 
+        msgbox("   Das Ersteinsatzdatum ist ein Sonntag.","Hinweis",64)
+       endif
+       llZeiger = .t.
+     endcase
+    endif 
+    
+    if .not. llZeiger
+     form.erst_eins.setfocus()  && nur bei aufruf mit OnChange notwendig
+    endif 
+    
+    return llZeiger
+    
+
+
+   Procedure KFR_OnChange
+   
+    do case
+     case empty(this.value)
+      return
+     case type(this.value) <> "N"
+      msgbox("Fehler: Schreibfehler.","Achtung",48)
+      this.setfocus()
+      return
+     otherwise
+      sele kfr
+      set order to 1
+      if .not. seek(val(this.value))
+       msgbox("Fehler: Die Eingabe ist nicht im Katalog enthalten.","Achtung",48)
+       this.setfocus()
+       return
+      endif
+    endcase
+   
+    if lower(ltrim(rtrim(form.pb_art.value))) $ "eichen kalibrieren"
+     local ldDatum
+     ldDatum = date() + val(this.value)
+     do case
+      case cdow(ldDatum) = "Samstag" 
+       ldDatum = ldDatum + 2
+      case cdow(ldDatum) = "Sonntag"
+       ldDatum = ldDatum + 1     
+     endcase
+     form.pb_datum.value = ldDatum
+    endif
+    
+    
+    
+  Procedure PB_DATUM_Valid
+  
+    privat plValid
+    plValid = .t.
+
+    do PbDatVA with form
+    
+    llZeiger = plValid  && nur bei aufruf mit OnChange notwendig
+    
+    if .not. llZeiger
+     form.pb_datum.setfocus()  && nur bei aufruf mit OnChange notwendig
+    endif 
+    
+    return plValid
+    
+    
+        
+  Procedure PbOrtCH
+
+   if .not. empty(this.value)
+    local lcEingabe
+    lcEingabe = ltrim(this.value)
+    sele pb_ort
+    * kein set order to 1, wegen set key to... in procedure SetOrt
+    locate for pb_ort = lcEingabe
+    if found()
+     this.value = pb_ort
+    else
+     if msgbox("  Nicht im Katalog enthalten - Aufnehmen ?","Katalog - Standorte",292) = 6
+      local lcArtKurz
+      go top
+      if .not. eof()
+       lcArtKurz = art_kurz
+      else
+       local lcEingabe
+       lcEingabe = proper(ltrim(rtrim(form.pb_art.value)))
+       do case      
+        case lcEingabe $ "Eichen Kalibrieren"
+         lcArtKurz = "E"
+        case lcEingabe = "Lager"
+         lcArtKurz = "L"
+        case lcEingabe = "Zum PrÅfen"
+         lcArtKurz = "P"
+        case lcEingabe = "Reparatur"
+         lcArtKurz = "R"
+        otherwise
+         lcArtKurz = "S"
+       endcase
+      endif
+      append blank
+      repl mand_nr with nutzer.mand_nr, art_kurz with lcArtKurz, pb_ort with ltrim(this.value)
+      this.datasource = "FIELD pb_ort->pb_ort"
+     endif
+    endif
+   endif  
+   
+   form.pb_kost.value = 0
+    
+    
+    
+   Procedure NOTIZEN_OnOpen
+
+    if empty(kartei->not_ole)
+     form.rechteck_notizen.fontitalic = .t.
+     form.rechteck_notizen.text = "  Notizen  "
+     form.not_konv.datalink = "kartei->not_konv"
+     form.not_konv.visible = .t.
+    else
+     form.not_ole.datalink = "kartei->not_ole"
+     form.rechteck_notizen.fontitalic = .f.
+     form.rechteck_notizen.text = "  Notizen [ " + form.not_ole.servername + " ]  "
+     form.not_ole.visible = .t.
+    endif    
+   
+   
+   
+  Procedure PROTOKOLL_OnOpen
+
+    if empty(kartei->prot_ole)
+     form.rechteck_protokoll.fontitalic = .t.
+     form.rechteck_protokoll.text = "  PrÅfprotokoll  "
+     form.prot_konv.datalink = "kartei->prot_konv"
+     form.prot_konv.visible = .t.
+    else
+     form.prot_ole.datalink = "kartei->prot_ole"
+     form.rechteck_protokoll.fontitalic = .f.
+     form.rechteck_protokoll.text = "  PrÅfprotokoll [ " + form.prot_ole.servername + " ]  "
+     form.prot_ole.visible = .t.
+    endif   
+    
+    
+    
+  Procedure SetzenNummer(LogikLfdnr)      
+
+     if .not. LogikLfdnr
+    
+      form.nummer.fontname = "ARIAL"
+      form.nummer.value    = "?"
+      form.nummer.picture  = "XXXXXXXXXXXXXXX"
+      
+     else
+
+      form.nummer.fontname = "MS SANS SERIF"
+      form.nummer.picture = "99999"
+
+      sele kartei
+      set order to 1
+      local lnRettenSatznummer
+      lnRettenSatznummer = recno()
+      set dele on
+      set exact off
+      if seek(form.codewort.value)
+       if lfdnr = 0
+        skip  && -> Åberspringen des mit append blank angehangenen und mit stammdaten gefÅllten datensatz
+       endif
+       local lnFreieNummer
+       lnFreieNummer = 1
+       scan rest while codewort == form.codewort.value
+        if lfdnr = lnFreieNummer
+         lnFreieNummer = lnFreieNummer + 1
+        else
+         exit
+        endif
+       endscan
+       form.nummer.value = lnFreieNummer
+      else 
+       form.nummer.value = 1
+      endif 
+      go lnRettenSatznummer 
+
+     endif 
+ 
+     form.nummer.setfocus()
+
+
+      
+   
+   Procedure Schalter_OK_OnClick
+   
+
+if 1=1  && anwendung nur bei ONCHANGE-Methode
+
+ llZeiger = .f.
+ 
+ class::nummer_valid()
+ 
+ if .not. llZeiger
+  form.nummer.setfocus()
+  return
+ endif
+ 
+ class::erst_eins_valid()
+ 
+ if .not. llZeiger
+  form.erst_eins.setfocus()
+  return
+ endif
+ 
+ class::pb_datum_valid()
+ 
+ if .not. llZeiger
+  form.pb_datum.setfocus()
+  return
+ endif
+
+endif    
+
+    do case
+     case empty(form.codewort.value) .or. form.codewort.value == "?"
+      msgbox("Fehler: Es besteht Eingabepflicht.","Achtung",48) 
+      form.codewort.setfocus()
+      return
+     case empty(form.pb_art.value) .or. form.pb_art.value == "?"
+      msgbox("Fehler: Es besteht Eingabepflicht.","Achtung",48)  
+      form.pb_art.setfocus()
+      return
+     otherwise
+      if msgbox("Diese PrÅfmittelkarte in die Kartei Åbernehmen ?","Neue Karte anlegen ?",292) = 7
+       return
+      endif 
+    endcase
+
+    sele kartei
+    set order to 0
+    go bottom
+    
+    repl ben with ltrim(form.ben.value), codewort with ltrim(form.codewort.value), hst with ltrim(form.hst.value), klassi with ltrim(form.klassi.value), p_zeit with form.p_zeit.value, merkmale with ltrim(form.merkmale.value), abw with ltrim(form.abw.value), bes with ltrim(form.bes.value), geraete_nr with ltrim(form.geraete_nr.value), erst_eins with form.erst_eins.value, kfr with val(form.kfr.value), sonstiges with ltrim(form.sonstiges.value), pb_art with proper(ltrim(form.pb_art.value)), pb_datum with form.pb_datum.value, pb_kost with form.pb_kost.value, pb_ort with ltrim(form.pb_ort.value), pb_bem with ltrim(form.pb_bem.value), neuwert with form.neuwert.value, nd with form.nd.value, message with ltrim(form.message.value)
+    
+    if type("form.nummer.value") = "N"
+     repl lfdnr with form.nummer.value
+    else
+     repl spezinr with ltrim(form.nummer.value)
+    endif    
+    
+    * not_konv, not_ole, prot_konv u. prot_ole <-> datalink-verbindung
+    
+    if .not. empty(erst_eins)
+     repl anz_eins with 1
+    endif 
+   
+    do case 
+     case lower(ltrim(rtrim(form.pb_art.value))) $ "eichen kalibrieren"
+      if erst_eins <> date()
+       repl anz_eins with 2
+      endif 
+     case lower(ltrim(form.pb_art.value)) = "reparatur"
+      repl anz_rep with 1
+    endcase
+   
+    if form.pb_kost.value > 0
+     do case
+      case lower(ltrim(form.pb_art.value)) = "zum prÅfen"
+       repl prÅf_kost with form.pb_kost.value
+      case lower(ltrim(form.pb_art.value)) = "Ñndern"
+       repl Ñnd_kost with form.pb_kost.value
+      case lower(ltrim(form.pb_art.value)) = "reparatur"
+       repl rep_kost with form.pb_kost.value
+     endcase
+    endif      
+        
+   
+    * aufbau historie
+   
+    local lcBewegungArt, ldBewegungDatum, lcBewegungKosten, lcErsteZeileHistorie
+      
+    if lower(ltrim(rtrim(form.pb_art.value))) $ "eichen kalibrieren"
+     lcBewegungArt = "Im Einsatz  "
+     ldBewegungDatum = date()
+    else  
+     lcBewegungArt   = left(proper(ltrim(form.pb_art.value))+space(12),12)
+     ldBewegungDatum = form.pb_datum.value
+    endif 
+      
+    if form.pb_kost.value > 0
+     lcBewegungKosten = str(form.pb_kost.value,8,2) + " DM"
+    else 
+     lcBewegungKosten = space(11)
+    endif 
+     
+    set century on
+    lcErsteZeileHistorie = dtoc(ldBewegungDatum) + "  " + lcBewegungArt + " " + left(ltrim(form.pb_ort.value)+space(20),20) + " " + left(ltrim(form.pb_bem.value)+space(30),30) + " " + lcBewegungKosten + space(2)
+     
+    repl historie with lcErsteZeileHistorie
+
+    if msgbox("Eine weitere PrÅfmittelkarte auf Basis dieser Karte anlegen ?","Weitere Karte anlegen...",292) = 6
+     form.AktuelleSatznummer = recno()
+     store automem
+     if form.not_ole.oletype = 0
+      local ArrayNotKonv
+      set memo to 255
+      ArrayNotKonv = new array(memlines(not_konv))
+      store memo not_konv to array ArrayNotKonv
+     endif
+     if form.prot_ole.oletype = 0
+      local ArrayProtKonv
+      set memo to 255
+      ArrayProtKonv = new array(memlines(prot_konv))
+      store memo prot_konv to array ArrayProtKonv
+     endif
+     append blank
+     repl automem   && belegt auch memo-felder ?!
+     repl historie with "", not_konv with "", prot_konv with ""
+     if form.not_ole.oletype = 0 
+      repl memo not_konv with array ArrayNotKonv
+     endif
+     if form.prot_ole.oletype = 0 
+      repl memo prot_konv with array ArrayProtKonv
+     endif 
+     class::SetzenNummer(type("form.nummer.value")="N")
+    else
+     if val(form.AufrufendeSuchformularNummer) > 0
+      privat pcAufrufendeSuchformularNummer
+      pcAufrufendeSuchformularNummer = form.AufrufendeSuchformularNummer
+      Formular&pcAufrufendeSuchformularNummer..open()
+     else 
+      * zurÅck zum hauptformular      
+     endif 
+
+     * -> FORMULAR_OnClose
+      
+     form.close()
+
+    endif 
+     
+     
+     
+   Procedure Schalter_Abbruch_OnClick
+   
+    if msgbox("Diese PrÅfmittelkarte verwerfen ?","Anlegen Neuer Karte abbrechen ?",292) = 7
+     return
+    endif 
+   
+    sele kartei
+    set order to 0
+    go bottom
+    dele
+    
+    if val(form.AufrufendeSuchformularNummer) > 0
+     go form.AktuelleSatznummer
+     privat pcAufrufendeSuchformularNummer
+     pcAufrufendeSuchformularNummer = form.AufrufendeSuchformularNummer
+     Formular&pcAufrufendeSuchformularNummer..open()
+    else
+     * zurÅck zum hauptformular      
+    endif
+    
+    * -> FORMULAR_OnClose
+
+    form.close()
+    
+    
+    
+ENDCLASS
+
+
+   
+CLASS ABFRAGEFENSTER OF FORM
+   this.OnOpen = {; this.AufrufendeSuchformularNummer = pcAufrufendeSuchformularNummer; form.abbruch.setfocus()}
+   this.Width = 64.6
+   this.Text = "Aus aktueller Karte Åbernehmen ..."
+   this.MDI = .F.
+   this.EscExit = .F.
+   this.Left = 20
+   this.Top = 8.4
+   this.Height = 8.5879
+
+      DEFINE RECTANGLE RECHTECK1 OF THIS;
+       PROPERTY; 
+         Width 57.1855,;
+         FontItalic .T.,;
+         ColorNormal "B+/BtnFace",;
+         Text " Protokoll ",;
+         Left 3.6475,;
+         Top 2.6465,;
+         Height 2.5293
+
+   DEFINE CHECKBOX STAMMDATEN OF THIS;
+       PROPERTY; 
+         Width 14.835,;
+         Text "Stammdaten",;
+         Left 3.665,;
+         Group .T.,;
+         Value .t.,;
+         Top 0.8193,;
+         Height 1.2354
+
+   DEFINE CHECKBOX KOSTEN OF THIS;
+       PROPERTY; 
+         OnOpen {; if kartei->neuwert = 0; this.enabled = .f.; endif; this.visible = .t.},;
+         Width 10.335,;
+         Text "Kosten",;
+         Left 22.165,;
+         Visible .f.,;
+         Group .T.,;
+         Value .F.,;
+         Top 0.8193,;
+         Height 1.2354
+
+   DEFINE CHECKBOX NOTIZEN OF THIS;
+       PROPERTY; 
+         OnOpen {; if empty(kartei->not_konv); this.enabled = .f.; endif; this.visible = .t.},;
+         Width 10.501,;
+         Text "Notizen",;
+         Visible .f.,;
+         Left 35.332,;
+         Group .T.,;
+         Value .F.,;
+         Top 0.8193,;
+         Height 1.2354
+
+   DEFINE CHECKBOX MESSAGE OF THIS;
+       PROPERTY; 
+         OnOpen {; if empty(kartei->message); this.enabled = .f.; endif; this.visible = .t.},;
+         Width 11.834,;
+         Text "Message",;
+         Visible .f.,;
+         Left 49.332,;
+         Group .T.,;
+         Value .F.,;
+         Top 0.8193,;
+         Height 1.2354
+
+   DEFINE RADIOBUTTON OHNEPROTOKOLL OF THIS;
+       PROPERTY; 
+         Width 8.335,;
+         Text "Ohne",;
+         Left 7.3311,;
+         Group .T.,;
+         Value .T.,;
+         Top 3.7,;
+         Height 1
+
+   DEFINE RADIOBUTTON MITPROTOKOLL OF THIS;
+       PROPERTY; 
+         OnOpen {; if empty(kartei->prot_konv); this.enabled = .f.; endif; this.visible = .t.},;
+         Width 15.5,;
+         Text "PrÅfprotokoll",;
+         Visible .f.,;
+         Left 18,;
+         Group .F.,;
+         Value .F.,;
+         Top 3.7,;
+         Height 0.9395
+
+   DEFINE RADIOBUTTON MUSTERPROTOKOLL OF THIS;
+       PROPERTY; 
+         Width 22.001,;
+         Text "MusterprÅfprotokoll",;
+         Left 35.832,;
+         Group .F.,;
+         Value .F.,;
+         Top 3.7,;
+         Height 0.8818
+
+   DEFINE PUSHBUTTON ABBRUCH OF THIS;
+       PROPERTY; 
+         Width 16,;
+         Text "Abbruch",;
+         UpBitmap "RESOURCE #28",;
+         OnClick {; plAbbruchAbfrage = .t.; form.close()},;
+         Left 13.5,;
+         Group .T.,;
+         Top 6.4102,;
+         Height 1.4
+
+   DEFINE PUSHBUTTON OK OF THIS;
+       PROPERTY; 
+         Width 16,;
+         Text "OK",;
+         UpBitmap "RESOURCE #20",;
+         Left 35,;
+         OnClick class::OK_OnClick,;
+         Group .T.,;
+         SpeedTip "Neue Karte anlegen",;
+         Top 6.4102,;
+         Height 1.4
+ 
+ 
+*************************************************************************
+
+
+  Procedure OK_OnClick
+  
+   plAbbruchAbfrage = .f.
+   
+   sele kartei   
+   store automem
+
+   if form.notizen.value
+    set memo to 255
+    local ArrayNotizen
+    ArrayNotizen = new array(memlines(kartei->not_konv))
+    store memo kartei->not_konv to array ArrayNotizen
+   endif
+   
+   do case
+    case form.mitprotokoll.value
+     set memo to 255
+     local ArrayProtokoll
+     ArrayProtokoll = new array(memlines(kartei->prot_konv))
+     store memo kartei->prot_konv to array ArrayProtokoll
+    case form.musterprotokoll.value
+     privat ArrayMusterprotokoll  
+     ArrayMusterprotokoll = ""  && wird in klasse: AUSWAHL_MUSTER gesetzt
+     local f
+     f = new AUSWAHL_MUSTER()
+     f.readmodal()
+   endcase
+   
+   sele kartei
+   set order to 0 
+   append blank
+   
+   if form.stammdaten.value
+    replace automem
+    * automem belegt auch memo-felder ?!
+    repl historie with "", not_konv with "", prot_konv with ""
+    * nummer nicht zurÅcksetzen -> procedure codewort_onopen !!!
+    repl erst_eins with {}, pb_art with "?", pb_datum with {}, pb_kost with 0, pb_ort with "", pb_bem with "", message with "", neuwert with 0, nd with 0, prÅf_kost with 0, Ñnd_kost with 0, rep_kost with 0, anz_eins with 0, anz_rep with 0
+   else
+    repl ben with "?", codewort with "?", pb_art with "?"
+   endif
+    
+   if form.kosten.value
+    repl neuwert with m->neuwert, nd with m->nd
+   endif 
+    
+   if form.notizen.value
+    repl memo not_konv with array ArrayNotizen
+   endif  
+     
+   if form.message.value
+    repl message with m->message
+   endif   
+     
+   do case
+    case form.mitprotokoll.value
+     repl memo prot_konv with array ArrayProtokoll
+    case form.musterprotokoll.value
+     repl memo prot_konv with array ArrayMusterprotokoll
+   endcase 
+
+
+   form.close()
+
+
+
+ENDCLASS
+
+
+
+CLASS AUSWAHL_MUSTER OF FORM
+   this.Width = 60
+   this.Text = "MusterprÅfprotokoll auswÑhlen..."
+   this.EscExit = .f.
+   this.SysMenu = .f.
+   this.mdi = .f.
+   this.Left = 22
+   this.Top = 15
+   this.Height = 8
+   
+   DEFINE LISTBOX LISTE OF THIS;
+       PROPERTY; 
+         Width 54.3359,;
+         OnOpen class::LISTE_OnOpen,;
+         ColorHighLight "HighLightText/HighLight",;
+         Left 2.8,;
+         Top 0.9395,;
+         OnLeftMouseDown class::LISTE_OnLeftMouseDown,;
+         ID 100,;
+         Height 6.2
+
+         
+  Procedure LISTE_OnOpen
+
+   sele 1
+   use muster index muster
+   this.datasource = "field muster->mu_name"
+
+   
+
+  Procedure LISTE_OnLeftMouseDown
+
+   sele muster
+   set order to 1
+   seek listselected(form.liste)
+  
+   set memo to 255
+   ArrayMusterprotokoll = new array(memlines(muster))
+   store memo muster to array ArrayMusterprotokoll
+
+   use
+
+   form.close()
+ 
+ 
+ENDCLASS
+

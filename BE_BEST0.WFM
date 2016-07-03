@@ -1,0 +1,147 @@
+*** be_best0.wfm
+
+create session
+
+sele 100
+use (Nutzer.Mandant) index (Nutzer.Mandant) alias kartei
+
+sele 1
+
+
+gnFormularZaehler = gnFormularZaehler + 1
+
+private pcZahl
+pcZahl = ltrim(str(gnFormularZaehler))
+
+
+
+** END HEADER -- Diese Zeile nicht lîschen*
+* Erstellt am 03.05.1996
+*
+
+privat plBerichtErstellen, pcTextTipsUndTricks
+plBerichtErstellen = .f.
+pcTextTipsUndTricks = ""
+
+public Formular&pcZahl
+Formular&pcZahl = new PRUEFMITTELBESTAND_EINGABE()
+Formular&pcZahl..ReadModal()
+
+if plBerichtErstellen
+ do be_best2.wfm with pcZahl
+endif 
+
+CLASS PRUEFMITTELBESTAND_EINGABE OF BERICHTSEINGABE From "BASIS.CFM"
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "PrÅfmittelbestand"
+   this.Text = "Bericht [ PrÅfmittelbestand ]"
+   
+   form.schalter_bericht.onclick = class::SCHALTER_BERICHT_OnClick
+   form.schalter_abbruch.onclick = {; form.close()}
+
+
+   DEFINE RECTANGLE RECHTECK1 OF THIS;
+       PROPERTY; 
+         Width 70.5,;
+         Text "  Angaben zum Bericht  ",;
+         Left 4.666,;
+         Top 1.1758,;
+         Height 10.5293
+
+   DEFINE CHECKBOX KONTROLLFELD1 OF THIS;
+       PROPERTY; 
+         Group .T.,;
+         Width 38.333,;
+         Enabled .F.,;
+         Text "Nach der PrÅfmittelart unterscheiden",;
+         Left 21.333,;
+         Value .T.,;
+         Top 2.7051,;
+         Height 1.3535
+
+   DEFINE RECTANGLE RECHTECK2 OF THIS;
+       PROPERTY; 
+         Width 62,;
+         Text " Weitere Unterscheidung ",;
+         Left 9,;
+         Top 4.7646,;
+         Height 3.2354
+
+   DEFINE RADIOBUTTON LOG_OHNE OF THIS;
+       PROPERTY; 
+         Group .T.,;
+         Width 8.667,;
+         Text "Ohne",;
+         Left 16.166,;
+         Value .T.,;
+         Top 5.9404,;
+         Height 1.2939
+
+   DEFINE RADIOBUTTON LOG_BEN OF THIS;
+       PROPERTY; 
+         Group .F.,;
+         Width 14.334,;
+         Text "Benennung",;
+         Left 31.166,;
+         Value .F.,;
+         Top 5.8818,;
+         Height 1.3525
+
+   DEFINE RADIOBUTTON LOG_MERKMALE OF THIS;
+       PROPERTY; 
+         Group .F.,;
+         Width 12.834,;
+         Text "Merkmale",;
+         Left 51.666,;
+         Value .F.,;
+         Top 5.8818,;
+         Height 1.3525
+
+   DEFINE CHECKBOX LOG_FILTER OF THIS;
+       PROPERTY; 
+         Group .T.,;
+         Width 43.833,;
+         Text "Filter an das Ende des Berichtes schreiben",;
+         Left 17.5,;
+         Value .T.,;
+         Top 9.0586,;
+         Height 1.5879
+         
+         
+
+   Procedure SCHALTER_BERICHT_OnClick
+   
+    plBerichtErstellen = .t.
+    
+    sele kartei
+    
+    local lcDateiname
+    lcDateiname = funique("$????")
+    copy structure to (lcDateiname) fields bes, hst, ben, codewort, merkmale, lfdnr
+   
+    sele 10
+    use (lcDateiname) nosave alias bericht exclusive
+    append blank
+    repl codewort with " 1 2 3 4 5"  && damit dieser datensatz in be_best1.prg nicht gefunden werden kann
+    
+    if form.log_filter.value
+     repl bes with "Filterausgabe"
+    endif 
+    
+    do case
+     case form.log_ohne.value
+      index on codewort tag Index_1 of (lcDateiname)
+     case form.log_ben.value
+      index on codewort+ben tag Index_1 of (lcDateiname)
+     case form.log_merkmale.value
+      index on codewort+merkmale tag Index_1 of (lcDateiname)
+    endcase
+    
+    index on hst+ben+merkmale tag Index_2 of (lcDateiname)
+    
+    do suchen with form, form.formularnummer, "Gesamtsuche", "SuchArrayNein", "be_best1.prg"
+   
+    form.close()   
+   
+   
+ENDCLASS

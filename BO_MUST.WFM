@@ -1,0 +1,316 @@
+*** bo_must.wfm
+
+create session
+
+use muster index muster
+
+
+
+** END HEADER -- Diese Zeile nicht l”schen*
+* Erstellt am 18.03.1996
+*
+
+local f
+f = new KATALOG_MUSTER()
+f.ReadModal()
+
+CLASS KATALOG_MUSTER OF FORM
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "Musterprotokoll"
+   this.Width = 99
+   this.Text = "BOSS [ Katalog - Musterprfprotokolle ]"
+   this.MDI = .F.
+   this.Left = 2.8
+   this.Top = 3.4
+   this.Height = 20.1172
+   
+   this.OnOpen = {; if glTipsUndTricks; msgbox("Musterprfprotokolle k”nnen an dieser Stelle nur mit dem internen Editor erstellt werden. Sollen diese mit einem externen Editor ( Word, Excel, ... ) erstellt werden, muá das Muster mit einem externen Programm in eine Datei geschrieben werden. Beim Anlegen neuer Prfmittelkarten kann dann diese Datei als OLE-Objekt eingebettet werden. Weitere Hilfe mit Taste F1...","Tips & Tricks",64); endif}
+   
+
+   DEFINE TEXT TEXT1 OF THIS;
+       PROPERTY; 
+         Width 29.5,;
+         Text "Name des Musterprfprotokolls",;
+         Left 1.833,;
+         Top 1.7637,;
+         Height 0.8809
+
+   DEFINE COMBOBOX NAME OF THIS;
+       PROPERTY; 
+         Width 65,;
+         OnOpen {; this.setfocus()},;
+         Left 31.833,;
+         Style 1,;
+         DropDownHeight 14,; 
+         DataSource "FIELD muster->mu_name",;
+         Top 1.5293,;
+         Height 1.1758
+
+   DEFINE TEXT KORREKTUR_TEXT OF THIS;
+       PROPERTY; 
+         Width 17.1689,;
+         Visible .F.,;
+         Text "Korrigierter Name",;
+         Left 16.1641,;
+         Top 5.9395,;
+         Height 0.9395
+
+   DEFINE ENTRYFIELD KORREKTUR_EINGABE OF THIS;
+       PROPERTY; 
+         Width 48.835,;
+         Valid CLASS::KORREKTUR_EINGABE_VALID,;
+         Visible .f.,;
+         ValidErrorMsg "Ungltige Eingabe",;
+         ValidRequired .T.,;
+         Left 33.3311,;
+         Value "KORREKTUR_EINGABE",;
+         Top 5.7051,;
+         Height 1.3516
+
+   DEFINE EDITOR MUSTER OF THIS;
+       PROPERTY; 
+         Width 87.167,;
+         Visible .f.,;
+         Left 5.666,;
+         CUATab .T.,;
+         Top 3.8809,;
+         Height 13.3516
+
+   DEFINE PUSHBUTTON SCHALTER_ABBRUCH OF THIS;
+       PROPERTY; 
+         Width 16,;
+         Visible .F.,;
+         OnClick class::SCHALTER_ABBRUCH_OnClick,;
+         Text "Abbruch",;
+         UpBitmap "RESOURCE #28",;
+         Left 28,;
+         Group .T.,;
+         Top 18,;
+         Height 1.3516
+
+   DEFINE PUSHBUTTON SCHALTER_OK OF THIS;
+       PROPERTY; 
+         Width 16.001,;
+         OnClick class::SCHALTER_OK_OnClick,;
+         Visible .F.,;
+         Text "OK",;
+         UpBitmap "RESOURCE #20",;
+         Left 52.165,;
+         Group .T.,;
+         Top 18,;
+         Height 1.3516
+
+   DEFINE PUSHBUTTON SCHALTER_LOESCHEN OF THIS;
+       PROPERTY; 
+         Width 18,;
+         Text "L”schen",;
+         OnClick class::SCHALTER_LOESCHEN_OnClick,;
+         UpBitmap "RESOURCE #24",;
+         DisabledBitmap "RESOURCE #25",;
+         Left 19,;
+         Group .T.,;
+         Top 15.1758,;
+         SpeedBar .T.,;
+         Height 1.5293
+
+   DEFINE PUSHBUTTON SCHALTER_KORRIGIEREN OF THIS;
+       PROPERTY; 
+         Width 18,;
+         Text "Korrigieren",;
+         UpBitmap "RESOURCE #148",;
+         OnClick class::schalter_korrigieren_onclick,;
+         DisabledBitmap "RESOURCE #149",;
+         Left 40,;
+         Group .T.,;
+         Top 15.1758,;
+         SpeedBar .T.,;
+         Height 1.5293
+
+   DEFINE PUSHBUTTON SCHALTER_HINZUFUEGEN OF THIS;
+       PROPERTY; 
+         Width 18,;
+         Text "Hinzufgen",;
+         OnClick class::schalter_hinzufuegen_onclick,;
+         UpBitmap "RESOURCE #855",;
+         DisabledBitmap "RESOURCE #865",;
+         Left 60.666,;
+         Group .T.,;
+         Top 15.1758,;
+         SpeedBar .T.,;
+         Height 1.5293
+
+   DEFINE PUSHBUTTON SCHALTER_SCHLIESZEN OF THIS;
+       PROPERTY; 
+         Width 22.833,;
+         Text "Schlieáen",;
+         OnClick {; form.close()},;
+         UpBitmap "RESOURCE #1005",;
+         DisabledBitmap "RESOURCE #1006",;
+         Left 37.333,;
+         Group .T.,;
+         Top 17.5879,;
+         SpeedBar .T.,;
+         Height 1.8232
+         
+************************************************************************
+
+
+   Procedure SCHALTER_LOESCHEN_OnClick
+   
+     if .not. empty(form.name.value)
+      sele muster
+      set order to 1
+      set exact on
+      seek ltrim(form.name.value)
+      set exact off
+      if .not. found()
+       msgbox("Fehler: Das Musterprfprotokoll ist nicht vorhanden.","Achtung",48)
+      else
+       if msgbox("Das Musterprfprotokoll wirklich l”schen ?","Musterprfprotokoll l”schen ?",292) = 6
+        dele
+        form.name.datasource = "field muster->mu_name"
+        form.name.value = ""
+       endif
+      endif
+     endif    
+    
+   
+   
+   Procedure SCHALTER_KORRIGIEREN_OnClick
+   
+     if .not. empty(form.name.value)
+      sele muster
+      set order to 1
+      set exact on
+      seek ltrim(form.name.value)
+      set exact off
+      if .not. found()
+       msgbox("Fehler: Das Musterprfprotokoll ist nicht vorhanden.","Achtung",48)
+      else
+       form.name.enabled = .f.
+       
+       form.schalter_loeschen.enabled    = .f.
+       form.schalter_korrigieren.enabled = .f.
+       form.schalter_hinzufuegen.enabled = .f.
+       form.schalter_schlieszen.enabled  = .f.
+       
+       form.korrektur_text.visible  = .t.
+       form.korrektur_eingabe.value   = form.name.value
+       form.korrektur_eingabe.visible = .t.
+       form.korrektur_eingabe.setfocus()
+      endif
+     endif
+    
+   
+   
+    Procedure KORREKTUR_EINGABE_Valid
+   
+      if empty(this.value)
+       this.value = form.name.value
+       return .t.
+      else
+       sele muster
+       set order to 1
+       if .not. mu_name == ltrim(this.value)
+        repl mu_name with ltrim(this.value)
+        form.name.datasource = "field muster->mu_name"
+        form.name.value = ltrim(this.value)
+       endif
+       form.muster.value = muster->muster
+       form.korrektur_text.visible       = .f.
+       form.korrektur_eingabe.visible    = .f.
+       form.schalter_loeschen.visible    = .f.
+       form.schalter_korrigieren.visible = .f.
+       form.schalter_hinzufuegen.visible = .f.
+       form.schalter_schlieszen.visible  = .f.
+
+       form.schalter_loeschen.enabled    = .t.
+       form.schalter_korrigieren.enabled = .t.
+       form.schalter_hinzufuegen.enabled = .t.
+       form.schalter_schlieszen.enabled  = .t.
+       form.schalter_ok.visible      = .t.
+       form.schalter_abbruch.visible = .t.
+       form.muster.visible           = .t.
+       form.muster.setfocus()         
+       return .t.
+      endif
+      
+     
+    
+    Procedure SCHALTER_HINZUFUEGEN_OnClick
+   
+     if .not. empty(form.name.value)
+      sele muster
+      set order to 1
+      set exact off  && !
+      seek ltrim(form.name.value)
+      if found()
+       msgbox("Fehler: Das Musterprfprotokoll ist schon vorhanden.","Achtung",48)
+      else
+       set order to 0
+       append blank
+       repl mu_name with ltrim(form.name.value)
+       set order to 1
+       form.name.datasource = "FIELD muster->mu_name"
+       form.name.value      = mu_name
+       form.name.enabled    = .f.
+       form.muster.value = ""
+       form.schalter_loeschen.visible    = .f.
+       form.schalter_korrigieren.visible = .f.
+       form.schalter_hinzufuegen.visible = .f.
+       form.schalter_schlieszen.visible  = .f.
+       form.schalter_ok.visible      = .t.
+       form.schalter_abbruch.visible = .t.
+       form.muster.visible           = .t.
+       form.muster.setfocus()         
+      endif
+     endif
+    
+    
+   
+   Procedure SCHALTER_OK_OnClick
+    
+    repl muster with form.muster.value
+    
+    if empty(muster->muster)
+     msgbox("  Das Musterprfprotokoll wird gel”scht.","Hinweis",64)
+     dele
+     form.name.datasource = "FIELD muster->mu_name"
+     form.name.value = ""
+    endif 
+    
+    form.schalter_loeschen.visible    = .t.
+    form.schalter_korrigieren.visible = .t.
+    form.schalter_hinzufuegen.visible = .t.
+    form.schalter_schlieszen.visible  = .t.
+    form.schalter_ok.visible      = .f.
+    form.schalter_abbruch.visible = .f.
+    form.muster.visible           = .f.
+    
+    form.name.enabled = .t.
+    form.name.setfocus()             
+    
+    
+   
+   Procedure SCHALTER_ABBRUCH_OnClick
+    
+    if isblank(muster->muster)   && hinzufuegen
+     dele
+     form.name.datasource = "FIELD muster->mu_name"
+     form.name.value = ""
+    endif 
+    
+    form.schalter_loeschen.visible    = .t.
+    form.schalter_korrigieren.visible = .t.
+    form.schalter_hinzufuegen.visible = .t.
+    form.schalter_schlieszen.visible  = .t.
+    form.schalter_ok.visible      = .f.
+    form.schalter_abbruch.visible = .f.
+    form.muster.visible           = .f.
+
+    form.name.enabled = .t.
+    form.name.setfocus()             
+    
+    
+    
+ENDCLASS

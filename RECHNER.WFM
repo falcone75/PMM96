@@ -1,0 +1,1105 @@
+********************************************************************************
+*  PROGRAMM:     Rechner.wfm
+*
+*  AUTOREN:      Borland Beispielgruppe
+*
+*  DATUM:        5/93
+*
+*  AKTUALISIERT: 3/96 by Graubner
+*
+*  REVISION:     $Revision:   1.8  $
+*
+*  VERSION:      Visual dBASE
+*
+*  BESCHREIBUNG: Mit dieser Datei wird ein Rechner-Formular erstellt. Der Rechner enthÑlt
+*                Befehlsfelder fÅr die Eingabe von Zahlen und Rechenoperationen.
+*                Au·erdem sind 2 Eingabefelder vorhanden: eins fÅr die Anzeige der
+*                aktuellen Berechnung und eins fÅr die Anzeige des aktuellen
+*                Speicherinhalts. Berechnungen kînnen entweder im
+*                Dezimal- oder im Hexadezimalsystem durchgefÅhrt werden.
+*
+*  PARAMETER:    Keine
+*
+*  AUFRUFE:       Buttons.cc       (FÅr benutzerdefinierte Befehlsfelder)
+*
+*  SYNTAX:       DO Rechner.wfm
+*
+********************************************************************************
+#define MAX_DEC_DIGITS      18
+#define MAX_HEX_DIGITS       8
+#define DISPLAY_LEN         18
+#define HEX_OVERFLOW        2^32
+#define DEC_OVERFLOW        10^18
+
+create session   && Von diesem Programm werden zwar keine Tabellen benutzt, aber
+                 && diese Zeile stellt sicher, da· die verwendeten Variablennamen nicht
+                 && auf eine frÅher geîffnete Tabelle verweisen.
+set talk off
+set ldCheck off
+
+** END HEADER -- Diese Zeile nicht lîschen*
+* Erstellt am 12.03.1996
+*
+
+local f
+f = new RECHNERFORM()
+f.Open()
+
+CLASS RECHNERFORM OF FORM
+*   Set Procedure To BUTTONS.CC additive
+   this.OnOpen = CLASS::ONOPEN
+   this.OnGotFocus = CLASS::ONGOTFOCUS
+   this.Width = 34.4
+   this.OnClose = CLASS::ONCLOSE
+   this.TopMost = .t. 
+   this.mdi = .f.
+   this.MousePointer = 1
+   this.ColorNormal = "BTNTEXT/BTNFACE"
+   this.Text = "Rechner"
+   this.Maximize = .F.
+   this.Minimize = .F.
+   this.Left = 66.7
+   this.Top = 1.5
+   this.Height = 11.2939
+
+   DEFINE RECTANGLE RECTANGLE2 OF THIS;
+       PROPERTY; 
+         Width 33.0068,;
+         ColorNormal "N/W",;
+         Text "",;
+         BorderStyle 1,;
+         Left 0.6592,;
+         Top 8.3516,;
+         Height 1.7061
+
+   DEFINE RECTANGLE RECTANGLE1 OF THIS;
+       PROPERTY; 
+         Width 33.0068,;
+         FontBold .F.,;
+         ColorNormal "N/W",;
+         Text "",;
+         BorderStyle 1,;
+         Left 0.6592,;
+         Top 2.1758,;
+         Height 6.1768
+
+   DEFINE ENTRYFIELD DISPLAY OF THIS;
+       PROPERTY; 
+         Width 33.0068,;
+         FontName "Arial",;
+         ColorNormal "N/BG*",;
+         Function "J",;
+         FontSize 12,;
+         Left 0.6592,;
+         Value "                 0",;
+         Top 1.1172,;
+         Enabled .F.,;
+         ValidErrorMsg "UngÅltige Eingabe",;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON B7 OF THIS;
+       PROPERTY; 
+         Width 4.0205,;
+         FontName "Arial",;
+         ColorNormal "B/W",;
+         Text "7",;
+         Left 1.9795,;
+         OnClick CLASS::NUMERIC_CLICK,;
+         Top 2.4688,;
+         Group .T.,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON B8 OF THIS;
+       PROPERTY; 
+         Width 4,;
+         FontName "Arial",;
+         ColorNormal "B/W",;
+         Text "8",;
+         Left 6.5,;
+         OnClick CLASS::NUMERIC_CLICK,;
+         Top 2.4688,;
+         Group .T.,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON B9 OF THIS;
+       PROPERTY; 
+         Width 4,;
+         FontName "Arial",;
+         ColorNormal "B/W",;
+         Text "9",;
+         Left 11,;
+         OnClick CLASS::NUMERIC_CLICK,;
+         Top 2.4688,;
+         Group .T.,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON B4 OF THIS;
+       PROPERTY; 
+         Width 4.0205,;
+         FontName "Arial",;
+         ColorNormal "B/W",;
+         Text "4",;
+         Left 1.9795,;
+         OnClick CLASS::NUMERIC_CLICK,;
+         Top 3.9395,;
+         Group .T.,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON B5 OF THIS;
+       PROPERTY; 
+         Width 4,;
+         FontName "Arial",;
+         ColorNormal "B/W",;
+         Text "5",;
+         Left 6.5,;
+         OnClick CLASS::NUMERIC_CLICK,;
+         Top 3.9395,;
+         Group .T.,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON B6 OF THIS;
+       PROPERTY; 
+         Width 4,;
+         FontName "Arial",;
+         ColorNormal "B/W",;
+         Text "6",;
+         Left 11,;
+         OnClick CLASS::NUMERIC_CLICK,;
+         Top 3.9395,;
+         Group .T.,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON B1 OF THIS;
+       PROPERTY; 
+         Width 4.0205,;
+         FontName "Arial",;
+         ColorNormal "B/W",;
+         Text "1",;
+         Left 1.9795,;
+         OnClick CLASS::NUMERIC_CLICK,;
+         Top 5.4102,;
+         Group .T.,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON B2 OF THIS;
+       PROPERTY; 
+         Width 4,;
+         FontName "Arial",;
+         ColorNormal "B/W",;
+         Text "2",;
+         Left 6.5,;
+         OnClick CLASS::NUMERIC_CLICK,;
+         Top 5.4102,;
+         Group .T.,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON B3 OF THIS;
+       PROPERTY; 
+         Width 4,;
+         FontName "Arial",;
+         ColorNormal "B/W",;
+         Text "3",;
+         Left 11,;
+         OnClick CLASS::NUMERIC_CLICK,;
+         Top 5.4102,;
+         Group .T.,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON OPPLUSMINUS OF THIS;
+       PROPERTY; 
+         Width 4.0205,;
+         FontName "Arial",;
+         ColorNormal "N/W",;
+         Text "+/-",;
+         FontSize 10,;
+         Left 1.9795,;
+         OnClick CLASS::PLUSMINUS_CLICK,;
+         Top 6.8809,;
+         Group .T.,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON B0 OF THIS;
+       PROPERTY; 
+         Width 4,;
+         FontName "Arial",;
+         ColorNormal "B/W",;
+         Text "0",;
+         Left 6.5,;
+         OnClick CLASS::NUMERIC_CLICK,;
+         Top 6.8809,;
+         Group .T.,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON PERIOD OF THIS;
+       PROPERTY; 
+         Width 4,;
+         FontName "Arial",;
+         ColorNormal "N/W",;
+         Text " ",;
+         FontSize 10,;
+         Left 11,;
+         OnClick CLASS::PERIOD_CLICK,;
+         Top 6.8809,;
+         Group .T.,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON OPPOWER OF THIS;
+       PROPERTY; 
+         Width 4,;
+         FontName "Arial",;
+         ColorNormal "N/W",;
+         Text "^",;
+         FontSize 10,;
+         Left 17,;
+         OnClick CLASS::OP_CLICK,;
+         Top 2.4688,;
+         Group .T.,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON OPTIMES OF THIS;
+       PROPERTY; 
+         Width 4,;
+         FontName "Arial",;
+         ColorNormal "N/W",;
+         Text "*",;
+         FontSize 10,;
+         Left 17,;
+         OnClick CLASS::OP_CLICK,;
+         Top 3.9395,;
+         Group .T.,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON OPDIV OF THIS;
+       PROPERTY; 
+         Width 4,;
+         FontName "Arial",;
+         ColorNormal "N/W",;
+         Text "/",;
+         FontSize 10,;
+         Left 17,;
+         OnClick CLASS::OP_CLICK,;
+         Top 5.4102,;
+         Group .T.,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON OPMINUS OF THIS;
+       PROPERTY; 
+         Width 4,;
+         FontName "Arial",;
+         ColorNormal "N/W",;
+         Text "-",;
+         FontSize 10,;
+         Left 17,;
+         OnClick CLASS::OP_CLICK,;
+         Top 6.8809,;
+         Group .T.,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON CLEAR OF THIS;
+       PROPERTY; 
+         Width 4,;
+         FontBold .F.,;
+         FontName "Arial",;
+         ColorNormal "W*/R",;
+         Text "CE\C",;
+         FontSize 7,;
+         Left 21.5,;
+         OnClick CLASS::CLEAR_CLICK,;
+         Top 2.4688,;
+         Group .T.,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON OPEQUAL OF THIS;
+       PROPERTY; 
+         Width 4,;
+         Default .T.,;
+         FontName "Arial",;
+         ColorNormal "N/W",;
+         Text "=",;
+         FontSize 10,;
+         Left 21.5,;
+         OnClick CLASS::OP_CLICK,;
+         Top 3.9395,;
+         Group .T.,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON OPPLUS OF THIS;
+       PROPERTY; 
+         Width 4,;
+         FontName "Arial",;
+         ColorNormal "N/W",;
+         Text "+",;
+         FontSize 10,;
+         Left 21.5,;
+         OnClick CLASS::OP_CLICK,;
+         Top 5.4102,;
+         Group .T.,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON HEXDEC OF THIS;
+       PROPERTY; 
+         Width 4,;
+         FontBold .F.,;
+         FontName "Arial",;
+         ColorNormal "N/W",;
+         Text "&Hex",;
+         FontSize 7,;
+         Left 21.5,;
+         OnClick CLASS::CHANGEHEX,;
+         Top 6.8809,;
+         Group .T.,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON MADD OF THIS;
+       PROPERTY; 
+         Width 5.002,;
+         FontBold .F.,;
+         FontName "Arial",;
+         ColorNormal "W+/B",;
+         Text "&MAdd",;
+         FontSize 7,;
+         Left 27.6641,;
+         OnClick CLASS::MEM_CLICK,;
+         Top 2.4688,;
+         Group .T.,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON MSUB OF THIS;
+       PROPERTY; 
+         Width 5.002,;
+         FontBold .F.,;
+         FontName "Arial",;
+         ColorNormal "W+/B",;
+         Text "M&Sub",;
+         FontSize 7,;
+         Left 27.6641,;
+         OnClick CLASS::MEM_CLICK,;
+         Top 3.9395,;
+         Group .T.,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON MRCL OF THIS;
+       PROPERTY; 
+         Width 5.002,;
+         FontBold .F.,;
+         FontName "Arial",;
+         ColorNormal "W+/B",;
+         Text "M&Rcl",;
+         FontSize 7,;
+         Left 27.6641,;
+         OnClick CLASS::MRCL_PROC,;
+         Top 5.4102,;
+         Group .T.,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON MCLR OF THIS;
+       PROPERTY; 
+         Width 5.002,;
+         FontBold .F.,;
+         FontName "Arial",;
+         ColorNormal "W+/B",;
+         Text "MLîs",;
+         FontSize 7,;
+         Left 27.6641,;
+         OnClick CLASS::MCLR_PROC,;
+         Top 6.8809,;
+         Group .T.,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON B_A OF THIS;
+       PROPERTY; 
+         Width 4.0205,;
+         FontName "Arial",;
+         ColorNormal "B+/W",;
+         Text "&A",;
+         Left 1.9795,;
+         OnClick CLASS::NUMERIC_CLICK,;
+         Top 8.6465,;
+         Enabled .F.,;
+         Group .T.,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON B_B OF THIS;
+       PROPERTY; 
+         Width 4.0352,;
+         FontName "Arial",;
+         ColorNormal "B+/W",;
+         Text "&B",;
+         Left 7.2979,;
+         OnClick CLASS::NUMERIC_CLICK,;
+         Top 8.6465,;
+         Enabled .F.,;
+         Group .T.,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON B_C OF THIS;
+       PROPERTY; 
+         Width 4.0684,;
+         FontName "Arial",;
+         ColorNormal "B+/W",;
+         Text "&C",;
+         Left 12.5977,;
+         OnClick CLASS::NUMERIC_CLICK,;
+         Top 8.6465,;
+         Enabled .F.,;
+         Group .T.,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON B_D OF THIS;
+       PROPERTY; 
+         Width 4,;
+         FontName "Arial",;
+         ColorNormal "B+/W",;
+         Text "&D",;
+         Left 18,;
+         OnClick CLASS::NUMERIC_CLICK,;
+         Top 8.6465,;
+         Enabled .F.,;
+         Group .T.,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON B_E OF THIS;
+       PROPERTY; 
+         Width 3.9688,;
+         FontName "Arial",;
+         ColorNormal "B+/W",;
+         Text "&E",;
+         Left 23.1973,;
+         OnClick CLASS::NUMERIC_CLICK,;
+         Top 8.6465,;
+         Enabled .F.,;
+         Group .T.,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON B_F OF THIS;
+       PROPERTY; 
+         Width 4.0684,;
+         FontName "Arial",;
+         ColorNormal "B+/W",;
+         Text "&F",;
+         Left 28.5977,;
+         OnClick CLASS::NUMERIC_CLICK,;
+         Top 8.6465,;
+         Enabled .F.,;
+         Group .T.,;
+         Height 1.1768
+
+   DEFINE ENTRYFIELD MEMORY OF THIS;
+       PROPERTY; 
+         Width 33.0068,;
+         FontName "Arial",;
+         ColorNormal "W+/W",;
+         Function "J",;
+         FontSize 12,;
+         Left 0.6592,;
+         Value "                  ",;
+         Top 10,;
+         Enabled .F.,;
+         ValidErrorMsg "UngÅltige Eingabe",;
+         Height 1.1758
+
+
+   procedure OnOpen
+***********************************************************************
+   
+   set procedure to program(1) additive
+   
+   this.periodChar = setto("point")       && Wichtig fÅr internationale
+   this.period.text = form.periodChar     && Anwendungen
+   
+   this.OpPlus.Doit = {|a,b|a+b}
+   this.OpPlus.precedence = 1
+   
+   this.OpMinus.Doit = {|a,b|a-b}
+   this.OpMinus.precedence = 1
+   
+   this.OpTimes.Doit = {|a,b|a*b}
+   this.OpTimes.precedence = 2
+   
+   this.OpDiv.Doit = {|a,b|a/b}
+   this.OpDiv.precedence = 2
+   
+   this.OpPower.Doit = {|a,b|a^b}
+   this.OpPower.precedence = 3
+   
+   this.OpEqual.Doit = {|a,b|;}
+   this.OpEqual.precedence = 0
+   
+   this.MAdd.Doit = {|a,b|a+b}
+   this.MAdd.precedence = 1
+   
+   this.MSub.Doit = {|a,b|a-b}
+   this.MSub.precedence = 1
+   
+                              && Stack fÅr das Sichern des Operationsstatus
+   this.operationStack = new OperationStackClass()
+   
+   this.hex = .F.             && Hex- oder Dezimalmodus
+   this.decPlaces = 1         && Mit minimalen Dezimalstellen beginnen
+                              && Hîchstanzahl der Dezimalstellen eines Operanden
+   this.mostDecPlaces = 1
+   this.beforePeriod = .T.    && Zahlen vor oder nach Dezimalpunkt hinzufÅgen
+   this.lastKeyOperator = .F.
+   this.DefineBackgroundTexts()
+   
+   this.Clear.OnClick()
+   this.MClr.OnClick()
+   
+   
+   ****************************************************************************
+   
+   procedure OnClose
+   
+   * AufrÑumen
+   ****************************************************************************
+   
+   close procedure program(1)
+   
+   
+   ****************************************************************************
+   
+   procedure OnGotFocus
+   
+   * Sicherstellen, da· die Dezimalstellen beim Empfang des Fokus korrekt sind..
+   ****************************************************************************
+   
+   set decimals to form.decPlaces
+   
+   
+   
+   ****************************************************************************
+   
+   procedure DefineBackgroundTexts
+   
+   * Text hinter nicht-alphanumerischen Zeichen definieren, damit die Direktbefehle
+   * als 'onclick' fÅr diese Befehlsfelder ausgefÅhrt werden und der
+   * Text der Befehlsfelder nicht verstÅmmelt aussieht..
+   ****************************************************************************
+   
+   CLASS::DefineText(this.b1)
+   CLASS::DefineText(this.b2)
+   CLASS::DefineText(this.b3)
+   CLASS::DefineText(this.b4)
+   CLASS::DefineText(this.b5)
+   CLASS::DefineText(this.b6)
+   CLASS::DefineText(this.b7)
+   CLASS::DefineText(this.b8)
+   CLASS::DefineText(this.b9)
+   CLASS::DefineText(this.b0)
+   CLASS::DefineText(this.period)
+   CLASS::DefineText(this.opPower)
+   CLASS::DefineText(this.opTimes)
+   CLASS::DefineText(this.opDiv)
+   CLASS::DefineText(this.opMinus)
+   CLASS::DefineText(this.opPlus)
+   CLASS::DefineText(this.opEqual)
+   
+   
+   ****************************************************************************
+   
+   procedure DefineText(button)
+   
+   *  Text definieren, der hinter den Befehlsfeldern erscheint. Dieser Text
+   * liegt in der Tabfolge vor den Befehlsfeldern.
+   ****************************************************************************
+   private textName
+   
+   textName = button.name + "Text"
+   define text &textName of this;
+      property;
+         top button.top,;
+         left button.left,;
+         text "&" + button.text,;
+         before button
+   
+   
+   ****************************************************************************
+   
+   procedure ChangeHex
+   
+   * Zwischen HEX- und DEZ-Modus wechseln.
+   ****************************************************************************
+   local value,memValue,dispFraction,memFraction
+   
+   * Werte in das Anzeige- und Speicherfeld Åbernehmen, ehe der Hex-Indikator gewechselt wird
+   value = CLASS::NumVal(form.display.value)
+   memValue = CLASS::NumVal(form.memory.value)
+   form.beforePeriod = .T.
+   set decimals to form.decPlaces
+   dispFraction = val(substr(form.display.value,;
+                             at(form.periodChar, form.display.value)))
+   memFraction = val(substr(form.memory.value,;
+                            at(form.periodChar, form.memory.value)))
+   
+   form.hex = .not. form.hex
+   this.text = iif(form.hex, "Dez", "&Hex")
+   
+   * Buchstaben fÅr Hexadezimalsystem aktivieren/deaktivieren
+   store form.hex to ;
+      form.B_A.enabled, form.B_B.enabled, form.B_C.enabled,;
+      form.B_D.enabled, form.B_E.enabled, form.B_F.enabled
+   
+   * Tasten aktivieren/deaktivieren, die fÅr Hexadezimalsystem nicht gebraucht werden
+   store .not. form.hex to form.opPlusMinus.enabled, form.period.enabled
+   
+   if abs(value) >= HEX_OVERFLOW
+      *** TemporÑr
+      form.display.value = space(DISPLAY_LEN - MAX_HEX_DIGITS) +;
+                              replicate("*", MAX_HEX_DIGITS)
+   else
+      form.display.value = CLASS::CharVal(value + dispFraction)
+   endif
+   if abs(memValue) >= HEX_OVERFLOW
+      form.memory.value  = space(DISPLAY_LEN - MAX_HEX_DIGITS) +;
+                              replicate("*", MAX_HEX_DIGITS)
+   else
+      form.memory.value = CLASS::CharVal(memValue + memFraction)
+   endif
+   
+   
+   ****************************************************************************
+   
+   procedure Numeric_Click
+   
+   * Ziffer bearbeiten.
+   ****************************************************************************
+   local num
+   
+   if form.lastKeyOperator
+      form.LastKeyOperator = .F.
+      form.beforePeriod = .T.
+      form.display.value = space(MAX_DEC_DIGITS - 1) +;
+                              CLASS::DisplayValue(this.text)
+   else
+      do case
+         case CLASS::DisplayFull()
+            ??chr(7)
+         case form.beforePeriod
+            * Nur die DISPLAY_LEN Zeichen von rechts
+            form.display.value = right(;
+                                    CLASS::DisplayValue(form.display.value) +;
+                                    CLASS::DisplayValue(this.text), DISPLAY_LEN)
+         otherwise
+            form.display.value = CLASS::AddAfterPeriod(;
+                                    CLASS::DisplayValue(this.text))
+      endcase
+   endif
+   form.opEqual.SetFocus()
+   
+   
+   ****************************************************************************
+   
+   procedure Period_Click
+   
+   * Dezimaltrenner bearbeiten.
+   ****************************************************************************
+   
+   if form.beforePeriod .and. .not. form.hex
+      form.beforePeriod = .F.
+      form.decPlaces = 1
+      set decimals to 1
+      if form.lastKeyOperator
+         form.LastKeyOperator = .F.
+         form.display.value = space(MAX_DEC_DIGITS - 1) + form.periodChar
+      else
+         form.display.value = CLASS::AddAfterPeriod(form.periodChar)
+      endif
+   endif
+   
+   
+   ****************************************************************************
+   
+   procedure Op_Click
+   
+   * Operator bearbeiten.
+   ****************************************************************************
+   private lastOperation, lastOp, lastValue, tempOpList, tempThis
+   
+   if form.LastKeyOperator .or. form.operationStack.IsEmpty()
+      form.lastValue = CLASS::NumVal(form.display.value)
+   else
+      * Alle vorherigen Operation mit >= PrÑferenz bearbeiten
+      do while form.operationStack.PrevPrecedenceGreaterOrEqual(this.precedence)
+         lastOperation = form.operationStack.Pop()
+         if lastOperation.GetPrecedence() > 0        && Nicht bearbeiten: =
+            lastOp = lastOperation.GetOp()
+            lastValue = lastOperation.GetValue()
+            set decimals to form.mostDecPlaces
+            form.lastValue = lastOp(lastValue, CLASS::NumVal(form.display.value))
+   
+            form.display.value = CLASS::CharVal(form.lastValue)
+            form.decPlaces = 1
+            set decimals to 1
+         endif
+      enddo
+   endif
+   form.beforePeriod = .T.
+   form.lastKeyOperator = .T.
+   
+   tempThis = this
+   tempThis.value = CLASS::NumVal(form.display.value)
+   
+   form.operationStack.Push(tempThis)      && Problem mit Weitergabe von "this"
+   
+   
+   ****************************************************************************
+   
+   procedure Mem_Click
+   
+   * Speicherfeld bearbeiten.
+   ****************************************************************************
+   local result
+   
+   result = this.Doit(CLASS::NumVal(form.memory.value),;
+                      CLASS::NumVal(form.display.value))
+   form.memory.value = CLASS::CharVal(result)
+   
+   
+   ****************************************************************************
+   
+   procedure MClr_Proc
+   
+   * Speicher lîschen.
+   ****************************************************************************
+   
+   form.lastKeyOperator = .T.
+   form.memory.value = space(MAX_DEC_DIGITS - 1) + "0"
+   
+   
+   ****************************************************************************
+   
+   procedure MRcl_Proc
+   
+   * Aus Speicher holen.
+   ****************************************************************************
+   
+   if form.lastKeyOperator
+      form.LastKeyOperator = .F.
+      form.beforePeriod = .T.
+      form.lastValue = CLASS::NumVal(form.display.value)
+      form.display.value = form.memory.value
+   else
+      form.lastValue = CLASS::NumVal(form.display.value)
+      form.display.value = form.memory.value
+   endif
+   
+   
+   ****************************************************************************
+   
+   procedure Clear_Click
+   
+   * Alles lîschen.
+   ****************************************************************************
+   
+   form.operationStack.Initialize()     && Leeren Operationsstack lîschen
+   form.lastValue = 0                   && Wert lîschen
+   form.lastKeyOperator = .F.           && Ohne gedrÅckte Operatortaste beginnen
+   form.decPlaces = 1                   && Dezimalstellen am Anfang
+   set decimals to 1
+   form.mostDecPlaces = 1
+   form.display.value = space(MAX_DEC_DIGITS - 1) + "0"
+   form.beforePeriod = .T.              && Mit Zahleingabe beginnen
+   
+   
+   ****************************************************************************
+   
+   procedure PlusMinus_Click
+   
+   * Vorzeichen umschalten.
+   ****************************************************************************
+   local num
+   
+   if .not. form.hex
+      num = CLASS::NumVal(form.display.value)
+      form.display.value = CLASS::CharVal(num * -1)
+      form.LastKeyOperator = .F.
+   endif
+   
+   
+   
+   
+   
+   *******************************************************************************
+   
+   function DisplayFull
+   
+   * öberprÅfen, ob die Anzeige schon MAX_DEC_DIGITS Ziffern hat.
+   *******************************************************************************
+   private isFull, maxValueLen
+   
+   maxValueLen = iif(form.hex, MAX_HEX_DIGITS, MAX_DEC_DIGITS)
+   
+   * öberprÅfen, ob die Ziffer ganz links = " " ist
+   isFull = .not. empty(left(right(form.display.value, maxValueLen), 1))
+   
+   return isFull
+   
+   
+   
+   *******************************************************************************
+   
+   function AddAfterPeriod(char)
+   
+   * Nachkommastellen nach Komma einfÅgen.
+   *******************************************************************************
+   
+   form.decPlaces = form.decPlaces + 1
+   set decimals to form.decPlaces
+   form.mostDecPlaces = max(form.decPlaces, form.mostDecPlaces)
+   
+   return CLASS::DisplayValue(form.display.value) + char
+   
+   
+   
+   *******************************************************************************
+   
+   function DisplayValue(value)
+   
+   *  Wert ohne Zeichen darstellen.
+   *******************************************************************************
+   private num, pickLoc
+   
+   num = value
+   pickLoc = at("&",num)
+   do case
+      case pickLoc <> 0
+         num = stuff(num,pickLoc,1,"")
+      case right(num,2) = " 0"
+         num = space(MAX_DEC_DIGITS)
+      case left(num,1) = " "
+         num = substr(num,2)
+   endcase
+   
+   return num
+   
+   
+   
+   *******************************************************************************
+   
+   function CharVal(num)
+   
+   * Aus einem String einen numerischen Wert im aktuelle HEX/DEZ-Modus machen
+   *******************************************************************************
+   private string, fractionVal
+   
+   if form.hex
+      if abs(num) >= HEX_OVERFLOW
+         string = replicate("*", MAX_HEX_DIGITS)
+      else
+         string = itoh(num)
+         string = space(MAX_DEC_DIGITS - len(string)) + string
+      endif
+   else
+      if abs(num) >= DEC_OVERFLOW
+         string = replicate("*", MAX_DEC_DIGITS)
+      else
+         string = str(num, MAX_DEC_DIGITS, form.decPlaces)
+         if val(right(string, form.decPlaces)) = 0      && Wenn Nachkommawert = 0
+            string = str(num, MAX_DEC_DIGITS)
+         endif
+      endif
+   endif
+   
+   return string
+   
+   
+   *******************************************************************************
+   
+   function NumVal(string)
+   
+   * Zahl aus einem HEX/DEZ-String machen
+   *******************************************************************************
+   private h, num, periodLoc, s
+   
+   s = string
+   if form.hex
+      h = htoi(string)
+      num = iif(h >= HEX_OVERFLOW/2, bitxor(h, HEX_OVERFLOW), h)
+   else
+      periodLoc = at(form.periodChar, s)        && Einstellung Point fÅr
+      if periodLoc <> 0                         && aktuelles Land verwenden
+         num = val(stuff(s, periodLoc, 1, "."))
+      else
+         num = val(s)
+      endif
+   endif
+   
+   return num
+   
+   
+   
+ENDCLASS
+
+
+
+
+*******************************************************************************
+*******************************************************************************
+CLASS OperationStackClass
+
+* Diese Klasse definiert ein Stackobjekt zum Speichern mathematischer OperationszustÑnde.
+* Dies wird dadurch notwendig, da Operatoren eine bestimmte Rangreihenfolge besitzen,
+* wie z.B. + und *. Dies ist der Stack des Objekts OperationStateClass.
+*******************************************************************************
+
+
+   this.Initialize()
+
+
+   ****************************************************************************
+
+   procedure Initialize
+
+   * Leeren Stack erzeugen
+   ****************************************************************************
+
+                                        && Ende (und zuerst auch Anfang) des Stack
+   this.stackTop = new OperationStateClass()
+
+
+   ****************************************************************************
+
+   function IsEmpty
+
+   * öberprÅfen ob Stack leer
+   ****************************************************************************
+
+   return empty(this.stackTop.GetNext())        && Leer wenn keine weiteren Operationen
+
+
+   ****************************************************************************
+
+   function Pop
+
+   * Letzten Operationszustand wiederfinden
+   ****************************************************************************
+   private operation
+
+   if empty(this.stackTop.GetNext())
+      operation = .F.
+      InformationMessage("FEHLER: Versuch von leerem Stack zu lesen", "Info")
+   else
+      operation = this.stackTop
+      this.stackTop = this.stackTop.GetNext()
+   endif
+
+   return operation
+
+
+   ****************************************************************************
+
+   procedure Push(operation)
+
+   * Letzten Operationszustand sichern
+   ****************************************************************************
+   private newStackTop
+
+   newStackTop = new operationStateClass()      && Neuen Operationszustand erzeugen
+   newStackTop.Assign(operation)                && Ihm Eigenschaften
+                                                && zuweisen
+   newStackTop.SetNext(this.stackTop)           && GegenwÑrtig oberste zum nÑchsten machen
+
+   this.stackTop = newStackTop                  && Neue Operation zur obersten machen
+
+
+   ****************************************************************************
+
+   function PrevPrecedenceGreaterOrEqual(curPrecedence)
+
+   * Letzten Operationszustand wiederfinden
+   ****************************************************************************
+
+   return (this.stackTop.GetPrecedence() >= curPrecedence)
+
+
+
+ENDCLASS
+
+
+
+*******************************************************************************
+*******************************************************************************
+CLASS OperationStateClass
+
+* Diese Klasse definiert einen Operationszustand, der im Operationsstack
+* gespeichert wird
+*******************************************************************************
+
+
+   this.op = {|a,b|;}          && Operation die 2 Operanden akzeptiert, aber
+   this.precedence = -1        && nichts tut
+   this.value = 0
+   this.next = .F.
+
+
+
+   ****************************************************************************
+   procedure GetOp
+   ****************************************************************************
+
+   return this.op
+
+
+   ****************************************************************************
+   procedure SetOp(newOp)
+   ****************************************************************************
+
+   this.op = newOp
+
+
+   ****************************************************************************
+   procedure GetPrecedence
+   ****************************************************************************
+
+   return this.precedence
+
+
+   ****************************************************************************
+   procedure SetPrecedence(newPrecedence)
+   ****************************************************************************
+
+   this.precedence = newPrecedence
+
+
+   ****************************************************************************
+   procedure GetValue
+   ****************************************************************************
+
+   return this.value
+
+
+   ****************************************************************************
+   procedure SetValue(newValue)
+   ****************************************************************************
+
+   this.value = newValue
+
+
+   ****************************************************************************
+   procedure GetNext
+   ****************************************************************************
+
+   return this.next
+
+
+   ****************************************************************************
+   procedure SetNext(newNext)
+   ****************************************************************************
+
+   this.next = newNext
+
+
+   ****************************************************************************
+   procedure Assign(newOperationState)
+   ****************************************************************************
+
+   this.op = newOperationState.Doit
+   this.precedence = newOperationState.precedence
+   this.value = newOperationState.value
+
+
+
+ENDCLASS
+
+
+

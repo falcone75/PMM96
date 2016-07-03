@@ -1,0 +1,191 @@
+*** be_stat2.wfm
+
+parameter Formularnummer
+
+
+** END HEADER -- Diese Zeile nicht lîschen*
+* Erstellt am 15.04.1996
+*
+
+* public  -> be_stat0.wfm
+Formular&Formularnummer = new STATISTIK_AUSGABE()
+Formular&Formularnummer..open()
+
+CLASS STATISTIK_AUSGABE OF BERICHTSAUSGABE from basis.cfm
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "Statistik"
+   this.Text = "Statistik"
+   this.OnOpen = class::FORMULAR_OnOpen
+
+   
+  Procedure FORMULAR_OnOpen
+         
+
+   set printer off
+   set device to file (this.Berichtsdatei)  && set printer to... <-> lÑ·t nur 31 zeichen fÅr pfad und dateiname zu
+   
+   @  1,63 say dmy(date())
+   
+   @ 3,33 say "S T A T I S T I K"
+   
+   @  4,38 say "* * *"
+   @  5,((84-len(nutzer.mand_bez))/2) say nutzer.mand_bez
+   @  6,10 say repl(chr(95),64)
+   
+   local lnZeile, lnAnzahlPM_OhneSchrott, lnAnzahlPM_MitSchrott, lcBalken, lcAnzeige
+   lnZeile = 10
+   
+   sele bericht
+   go 2
+
+   lnAnzahlPM_OhneSchrott = lfdnr + val(codewort) + val(klassi) + kfr + anz_eins + val(hst)
+   lnAnzahlPM_MitSchrott  = lnAnzahlPM_OhneSchrott + val(spezinr)
+
+ 
+   @ lnZeile,10 say "1. Einsatzverhalten"
+
+
+   if empty(lfdnr)
+    lcAnzeige = "   0"
+   else
+    lcBalken = repl(chr(176),int(40*lfdnr/lnAnzahlPM_MitSchrott)) + "  " + ltrim(str(round(100*lfdnr/lnAnzahlPM_MitSchrott,0))) + "%"
+    lcAnzeige = str(lfdnr,4) + " " + lcBalken
+   endif
+   @ lnZeile+2,15 say "Im Einsatz : " + lcAnzeige
+   
+   if empty(codewort)
+    lcAnzeige = "   0"
+   else 
+    lcBalken = repl(chr(176),int(40*val(codewort)/lnAnzahlPM_MitSchrott)) + "  " + ltrim(str(round(100*val(codewort)/lnAnzahlPM_MitSchrott,0))) + "%"
+    lcAnzeige = str(val(codewort),4) + " " + lcBalken
+   endif
+   @ lnZeile+4,15 say "Lager      : " + lcAnzeige
+   
+   if empty(klassi)
+    lcAnzeige = "   0"
+   else 
+    lcBalken = repl(chr(176),int(40*val(klassi)/lnAnzahlPM_MitSchrott)) + "  " + ltrim(str(round(100*val(klassi)/lnAnzahlPM_MitSchrott,0))) + "%"
+    lcAnzeige = str(val(klassi),4) + " " + lcBalken
+   endif 
+   @ lnZeile+6,15 say "Zum PrÅfen : " + lcAnzeige
+   
+   if empty(kfr)
+    lcAnzeige = "   0"
+   else 
+    lcBalken = repl(chr(176),int(40*kfr/lnAnzahlPM_MitSchrott)) + "  " + ltrim(str(round(100*kfr/lnAnzahlPM_MitSchrott,0))) + "%"
+    lcAnzeige = str(kfr,4) + " " + lcBalken
+   endif
+   @ lnZeile+8,15 say "Reparatur  : " + lcAnzeige
+   
+   if empty(anz_eins)
+    lcAnzeige = "   0"
+   else 
+    lcBalken = repl(chr(176),int(40*anz_eins/lnAnzahlPM_MitSchrott)) + "  " + ltrim(str(round(100*anz_eins/lnAnzahlPM_MitSchrott,0))) + "%"
+    lcAnzeige = str(anz_eins,4) + " " + lcBalken
+   endif
+   @ lnZeile+10,15 say "éndern     : " + lcAnzeige
+   
+   if empty(spezinr)
+    lcAnzeige = "   0"
+   else 
+    lcBalken = repl(chr(176),int(40*val(spezinr)/lnAnzahlPM_MitSchrott)) + "  " + ltrim(str(round(100*val(spezinr)/lnAnzahlPM_MitSchrott,0))) + "%"
+    lcAnzeige = str(val(spezinr),4) + " " + lcBalken
+   endif
+   @ lnZeile+12,15 say "Schrott    : " + lcAnzeige
+      
+   if empty(hst)
+    lcAnzeige = "   0"
+   else 
+    lcBalken = repl(chr(176),int(40*val(hst)/lnAnzahlPM_MitSchrott)) + "  " + ltrim(str(round(100*val(hst)/lnAnzahlPM_MitSchrott,0))) + "%"
+    lcAnzeige = str(val(hst),4) + " " + lcBalken
+   endif
+   @ lnZeile+14,15 say "Rest       : " + lcAnzeige
+   
+   
+   @ lnZeile+16,14 say repl("-",19)
+   
+   @ lnZeile+18,15 say "Gesamt     :" + str(lnAnzahlPM_OhneSchrott,5)
+   
+   
+   @ lnZeile+21,10 say "2. Reparaturverhalten ( Ohne Schrott )"
+   
+   if lnAnzahlPM_OhneSchrott > 4
+   
+    lcAnzeige = 100 * val(bes) / lnAnzahlPM_OhneSchrott
+    do case
+     case lcAnzeige = 0
+      lcAnzeige = "0 %"
+     case lcAnzeige < 0.1
+      lcAnzeige = "< 0.1 %"
+     otherwise
+      lcAnzeige = ltrim(str(round(lcAnzeige,1),5,1)) + "%"
+    endcase
+   else
+    lcAnzeige = "Keine Auswertung"
+   endif
+   
+   @ lnZeile+23,15 say "ReparaturhÑufigkeit : " + lcAnzeige
+
+   if val(bes) > 4
+    lcAnzeige = ltrim(str(round(rep_kost/val(bes),1),5,1)) + " Reparaturen"
+   else
+    lcAnzeige = "Keine Auswertung"
+   endif
+
+   @ lnZeile+25,15 say "Mittl. Anzahl Rep.  : " + lcAnzeige
+
+   IF val(bes) > 4
+    lcAnzeige = chr(241) + " " + ltrim(str(round(sqrt((neuwert-rep_kost^2/val(bes))/val(bes)),1),5,1)) + " Reparaturen"
+   ELSE
+    lcAnzeige = "Keine Auswertung"
+   ENDIF
+
+   @ lnZeile+27,15 say "Streuung            : " + lcAnzeige
+
+
+   @ lnZeile+30,10 say "3. Lebensdauer ( Ohne Schrott )"
+   
+   @ lnZeile+32,15 say "Ausgewertete PrÅfmittel : " + ltrim(str(val(abw)))
+   
+   if val(abw) > 4
+    lcAnzeige = (Ñnd_kost/lnAnzahlPM_OhneSchrott) / 365
+    if lcAnzeige < 0.1
+     lcAnzeige = "< 0.1 Jahre"
+    else
+     lcAnzeige = ltrim(str(round(lcAnzeige,1),5,1)) + " Jahre"
+    endif
+   else
+    lcAnzeige = "Keine Auswertung"
+   endif
+   
+   @ lnZeile+34,15 say "Mittlere Lebensdauer    : " + lcAnzeige
+   
+   if val(abw) > 4
+    lcAnzeige = (sqrt((prÅf_kost-Ñnd_kost^2/lnAnzahlPM_OhneSchrott)/lnAnzahlPM_OhneSchrott)) / 365
+    if lcAnzeige < 0.1
+     lcAnzeige = "< " + chr(241) + " 0.1 Jahre"
+    else
+     lcAnzeige = chr(241) + " " + ltrim(str(round(lcAnzeige,1),5,1)) + " Jahre"
+    endif
+   else
+    lcAnzeige = "Keine Auswertung"
+   endif
+   
+   @ lnZeile+36,15 say "Sreuung                 : " + lcAnzeige
+
+
+   go 1
+
+   if ben = "Filterausgabe"
+    do AufnFilt.prg with Filter&Formularnummer, lnZeile + 39  && -> archiv_p.prg
+   endif 
+    
+   set device to screen
+   
+   use   && lîscht mit nosave in be_list0.wfm angelegte datei  
+   
+   form.ausgabe.datalink = "file " + form.Berichtsdatei
+   
+
+
+ENDCLASS

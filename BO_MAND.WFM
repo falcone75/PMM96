@@ -1,0 +1,387 @@
+*** bo_mand.wfm
+
+create session
+
+use mandant index mandant
+
+
+
+** END HEADER -- Diese Zeile nicht l”schen*
+* Erstellt am 20.03.1996
+*
+
+local f
+f = new KATALOG_MUSTER()
+f.ReadModal()
+
+CLASS KATALOG_MUSTER OF FORM
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "Mandanten"
+   this.Width = 90.833
+   this.Text = "BOSS [ Mandanten ]"
+   this.MDI = .F.
+   this.Left = 6.833
+   this.Top = 5.8
+   this.Height = 14.8818
+   
+   this.OnOpen = {; if glTipsUndTricks; msgbox("Beim Hinzufgen eines Mandanten muá der Name der Datenbankdatei mit der RETURN-Taste best„tigt werden. Weitere Hilfe mit Taste F1...","Tips & Tricks",64); endif}
+
+
+   DEFINE TEXT TEXT1 OF THIS;
+       PROPERTY; 
+         Width 20.833,;
+         Text "Name des Mandanten",;
+         Left 3,;
+         Top 2.293,;
+         Height 0.8809
+
+   DEFINE COMBOBOX NAME OF THIS;
+       PROPERTY; 
+         Width 62.835,;
+         OnOpen {; this.setfocus()},;
+         Left 24.3311,;
+         DataSource "FIELD mandant->mand_bez",;
+         Top 2.0586,;
+         Style 1,;
+         Height 1.1758
+
+   DEFINE TEXT KORREKTUR_TEXT OF THIS;
+       PROPERTY; 
+         Width 17.167,;
+         Text "Korrigierter Name",;
+         Visible .f.,;
+         Left 7.833,;
+         Top 5.1,;
+         Height 0.9414
+
+   DEFINE ENTRYFIELD KORREKTUR_EINGABE OF THIS;
+       PROPERTY; 
+         Width 59.166,;
+         ValidRequired .T.,;
+         Valid CLASS::KORREKTUR_EINGABE_VALID,;
+         Visible .f.,;
+         Left 25,;
+         MaxLength 50,;
+         Top 4.9,;
+         Height 1.2354
+
+   DEFINE TEXT DATEINAME_TEXT OF THIS;
+       PROPERTY; 
+         Width 25.667,;
+         Visible .f.,;
+         Text "Name der Datenbankdatei",;
+         Left 23.666,;
+         Top 5.1,;
+         Height 0.9414
+
+   DEFINE ENTRYFIELD DATEINAME_EINGABE OF THIS;
+       PROPERTY; 
+         Width 11.333,;
+         Function "!",;
+         Valid CLASS::DATEINAME_EINGABE_Valid,;
+         ValidRequired .T.,;
+         Visible .f.,;
+         Left 49.333,;
+         MaxLength 8,;
+         Top 4.9,;
+         Height 1.3
+   
+   DEFINE PUSHBUTTON SCHALTER_LOESCHEN OF THIS;
+       PROPERTY; 
+         Width 18.002,;
+         Text "L”schen",;
+         UpBitmap "RESOURCE #24",;
+         DisabledBitmap "RESOURCE #25",;
+         Left 14.1641,;
+         OnClick CLASS::SCHALTER_LOESCHEN_ONCLICK,;
+         Group .T.,;
+         Top 9.8818,;
+         SpeedBar .T.,;
+         Height 1.5293
+
+   DEFINE PUSHBUTTON SCHALTER_KORRIGIEREN OF THIS;
+       PROPERTY; 
+         Width 18.002,;
+         Text "Korrigieren",;
+         UpBitmap "RESOURCE #148",;
+         DisabledBitmap "RESOURCE #149",;
+         Left 36.1641,;
+         OnClick CLASS::SCHALTER_KORRIGIEREN_ONCLICK,;
+         Group .T.,;
+         Top 9.8818,;
+         SpeedBar .T.,;
+         Height 1.5293
+
+   DEFINE PUSHBUTTON SCHALTER_HINZUFUEGEN OF THIS;
+       PROPERTY; 
+         Width 18,;
+         Text "Hinzufgen",;
+         UpBitmap "RESOURCE #855",;
+         DisabledBitmap "RESOURCE #865",;
+         Left 58,;
+         OnClick CLASS::SCHALTER_HINZUFUEGEN_ONCLICK,;
+         Group .T.,;
+         Top 9.8232,;
+         SpeedBar .T.,;
+         Height 1.5293
+
+   DEFINE PUSHBUTTON SCHALTER_SCHLIESZEN OF THIS;
+       PROPERTY; 
+         Width 22.835,;
+         Text "Schlieáen",;
+         UpBitmap "RESOURCE #1005",;
+         DisabledBitmap "RESOURCE #1006",;
+         Left 33.6311,;
+         OnClick {; form.close()},;
+         Group .T.,;
+         Top 12.2939,;
+         SpeedBar .T.,;
+         Height 1.8232
+         
+
+*************************************************************************   
+   
+
+   Procedure SCHALTER_LOESCHEN_OnClick
+   
+     if .not. empty(form.name.value)
+      sele mandant
+      set order to 1
+      set exact on
+      seek ltrim(form.name.value)
+      set exact off
+      if .not. found()
+       msgbox("  Fehler: Der Mandant ist nicht vorhanden.","Achtung",48)
+      else
+    
+       if mandant == nutzer.mandant
+        msgbox("Fehler: Der aktuelle Mandant kann nicht gel”scht werden.","Achtung",48)
+        form.name.setfocus()
+        return
+       endif 
+              
+       if msgbox("Es wird der Mandant gel”scht. Auáerdem werden zu- geh”rige Eintr„ge aus den Katalogen Eigentmer und Standorte entfernt.","Mandanten l”schen...",273) = 1
+        if msgbox("Den Mandanten von der Festplatte l”schen ?","Mandant l”schen ?",292) = 6
+         
+         sele 5
+         
+         local lcMandanten, lnPos
+         use paszwort
+         scan all
+          if mandant->mand_nr $ mandanten
+           lcMandanten = ltrim(rtrim(mandanten))
+           lnPos = at(mandant->mand_nr,lcMandanten)
+           repl mandanten with left(lcMandanten,lnPos-2) + right(lcMandanten,len(lcMandanten)-lnPos-2)
+           if empty(mandanten)
+            msgbox('Der Nutzer "' + rtrim(name) + '" hat auf keinen Mandanten mehr Zugriff und wird deshalb ebenfalls gel”scht.',"Hinweis",64)
+            dele
+           endif 
+          endif
+         endscan
+         
+         use bes index bes
+         set key to mandant->mand_nr
+         dele all
+         
+         use pb_ort index pb_ort
+         set key to mandant->mand_nr
+         dele all
+         
+         use
+        
+         sele mandant
+
+         delete file (rtrim(mandant) + ".dbf")
+         delete file (rtrim(mandant) + ".dbt")
+         delete file (rtrim(mandant) + ".ndx")
+         
+         dele  && kein pack !!!
+
+         form.name.datasource = "field mandant->mand_bez"
+         form.name.value = ""
+        
+        endif
+      
+       endif
+      
+      endif
+      
+     endif    
+    
+   
+   
+   Procedure SCHALTER_KORRIGIEREN_OnClick
+   
+     if .not. empty(form.name.value)
+      sele mandant
+      set order to 1
+      set exact on
+      seek ltrim(form.name.value)
+      set exact off
+      if .not. found()
+       msgbox(" Fehler: Der Mandant ist nicht vorhanden.","Achtung",48)
+      else
+       form.name.enabled = .f.
+       form.schalter_loeschen.enabled    = .f.
+       form.schalter_korrigieren.enabled = .f.
+       form.schalter_hinzufuegen.enabled = .f.
+       form.schalter_schlieszen.enabled  = .f.
+       form.korrektur_text.visible  = .t.
+       form.korrektur_eingabe.value   = form.name.value
+       form.korrektur_eingabe.visible = .t.
+       form.korrektur_eingabe.setfocus()
+      endif
+     endif
+    
+   
+   
+    Procedure KORREKTUR_EINGABE_Valid
+   
+      if empty(this.value)
+       
+       this.value = form.name.value
+       
+      else
+       
+       sele mandant
+       set order to 1
+       if .not. mand_bez == ltrim(this.value)
+        repl mand_bez with ltrim(this.value)
+        form.name.datasource = "field mandant->mand_bez"
+        form.name.value = ltrim(this.value)
+       endif
+       
+       form.korrektur_text.visible       = .f.
+       form.korrektur_eingabe.visible    = .f.
+       
+       form.schalter_loeschen.enabled    = .t.
+       form.schalter_korrigieren.enabled = .t.
+       form.schalter_hinzufuegen.enabled = .t.
+       form.schalter_schlieszen.enabled  = .t.
+
+       form.name.enabled = .t.
+       form.name.setfocus()         
+      
+      endif
+      
+      return .t.
+      
+     
+    
+    Procedure SCHALTER_HINZUFUEGEN_OnClick
+   
+     if .not. empty(form.name.value)
+      sele mandant
+      set order to 1
+      set exact off  && !
+      seek ltrim(form.name.value)
+      if found()
+       msgbox("  Fehler: Der Mandant ist schon vorhanden.","Achtung",48)
+      else
+       form.name.enabled = .f.
+       form.schalter_loeschen.enabled    = .f.
+       form.schalter_korrigieren.enabled = .f.
+       form.schalter_hinzufuegen.enabled = .f.
+       form.schalter_schlieszen.enabled  = .f.
+       form.dateiname_text.visible = .t.
+       
+       local lcDateiname
+       lcDateiname = left(ltrim(form.name.value),8)
+       if " " $ lcDateiname
+        lcDateiname = left(lcDateiname,at(" ",lcDateiname)-1)
+       endif
+       
+       form.dateiname_eingabe.value = lcDateiname
+       form.dateiname_eingabe.visible = .t.
+       form.dateiname_eingabe.setfocus()
+      endif
+     endif
+    
+    
+   
+   Procedure DATEINAME_EINGABE_Valid
+    
+    if .not. empty(this.value)
+       
+     sele mandant
+     set order to 0
+     privat pcDateiname
+     pcDateiname = ltrim(rtrim(form.dateiname_eingabe.value))
+     loca for mandant == pcDateiname
+
+     if found()
+     
+      this.ValidErrorMsg = "  Fehler: Der Dateiname ist schon vorhanden."
+      return .f.
+     
+     else
+
+      local lcZeichen
+      for i=1 to len(pcDateiname)
+       lcZeichen = substr(pcDateiname,i,1)
+       do case
+        case lcZeichen $ "_^$~!#%&-{}@()"  && zul„ssige zeichen nach dos-konvention
+         *
+        case asc(upper(lcZeichen)) >= 65 .and. asc(upper(lcZeichen)) <= 90
+         *
+        case asc(lcZeichen) >= 48 .and. asc(lcZeichen) <= 57
+         *
+        otherwise
+         this.ValidErrorMsg = "Fehler: Der Dateiname enth„lt unzul„ssige Zeichen."
+         return .f.
+       endcase
+      next
+      
+      if msgbox("Den neuen Mandanten auf der Festplatte einrichten ?","Den Mandanten hinzufgen ?",292) = 6
+
+       sele mandant
+       set order to 0
+       go top
+       
+       sele 5
+       use (rtrim(mandant->mandant))
+       copy structure to (pcDateiname)
+       
+       use (pcDateiname)
+       index on codewort+str(lfdnr,5)+spezinr to (pcDateiname)
+       use
+      
+       sele mandant
+       set order to 0
+       set dele off
+       loca all for dele()
+       if found()
+        recall
+       else 
+        append blank
+       endif 
+       repl mand_nr with right("00"+ltrim(str(recno())),3), mandant with ltrim(form.dateiname_eingabe.value), mand_bez with ltrim(form.name.value)
+       set dele on
+       
+       set order to 1
+       form.name.datasource = "field mandant->mand_bez"
+       form.name.value = ""       
+ 
+      endif
+      
+     endif
+
+    endif
+    
+    form.dateiname_text.visible    = .f.
+    form.dateiname_eingabe.visible = .f.
+       
+    form.schalter_loeschen.enabled    = .t.
+    form.schalter_korrigieren.enabled = .t.
+    form.schalter_hinzufuegen.enabled = .t.
+    form.schalter_schlieszen.enabled  = .t.
+
+    form.name.enabled = .t.
+    form.name.setfocus()         
+      
+    return .t.
+    
+    
+    
+ENDCLASS
+

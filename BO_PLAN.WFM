@@ -1,0 +1,552 @@
+*** bo_plan.wfm
+
+create session
+
+use p_plan index p_plan
+
+sele 2
+use os index os.ix1, os.ix2
+
+
+** END HEADER -- Diese Zeile nicht l”schen*
+* Erstellt am 19.03.1996
+*
+
+local f
+f = new KATALOG_PLAN()
+f.ReadModal()
+
+CLASS KATALOG_PLAN OF FORM
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "Prfplan"
+   this.Width = 99
+   this.Text = "BOSS [ Katalog - Prfpl„ne ]"
+   this.MDI = .F.
+   this.Left = 2.8
+   this.Top = 3.4
+   this.Height = 20.1172
+   
+
+   DEFINE TEXT TEXT1 OF THIS;
+       PROPERTY; 
+         Width 20.668,;
+         Text "Name des Prfplanes",;
+         Left 6.165,;
+         Top 1.5293,;
+         Height 0.8809
+
+   DEFINE TEXT TEXT2 OF THIS;
+       PROPERTY; 
+         Width 33.333,;
+         Text "Zuordnung zu Prfmittelarten :",;
+         Left 35,;
+         Top 4,;
+         Height 1
+
+   DEFINE COMBOBOX NAME OF THIS;
+       PROPERTY; 
+         Width 65,;
+         OnOpen class::NAME_OnOpen,;
+         Visible .F.,;
+         Left 27.5,;
+         Style 1,;
+         DropDownHeight 15,; 
+         OnChange CLASS::NAME_ONCHANGE,;
+         DataSource "FIELD p_plan->pp_name",;
+         Top 1.3516,;
+         Height 1.1768
+
+   DEFINE LISTBOX PM_ARTEN OF THIS;
+       PROPERTY; 
+         Width 32,;
+         ID 101,;
+         Left 33,;
+         Top 5.5996,;
+         ColorHighLight "n/w+",;
+         Height 5.1172
+
+   DEFINE TEXT KORREKTUR_TEXT OF THIS;
+       PROPERTY; 
+         Width 17.166,;
+         Visible .F.,;
+         Text "Korrigierter Name",;
+         Left 13.5,;
+         Top 12.4395,;
+         Height 0.9395
+
+   DEFINE ENTRYFIELD KORREKTUR_EINGABE OF THIS;
+       PROPERTY; 
+         ValidRequired .T.,;
+         Width 54.9668,;
+         Valid CLASS::KORREKTUR_EINGABE_VALID,;
+         Visible .F.,;
+         ValidErrorMsg "Ungltige Eingabe",;
+         Left 30.6992,;
+         Value "KORREKTUR_EINGABE",;
+         MaxLength 50,;
+         Top 12.2051,;
+         Height 1.3
+
+   DEFINE EDITOR PLAN_KONV OF THIS;
+       PROPERTY; 
+         Width 87.2,;
+         Visible .f.,;
+         Left 5.66,;
+         Value "",;
+         Top 3.95,;
+         Height 13.35
+         
+   DEFINE OLE PLAN_OLE OF THIS;
+       PROPERTY; 
+         Width 87.2,;
+         Border .t.,;
+         Visible .f.,;
+         Left 5.66,;
+         Top 3.95,;
+         Height 13.35
+
+   DEFINE PUSHBUTTON SCHALTER_ABBRUCH OF THIS;
+       PROPERTY; 
+         Width 16,;
+         Visible .F.,;
+         Text "Abbruch",;
+         UpBitmap "RESOURCE #28",;
+         Left 28,;
+         OnClick CLASS::SCHALTER_ABBRUCH_ONCLICK,;
+         Group .T.,;
+         Top 18,;
+         Height 1.3516
+
+   DEFINE PUSHBUTTON SCHALTER_OK OF THIS;
+       PROPERTY; 
+         Width 16.002,;
+         Visible .F.,;
+         Text "OK",;
+         UpBitmap "RESOURCE #20",;
+         Left 52.1641,;
+         OnClick CLASS::SCHALTER_OK_ONCLICK,;
+         Group .T.,;
+         Top 18,;
+         Height 1.3516
+
+   DEFINE PUSHBUTTON SCHALTER_LOESCHEN OF THIS;
+       PROPERTY; 
+         Width 18,;
+         Text "L”schen",;
+         UpBitmap "RESOURCE #24",;
+         DisabledBitmap "RESOURCE #25",;
+         Left 19,;
+         OnClick CLASS::SCHALTER_LOESCHEN_ONCLICK,;
+         Group .T.,;
+         Top 15.1758,;
+         SpeedBar .T.,;
+         Height 1.5293
+
+   DEFINE PUSHBUTTON SCHALTER_KORRIGIEREN OF THIS;
+       PROPERTY; 
+         Width 18,;
+         Text "Korrigieren",;
+         UpBitmap "RESOURCE #148",;
+         DisabledBitmap "RESOURCE #149",;
+         Left 40,;
+         OnClick CLASS::SCHALTER_KORRIGIEREN_ONCLICK,;
+         Group .T.,;
+         Top 15.1758,;
+         SpeedBar .T.,;
+         Height 1.5293
+
+   DEFINE PUSHBUTTON SCHALTER_HINZUFUEGEN OF THIS;
+       PROPERTY; 
+         Width 18.002,;
+         Text "Hinzufgen",;
+         UpBitmap "RESOURCE #855",;
+         DisabledBitmap "RESOURCE #865",;
+         Left 60.6641,;
+         OnClick CLASS::SCHALTER_HINZUFUEGEN_ONCLICK,;
+         Group .T.,;
+         Top 15.1758,;
+         SpeedBar .T.,;
+         Height 1.5293
+
+   DEFINE PUSHBUTTON SCHALTER_SCHLIESZEN OF THIS;
+       PROPERTY; 
+         Width 22.835,;
+         Text "Schlieáen",;
+         UpBitmap "RESOURCE #1005",;
+         DisabledBitmap "RESOURCE #1006",;
+         Left 37.3311,;
+         OnClick {; form.close()},;
+         Group .T.,;
+         Top 17.5879,;
+         SpeedBar .T.,;
+         Height 1.8223
+         
+*************************************************************************
+  
+   Procedure NAME_OnOpen
+   
+    sele os
+    set filter to log_pm_art .and. codewort $ p_plan->pm_arten
+    
+    this.value = ""
+    this.visible = .t.
+    this.setfocus()
+    
+
+
+   Procedure NAME_OnChange
+   
+    sele p_plan
+    set order to 1
+    set exact on
+    seek ltrim(this.value)
+    set exact off
+   
+    sele os
+    set order to 2
+    form.pm_arten.datasource = "field os->ben"
+   
+   
+   
+   Procedure SCHALTER_LOESCHEN_OnClick
+   
+     if .not. empty(form.name.value)
+      sele p_plan
+      set order to 1
+      set exact on
+      seek ltrim(form.name.value)
+      set exact off
+      if .not. found()
+       msgbox("Fehler: Der Prfplan ist nicht vorhanden.","Achtung",48)
+      else
+       if msgbox("  Den Prfplan wirklich l”schen ?","Prfplan l”schen ?",292) = 6
+        dele
+        form.name.datasource = "field p_plan->pp_name"
+        form.name.value = ""
+        form.pm_arten.datasource = ""
+       endif
+      endif
+      form.name.setfocus()
+     endif    
+    
+   
+   
+   Procedure SCHALTER_KORRIGIEREN_OnClick
+   
+     if .not. empty(form.name.value)
+      sele p_plan
+      set order to 1
+      set exact on
+      seek ltrim(form.name.value)
+      set exact off
+      if .not. found()
+       msgbox("Fehler: Der Prfplan ist nicht vorhanden.","Achtung",48)
+      else
+       form.name.enabled = .f.
+       form.schalter_loeschen.enabled    = .f.
+       form.schalter_korrigieren.enabled = .f.
+       form.schalter_hinzufuegen.enabled = .f.
+       form.schalter_schlieszen.enabled  = .f.
+       form.korrektur_text.visible  = .t.
+       form.korrektur_eingabe.value   = form.name.value
+       form.korrektur_eingabe.visible = .t.
+       form.korrektur_eingabe.setfocus()
+      endif
+     endif
+    
+   
+   
+    Procedure KORREKTUR_EINGABE_Valid
+   
+      if empty(this.value)
+   
+       this.value = form.name.value
+       return .t.
+   
+      else
+      
+       sele p_plan
+       set order to 1
+       if .not. pp_name == ltrim(this.value)
+        repl pp_name with ltrim(this.value)
+        form.name.datasource = "field p_plan->pp_name"
+        form.name.value = ltrim(this.value)
+       endif
+       
+       if msgbox("  Zuordnung zu Prfmittelarten neu festlegen ?","Zuordnung neu festlegen ?",292) = 6
+   
+        local f
+        f = new ZUORDNUNG_FESTLEGEN()
+        f.readmodal()
+        
+        sele os
+        set order to 2
+        set filter to log_pm_art .and. codewort $ p_plan->pm_arten
+        form.pm_arten.datasource = "field os->ben"
+       
+       endif
+       
+       form.korrektur_text.visible       = .f.
+       form.korrektur_eingabe.visible    = .f.
+       
+       form.schalter_loeschen.visible    = .f.
+       form.schalter_korrigieren.visible = .f.
+       form.schalter_hinzufuegen.visible = .f.
+       form.schalter_schlieszen.visible  = .f.
+       
+       form.schalter_loeschen.enabled    = .t.
+       form.schalter_korrigieren.enabled = .t.
+       form.schalter_hinzufuegen.enabled = .t.
+       form.schalter_schlieszen.enabled  = .t.
+       
+       form.plan_ole.datalink = "p_plan->plan_ole"
+       
+       if form.plan_ole.oletype = 0
+        form.plan_konv.value = p_plan->plan_konv
+        form.schalter_ok.visible      = .t.
+        form.schalter_abbruch.visible = .t.
+        form.plan_konv.visible = .t.
+        form.plan_konv.setfocus()         
+       else
+        msgbox("Der Prfplan kann anschlieáend in der Windows Task-Liste gew„hlt werden.","Hinweis",64)
+        form.plan_ole.doverb(0)
+        form.schalter_loeschen.visible    = .t.
+        form.schalter_korrigieren.visible = .t.
+        form.schalter_hinzufuegen.visible = .t.
+        form.schalter_schlieszen.visible  = .t.
+        form.name.enabled = .t.
+        form.name.setfocus()             
+       endif
+       
+       return .t.
+       
+      endif
+      
+      
+     
+    
+    Procedure SCHALTER_HINZUFUEGEN_OnClick
+   
+     if empty(form.name.value)
+      return
+     endif 
+     
+     sele p_plan
+     set order to 1
+     set exact off  && !
+     seek ltrim(form.name.value)
+     if found()
+      msgbox("Fehler: Der Prfplan ist schon vorhanden.","Achtung",48)
+     else
+      
+      sele p_plan
+      set order to 0
+      append blank
+      repl pp_name with ltrim(form.name.value)
+       
+      local f
+      f = new ZUORDNUNG_FESTLEGEN()
+      f.readmodal()
+      sele os
+      set order to 2
+      form.pm_arten.datasource = "field os->ben" 
+       
+      sele p_plan       
+      set order to 1
+      form.name.datasource = "FIELD p_plan->pp_name"
+      form.name.value      = pp_name
+      form.name.enabled    = .f.
+       
+      form.schalter_loeschen.visible    = .f.
+      form.schalter_korrigieren.visible = .f.
+      form.schalter_hinzufuegen.visible = .f.
+      form.schalter_schlieszen.visible  = .f.
+       
+      if msgbox("  Ein OLE-Objekt fr den Prfplan einfgen ?","OLE-Objekt einbetten ?",292) = 6
+
+       repl ole plan_ole from ?
+       form.plan_ole.datalink = "p_plan->plan_ole"
+       
+       form.schalter_ok.visible = .t.
+       form.schalter_abbruch.visible = .t.
+       form.plan_ole.visible = .t.
+       form.plan_ole.setfocus()   
+       
+      else
+       
+       form.plan_konv.value = ""
+       form.schalter_ok.visible = .t.
+       form.schalter_abbruch.visible = .t.
+       form.plan_konv.visible = .t.
+       form.plan_konv.setfocus()         
+
+      endif
+  
+     endif
+    
+    
+   
+   Procedure SCHALTER_OK_OnClick
+    
+    if form.plan_ole.oletype = 0
+     repl p_plan->plan_konv with form.plan_konv.value
+     if empty(p_plan->plan_konv)
+      msgbox("   Der Prfplan wird gel”scht.","Hinweis",64)
+      dele
+      form.name.datasource = "FIELD p_plan->pp_name"
+      form.name.value = ""
+      form.pm_arten.datasource = ""
+     endif 
+    endif 
+    
+    form.schalter_ok.visible      = .f.
+    form.schalter_abbruch.visible = .f.
+    form.plan_konv.visible = .f.
+    form.plan_ole.visible  = .f.
+
+    form.schalter_loeschen.visible    = .t.
+    form.schalter_korrigieren.visible = .t.
+    form.schalter_hinzufuegen.visible = .t.
+    form.schalter_schlieszen.visible  = .t.
+    
+    form.name.enabled = .t.
+    form.name.setfocus()             
+    
+    
+    
+   
+   Procedure SCHALTER_ABBRUCH_OnClick
+    
+    if isblank(p_plan->plan_konv)   && hinzufuegen
+     dele
+     form.name.datasource = "FIELD p_plan->pp_name"
+     form.name.value = ""
+     form.pm_arten.datasource = ""
+    endif 
+    
+    form.schalter_ok.visible      = .f.
+    form.schalter_abbruch.visible = .f.
+    form.plan_konv.visible = .f.
+    form.plan_ole.visible  = .f. 
+   
+    form.schalter_loeschen.visible    = .t.
+    form.schalter_korrigieren.visible = .t.
+    form.schalter_hinzufuegen.visible = .t.
+    form.schalter_schlieszen.visible  = .t. 
+   
+    form.name.enabled = .t.
+    form.name.setfocus()             
+    
+    
+    
+ENDCLASS
+
+
+
+
+CLASS ZUORDNUNG_FESTLEGEN  OF FORM
+   this.Width = 53.5
+   this.Text = "Zuordnung festlegen"
+   this.mdi = .f.
+   this.Left = 24.8
+   this.Top = 8
+   this.Height = 13.8818
+
+
+   DEFINE TEXT TEXT1 OF THIS;
+       PROPERTY; 
+         Width 29.167,;
+         Text "Zuordnung zu Prfmittelarten :",;
+         Left 12.666,;
+         Top 0.9404,;
+         Height 1
+
+   DEFINE LISTBOX PM_ARTEN OF THIS;
+       PROPERTY; 
+         Width 32,;
+         OnOpen class::PM_ARTEN_OnOpen,;
+         ID 100,;
+         Multiple .t.,;
+         Left 10.666,;
+         Top 2.4697,;
+         ColorHighLight "HighLightText/HighLight",;
+         Height 8
+
+   DEFINE PUSHBUTTON ABBRUCH OF THIS;
+       PROPERTY; 
+         Width 16,;
+         OnOpen class::ABBRUCH_OnOpen,;
+         Text "Abbruch",;
+         UpBitmap "RESOURCE #28",;
+         DisabledBitmap "RESOURCE #29",;
+         OnClick {; form.close()},;
+         Left 8.833,;
+         Group .T.,;
+         Top 11.6465,;
+         Height 1.4121
+
+   DEFINE PUSHBUTTON OK OF THIS;
+       PROPERTY; 
+         Width 16,;
+         Text "OK",;
+         OnClick class::OK_OnClick,;
+         UpBitmap "RESOURCE #20",;
+         Left 28.5,;
+         Group .T.,;
+         Top 11.6465,;
+         Height 1.4121
+         
+         
+************************************************************************
+
+
+   Procedure ABBRUCH_OnOpen
+   
+    if empty(p_plan->pm_arten)   &&  -> hinzufgen
+     this.enabled = .f.
+    else
+     this.enabled = .t.
+    endif 
+   
+    if glTipsUndTricks
+     msgbox("Mehrere Prfmittelarten k”nnen durch gedrckhalten der Strg-Taste ausgew„hlt werden.","Tips & Tricks",64)
+    endif
+   
+   
+   Procedure PM_ARTEN_OnOpen
+
+    sele os
+    set order to 2
+    set filter to log_pm_art
+    this.datasource = "field os->ben"
+    
+    
+     
+   Procedure OK_OnClick
+   
+    local lcPmArten
+    lcPmArten = ""
+    sele os
+    set order to 2
+    for i=1 to listcount(form.pm_arten)
+     if .not. empty(listselected(form.pm_arten,i))
+      seek listselected(form.pm_arten,i)
+      lcPmArten = lcPmArten + codewort
+     endif      
+    next
+    do case
+     case empty(lcPmArten)
+      msgbox("Fehler: Es muá mindestens eine Prfmittelart festgelegt werden.","Achtung",48)
+      form.pm_arten.setfocus()
+     case len(lcPmArten) > 100
+      msgbox("Fehler: Es wurden zu viele Prfmittelarten festgelegt.","Achtung",48)
+      form.pm_arten.setfocus()
+     otherwise
+      set filter to log_pm_art .and. codewort $ p_plan->pm_arten
+      sele p_plan
+      repl pm_arten with lcPmArten
+      form.close()
+    endcase
+
+
+ENDCLASS

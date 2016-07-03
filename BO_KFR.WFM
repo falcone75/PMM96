@@ -1,0 +1,101 @@
+*** bo_kfr.wfm
+
+create session
+
+use kfr index kfr
+
+
+
+
+** END HEADER -- Diese Zeile nicht lîschen*
+* Erstellt am 18.03.1996
+*
+
+local f
+f = new KATALOG_KFR()
+f.ReadModal()
+
+CLASS KATALOG_KFR OF KATALOGFORM From "BASIS.CFM"
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "PrÅffrist"
+   this.Text = "BOSS [ Katalog - PrÅffristen ]"
+
+   this.schalter_loeschen.onclick    = class::schalter_loeschen_onclick
+   this.schalter_hinzufuegen.onclick = class::schalter_hinzufuegen_onclick
+   this.schalter_korrigieren.enabled = .f.
+
+
+   DEFINE TEXT TEXT2 OF THIS;
+       PROPERTY; 
+         Width 19,;
+         Text "PrÅffrist [Tage]",;
+         Left 20.9,;
+         Top 3.2939,;
+         Height 0.8818
+
+   DEFINE COMBOBOX KFR OF THIS;
+       PROPERTY; 
+         Width 11.05,;
+         OnOpen {; this.value = ""; this.visible = .t.; this.setfocus()},;
+         Left 36.43,;
+         DropDownHeight 8,;
+         Visible .f.,;
+         DataSource "field kfr->kfr",;
+         Style 1,;
+         Top 3.1172,;
+         Height 1.1768
+
+*************************************************************************
+
+   
+   Procedure SCHALTER_LOESCHEN_OnClick
+   
+     if .not. empty(form.kfr.value)
+      sele kfr
+      set order to 1
+      seek val(form.kfr.value)
+      if .not. found()
+       msgbox("    Fehler: Die PrÅffrist ist nicht vorhanden.","Achtung",48)
+      else
+       if msgbox("Die PrÅffrist: " + form.kfr.value + " Tage wirklich lîschen ?","PrÅffrist lîschen ?",292) = 6
+        dele
+        form.kfr.visible = .f.
+        form.kfr.datasource = "field kfr->kfr"
+        form.kfr.value = ""
+        form.kfr.visible = .t.
+       endif
+      endif
+     endif    
+    
+   
+    
+    Procedure SCHALTER_HINZUFUEGEN_OnClick
+   
+     if .not. empty(form.kfr.value)
+      sele kfr
+      set order to 1
+      seek val(form.kfr.value)
+      if found()
+       msgbox("    Fehler: Die PrÅffrist ist schon vorhanden.","Achtung",48)
+      else
+       do case
+        case type(form.kfr.value) <> "N"
+         msgbox("    Fehler: Falsche Schreibweise.","Achtung",48)       
+        case val(form.kfr.value) < 1 .or. "." $ form.kfr.value
+         msgbox("   Fehler: Nicht zulÑssige PrÅffrist.","Achtung",48)       
+        otherwise
+         set order to 0
+         append blank
+         repl kfr with ltrim(form.kfr.value)
+         set order to 1
+         form.kfr.visible = .f.
+         form.kfr.datasource = "field kfr->kfr"
+         form.kfr.value = ""
+         form.kfr.visible = .t.
+       endcase
+      endif
+     endif 
+   
+    
+    
+ENDCLASS

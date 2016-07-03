@@ -1,0 +1,88 @@
+*** ausgabe.wfm
+
+parameter Berichtsdatei
+
+** END HEADER -- Diese Zeile nicht l”schen*
+* Erstellt am 19.04.1996
+*
+
+local f
+f = new AUSGABEFORM()
+f.ReadModal()
+
+CLASS AUSGABEFORM OF FORM
+   this.Width = 60
+   this.Text = "Bericht ausgeben ..."
+   this.MDI = .F.
+   this.Left = 21.833
+   this.Top = 9
+   this.Height = 9.2939
+
+   DEFINE RECTANGLE RECHTECK1 OF THIS;
+       PROPERTY; 
+         Width 48.5,;
+         Text "  Ausgabe  ",;
+         Left 5.5,;
+         Top 1.293,;
+         Height 3.3535
+
+   DEFINE RADIOBUTTON AUSGABE_DRUCKER OF THIS;
+       PROPERTY; 
+         Width 20.333,;
+         Text "Aktueller Drucker",;
+         Group .T.,;
+         Left 10.333,;
+         Value .T.,;
+         Top 2.5879,;
+         Height 1.2939
+
+   DEFINE RADIOBUTTON AUSGABE_DATEI OF THIS;
+       PROPERTY; 
+         Width 16.333,;
+         Text "ASCII - Datei",;
+         Group .F.,;
+         Left 33.833,;
+         Value .F.,;
+         Top 2.5293,;
+         Height 1.3525
+
+   DEFINE PUSHBUTTON ABBRUCH OF THIS;
+       PROPERTY; 
+         Width 15,;
+         Text "Abbruch",;
+         Group .T.,;
+         UpBitmap "RESOURCE #28",;
+         Left 13.166,;
+         OnClick {; form.close()},;
+         Top 6.7051,;
+         Height 1.5293
+
+   DEFINE PUSHBUTTON OK OF THIS;
+       PROPERTY; 
+         Width 15,;
+         Text "OK",;
+         Group .T.,;
+         UpBitmap "RESOURCE #20",;
+         Left 31.666,;
+         OnClick CLASS::AUSGABE_ONCLICK,;
+         Top 6.7051,;
+         Height 1.5293
+
+
+   Procedure AUSGABE_OnClick
+   
+    if form.ausgabe_drucker.value
+     type (Berichtsdatei) to printer
+    else
+     local lcDateiname
+     lcDateiname = putfile("Name der ASCII-Datei","*","txt")
+     if .not. empty(lcDateiname)
+      type (Berichtsdatei) to file (lcDateiname)
+     endif
+    endif
+   
+    form.close()
+   
+   
+   
+ENDCLASS

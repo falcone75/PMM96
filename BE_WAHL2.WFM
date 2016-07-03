@@ -1,0 +1,259 @@
+*** be_wahl2.wfm
+
+parameter Formularnummer
+
+
+** END HEADER -- Diese Zeile nicht lîschen*
+* Erstellt am 15.04.1996
+*
+
+* public  -> be_wahl0.wfm
+Formular&Formularnummer = new WAHLFREIE_LISTE_AUSGABE()
+Formular&Formularnummer..open()
+
+CLASS WAHLFREIE_LISTE_AUSGABE OF BERICHTSAUSGABE from basis.cfm
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "Wahlfreie Liste"
+   this.Text   = "Wahlfreie Liste"
+   this.OnOpen = class::FORMULAR_OnOpen
+   
+
+  Procedure FORMULAR_OnOpen
+         
+   set printer off
+   set device to file (form.Berichtsdatei)  && set printer to... <-> lÑ·t nur 31 zeichen fÅr pfad und dateiname zu
+   
+   @ 1,63 say dmy(date())
+   
+   @ 3,28 say "W A H L F R E I E  L I S T E"
+   
+   @ 4,38 say "* * *"
+   @ 5,((84-len(nutzer.mand_bez))/2) say nutzer.mand_bez
+   @ 6,12 say repl(chr(95),60)
+   
+   local lnZeile
+   lnZeile = 9
+
+   sele bericht
+   go 1
+
+   if empty(not_konv)
+    @ lnZeile,5 say "Sortierreihenfolge : analog PrÅfmittelkartei"
+   else
+    @ lnZeile,5 say "Sortierreihenfolge :"
+    local lcSortierungListe, lnAnfangZeile, lnEndeZeile, lnAnzahlPluszeichen, lnPos
+    lcSortierungListe = not_konv
+    store 1 to lnAnfangZeile, lnAnzahlPluszeichen
+    
+    do while at(" + ",lcSortierungListe,lnAnzahlPluszeichen) > 0
+    
+     lnPos = at(" + ",lcSortierungListe,lnAnzahlPluszeichen) + 2
+    
+     do case
+      case lnPos - lnAnfangZeile > 52
+       @ lnZeile,26 say substr(lcSortierungListe,lnAnfangZeile,lnEndeZeile-lnAnfangZeile)
+       lnAnfangZeile = lnEndeZeile + 1
+       lnZeile = lnZeile + 1
+      case lnPos = len(lcSortierungListe)
+       @ lnZeile,26 say substr(lcSortierungListe,lnAnfangZeile,lnPos-lnAnfangZeile-2) 
+       lnAnzahlPluszeichen = 4711
+      otherwise 
+       lnEndeZeile = lnPos
+       lnAnzahlPluszeichen = lnAnzahlPluszeichen + 1
+     endcase
+     
+    enddo
+    
+   endif
+    
+   lnZeile = lnZeile + 2
+    
+   local lcAnzeigeListe, lnPosSternVor, lnPosSternDanach, lcNeueZeile, ;
+    lnLaengeString
+
+   lcAnzeigeListe = rtrim(prot_konv) + "*"
+   
+   lnIndex = 1
+   lcNeueZeile = ""
+   
+   do while at("*",lcAnzeigeListe,lnIndex+1) > 0
+
+    lnPosSternVor = at("*",lcAnzeigeListe,lnIndex)
+    lnPosSternDanach = at("*",lcAnzeigeListe,lnIndex+1)
+    lnLaengeString = val(substr(lcAnzeigeListe,lnPosSternVor+1,2))
+    lcAnzeige = left(substr(lcAnzeigeListe,lnPosSternVor+3,lnPosSternDanach-lnPosSternVor-3)+space(lnLaengeString),lnLaengeString) + " "
+   
+    if len(lcNeueZeile + lcAnzeige) <= 74
+     lcNeueZeile = lcNeueZeile + lcAnzeige
+     if at("*",lcAnzeigeListe,lnIndex+2) = 0
+      @ lnZeile,5 say lcNeueZeile
+     endif 
+    else
+     @ lnZeile,5 say lcNeueZeile
+     lnZeile = lnZeile + 1
+     if at("*",lcAnzeigeListe,lnIndex+2) = 0
+      @ lnZeile,5 say lcAnzeige
+     else 
+      lcNeueZeile = lcAnzeige
+     endif
+    endif
+    
+    lnIndex = lnIndex + 1
+   
+   enddo
+   
+   local lnAnzahlAnzeigefelder
+   
+   if "15Nummer*" $ lcAnzeigeListe
+    lnAnzahlAnzeigefelder = lnIndex
+   else
+    lnAnzahlAnzeigefelder = lnIndex - 1
+   endif
+   
+   @ lnZeile,5 say repl("-",74)
+    
+   lnZeile = lnZeile + 1
+   
+   if .not. empty(key(1)) 
+    set order to 1
+   endif 
+
+   local lnIndex, lcNeueZeile, lcAnzeige
+   privat pcFeld
+   
+   scan all for recno() > 1
+   
+    lcNeueZeile = ""
+    lnIndex = 3
+    
+    do while lnIndex <= lnAnzahlAnzeigefelder + 2
+    
+     pcFeld = upper(field(lnIndex))
+     
+     do case
+      case pcFeld = "LFDNR"
+       if lfdnr > 0
+        lcAnzeige = left(ltrim(str(lfdnr))+space(15),15)
+       else
+        lcAnzeige = spezinr
+       endif
+      case pcFeld = "SPEZINR"
+       lcAnzeige = ""
+      case pcFeld = "KLASSI"
+       lcAnzeige = left(klassi+space(14),14)
+      case pcFeld = "P_ZEIT"
+       if .not. empty(p_zeit)
+        lcAnzeige = left(ltrim(str(p_zeit))+" min    ",8)
+       else
+        lcAnzeige = space(8)
+       endif 
+      case pcFeld = "ERST_EINS"
+       if .not. empty(erst_eins)
+        lcAnzeige = dtoc(erst_eins) + " "
+       else
+        lcAnzeige = space(11) 
+       endif 
+      case pcFeld = "KFR"
+       lcAnzeige = left(ltrim(str(kfr)) + " Tage    ",9)
+      case pcFeld = "PB_ART"
+       lcAnzeige = pb_art + "  "
+      case pcFeld = "PB_DATUM"
+       lcAnzeige = dtoc(pb_datum) + space(6)
+      case pcFeld = "PB_KOST"
+       if .not. empty(pb_kost)
+        lcAnzeige = left(ltrim(str(pb_kost,8,2))+" DM"+space(14),17)
+       else
+        lcAnzeige = space(17)  
+       endif 
+      case pcFeld = "HISTORIE"  && enthÑhlt bemerkung der bewegung
+       if .not. empty(historie)
+        lcAnzeige = left(historie+space(30),30)
+       else
+        lcAnzeige = space(30)  
+       endif 
+      case pcFeld = "ANZ_EINS"
+       lcAnzeige = left(ltrim(str(anz_eins))+"x       ",8)
+      case pcFeld = "ANZ_REP"
+       lcAnzeige = left(ltrim(str(anz_rep))+"x"+space(10),11)
+      case pcFeld = "NEUWERT"
+       if .not. empty(neuwert)
+        lcAnzeige = left(ltrim(str(neuwert,10,2))+" DM"+space(10),13)
+       else
+        lcAnzeige = space(13) 
+       endif 
+      case pcFeld = "ND"
+       if .not. empty(nd)
+        lcAnzeige = left(ltrim(str(nd))+" Jahre"+space(7),13)
+       else
+        lcAnzeige = space(13) 
+       endif 
+      case pcFeld = "PRöF_KOST"
+       lcAnzeige = left(ltrim(str(prÅf_kost,10,2))+" DM"+space(10),13)
+      case pcFeld = "REP_KOST"
+       lcAnzeige = left(ltrim(str(rep_kost,10,2)) + " DM"+space(12),15)
+      case pcFeld = "éND_KOST"
+       lcAnzeige = left(ltrim(str(Ñnd_kost,10,2)) + " DM"+space(12),15)
+      case pcFeld = "MESSAGE"   && enthÑhlt zeitwert[DM]
+       if .not. empty(message)
+        lcAnzeige = left(ltrim(rtrim(message))+" DM"+space(10),13)
+       else
+        lcAnzeige = space(13)
+       endif
+      case pcFeld = "PB_BEM"   && enthÑhlt zeitwert[%]
+       if .not. empty(pb_bem)
+        lcAnzeige = left(ltrim(rtrim(pb_bem))+" %"+space(10),12)
+       else
+        lcAnzeige = space(12)
+       endif
+      otherwise
+       lcAnzeige = &pcFeld
+     endcase
+
+     if pcFeld <> "SPEZINR"
+      if empty(lcAnzeige)
+       lcAnzeige = left("---"+space(len(lcAnzeige)),len(lcAnzeige))
+      endif
+      lcAnzeige = lcAnzeige + " "
+     endif
+     
+     if len(lcNeueZeile + lcAnzeige) <= 74
+      lcNeueZeile = lcNeueZeile + lcAnzeige
+      if lnIndex = lnAnzahlAnzeigefelder + 2
+       @ lnZeile,5 say lcNeueZeile
+      endif 
+     else
+      @ lnZeile,5 say lcNeueZeile
+      lnZeile = lnZeile + 1
+      if lnIndex = lnAnzahlAnzeigefelder + 2
+       @ lnZeile,5 say lcAnzeige
+      else 
+       lcNeueZeile = lcAnzeige
+      endif
+     endif
+     
+     lnIndex = lnIndex + 1
+     
+    enddo
+    
+    lnZeile = lnZeile + 2
+    
+   endscan 
+
+   do AufnFilt.prg with Filter&Formularnummer, lnZeile + 1   && -> archiv_p.prg
+    
+   set device to screen
+
+   if empty(key(1))
+    use  && lîscht mit nosave in be_wahl0.wfm angelegte datei
+   else
+    local lcIndexdatei
+    lcIndexDatei = substr(dbf(),3,len(dbf())-6) + ".NDX"  && dbf() schreibt an den anfang das laufwerk
+    use
+    dele file (lcIndexdatei)
+   endif
+   
+   form.ausgabe.datalink = "file " + form.Berichtsdatei
+   
+
+
+ENDCLASS

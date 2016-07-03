@@ -1,0 +1,351 @@
+*** bo_indiz.wfm
+
+create session
+set safety off
+
+use mandant index mandant
+set filter to .not. mandant == nutzer.mandant
+
+
+
+
+** END HEADER -- Diese Zeile nicht lîschen*
+* Erstellt am 25.03.1996
+*
+
+local f
+f = new NEUINDIZIEREN()
+f.ReadModal()
+
+CLASS NEUINDIZIEREN OF FORM
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "Indizieren"
+   this.Width = 97.5
+   this.Text = "BOSS [ Neuindizieren ] "
+   this.MDI = .F.
+   this.Left = 3.666
+   this.Top = 3.2939
+   this.Height = 20.4697
+
+   this.OnOpen = {; if glTipsUndTricks; msgbox("Die Datenbankdatei des aktuellen Mandanten kann nicht indiziert werden. Weitere Hilfe mit Taste F1...","Tips & Tricks",64); endif}
+   
+
+   DEFINE RECTANGLE RECHTECK1 OF THIS;
+       PROPERTY; 
+         Width 56.3359,;
+         ColorNormal "RB/BtnFace",;
+         Text " Mandanten ",;
+         Left 20.1641,;
+         Top 1,;
+         Height 8.7637
+
+    DEFINE LISTBOX MANDANTEN OF THIS;
+       PROPERTY; 
+         Width 49.3359,;
+         ColorHighLight "n/w+",;
+         Left 23.6641,;
+         Enabled .F.,;
+         DataSource "FIELD mandant->mand_bez",;
+         Top 2.2344,;
+         Height 5.6475
+   
+   DEFINE CHECKBOX LOG_MANDANT OF THIS;
+       PROPERTY; 
+         Width 33.834,;
+         Text "Einen Mandanten neu indizieren",;
+         Left 31.332,;
+         Group .T.,;
+         Value .F.,;
+         OnChange CLASS::LOG_MANDANT_ONCHANGE,;
+         Top 8.2344,;
+         Height 1.0596
+
+   DEFINE CHECKBOX PASZWORT OF THIS;
+       PROPERTY; 
+         Width 16.168,;
+         Text "Pa·wortdatei",;
+         Left 25.832,;
+         Group .T.,;
+         Value .F.,;
+         Top 10.5,;
+         Height 0.8525
+
+   DEFINE CHECKBOX MANDANT OF THIS;
+       PROPERTY; 
+         Width 19.501,;
+         Text "Mandantendatei",;
+         Left 53.165,;
+         Group .T.,;
+         Value .F.,;
+         Top 10.5,;
+         Height 0.9111
+
+   DEFINE RECTANGLE RECHTECK2 OF THIS;
+       PROPERTY; 
+         Width 87.502,;
+         ColorNormal "RB/BtnFace",;
+         Text " Kataloge ",;
+         Left 4.6641,;
+         Top 11.6465,;
+         Height 4.6475
+
+   DEFINE CHECKBOX OS OF THIS;
+       PROPERTY; 
+         Width 19.4668,;
+         Text "Ordnungssystem",;
+         Left 7.6992,;
+         Group .T.,;
+         Value .F.,;
+         Top 12.8232,;
+         Height 0.8818
+
+   DEFINE CHECKBOX ABW OF THIS;
+       PROPERTY; 
+         Width 19.8008,;
+         Text "Zul. Abweichung",;
+         Left 7.6992,;
+         Group .T.,;
+         Value .F.,;
+         Top 13.8232,;
+         Height 0.8232
+
+   DEFINE CHECKBOX ART OF THIS;
+       PROPERTY; 
+         Width 20.1338,;
+         Text "Art der Bewegung",;
+         Left 7.6992,;
+         Group .T.,;
+         Value .F.,;
+         Top 14.8232,;
+         Height 0.8818
+
+   DEFINE CHECKBOX HST OF THIS;
+       PROPERTY; 
+         Width 12.667,;
+         Text "Hersteller",;
+         Left 31.666,;
+         Group .T.,;
+         Value .F.,;
+         Top 12.8232,;
+         Height 0.8232
+
+   DEFINE CHECKBOX STANDORT OF THIS;
+       PROPERTY; 
+         Width 13,;
+         Text "Standorte",;
+         Left 31.666,;
+         Group .T.,;
+         Value .F.,;
+         Top 13.8232,;
+         Height 0.8232
+
+   DEFINE CHECKBOX MERKMALE OF THIS;
+       PROPERTY; 
+         Width 13,;
+         Text "Merkmale",;
+         Left 31.666,;
+         Group .T.,;
+         Value .F.,;
+         Top 14.8232,;
+         Height 0.9414
+
+   DEFINE CHECKBOX BES OF THIS;
+       PROPERTY; 
+         Width 15.333,;
+         Text "EigentÅmer",;
+         Left 47.833,;
+         Group .T.,;
+         Value .F.,;
+         Top 12.8232,;
+         Height 0.8232
+
+   DEFINE CHECKBOX KLASSI OF THIS;
+       PROPERTY; 
+         Width 16.667,;
+         Text "Klassifikation",;
+         Left 47.833,;
+         Group .T.,;
+         Value .F.,;
+         Top 13.8232,;
+         Height 0.7646
+
+   DEFINE CHECKBOX KFR OF THIS;
+       PROPERTY; 
+         Width 17.5,;
+         Text "PrÅffristen",;
+         Left 47.833,;
+         Group .T.,;
+         Value .F.,;
+         Top 14.8232,;
+         Height 0.7646
+
+   DEFINE CHECKBOX MUSTER OF THIS;
+       PROPERTY; 
+         Width 22.167,;
+         Text "MusterprÅfprotokoll",;
+         Left 68.166,;
+         Group .T.,;
+         Value .F.,;
+         Top 12.8232,;
+         Height 0.8232
+
+   DEFINE CHECKBOX P_PLAN OF THIS;
+       PROPERTY; 
+         Width 12.834,;
+         Text "PrÅfplÑne",;
+         Left 68.166,;
+         Group .T.,;
+         Value .F.,;
+         Top 13.8232,;
+         Height 0.7646
+
+   DEFINE PUSHBUTTON ABBRUCH_SCHALTER OF THIS;
+       PROPERTY; 
+         Width 20.002,;
+         OnOpen {; this.setfocus()},;
+         Text "Abbruch",;
+         UpBitmap "RESOURCE #28",;
+         DisabledBitmap "RESOURCE #29",;
+         Left 20,;
+         OnClick {; form.close()},;
+         Group .T.,;
+         Top 18.1758,;
+         Height 1.5293
+
+   DEFINE PUSHBUTTON OK_SCHALTER OF THIS;
+       PROPERTY; 
+         Width 20.002,;
+         Text "Neuindizieren",;
+         UpBitmap "RESOURCE #20",;
+         Left 54,;
+         OnClick CLASS::OK_SCHALTER_ONCLICK,;
+         Group .T.,;
+         Top 18.1758,;
+         Height 1.5293
+         
+*************************************************************************
+
+   Procedure LOG_MANDANT_OnChange
+   
+    if this.value
+     form.mandanten.ColorHighLight = "HighLightText/HighLight"
+    else
+     form.mandanten.ColorHighLight = "n/w+"
+    endif
+   
+    form.mandanten.enabled = this.value
+    
+    
+   
+   Procedure OK_SCHALTER_OnClick
+   
+    local llZeiger
+    llZeiger = .f.
+   
+    if form.log_mandant.value
+     llZeiger = .t.
+     sele mandant
+     set order to 1
+     seek listselected(form.mandanten)
+     privat pcDatei
+     pcDatei = rtrim(mandant)
+     sele 5
+     use (pcDatei)  
+     index on codewort+str(lfdnr,5)+spezinr to (pcDatei)
+     use
+    endif
+    
+    sele 5
+    
+    if form.os.value
+     llZeiger = .t.
+     use os
+     index on codewort+ben to os.ix1
+     index on ben          to os.ix2
+    endif
+    
+    if form.hst.value
+     llZeiger = .t.
+     use hst
+     index on hst to hst
+    endif
+    
+    if form.bes.value 
+     llZeiger = .t.
+     use bes 
+     index on mand_nr+bes to bes
+    endif
+    
+    if form.merkmale.value
+     llZeiger = .t.
+     use merkmale
+     index on codewort+merkmale to merkmale
+    endif
+    
+    if form.abw.value
+     llZeiger = .t.
+     use abw
+     index on codewort+abw to abw
+    endif
+    
+    if form.kfr.value
+     llZeiger = .t.
+     use kfr
+     index on val(kfr) to kfr
+    endif
+    
+    if form.klassi.value
+     llZeiger = .t.
+     use klassi
+     index on klassi to klassi
+    endif
+    
+    if form.art.value
+     llZeiger = .t.
+     use pb_art
+     index on pb_art to pb_art
+    endif
+    
+    if form.standort.value
+     llZeiger = .t.
+     use pb_ort
+     index on mand_nr+art_kurz+pb_ort to pb_ort
+    endif
+    
+    if form.muster.value
+     llZeiger = .t.
+     use muster
+     index on mu_name to muster
+    endif
+    
+    if form.p_plan.value
+     llZeiger = .t.
+     use p_plan
+     index on pp_name to p_plan
+    endif
+    
+    if form.paszwort.value
+     llZeiger = .t.
+     use paszwort
+     index on paszwort to paszwort.ix1
+     index on name     to paszwort.ix2
+    endif
+   
+    if form.mandant.value
+     llZeiger = .t.
+     sele mandant
+     use mandant
+     index on mand_bez to mandant
+    endif
+   
+   
+    if .not. llZeiger
+     msgbox("Es wurden keine Dateien zum Neuindizieren ausgewÑhlt.","Hinweis",64)
+    else
+     msgbox("   Das Neuindizieren ist abgeschlossen.","Hinweis",64)
+     form.close()
+    endif
+   
+    
+   
+ENDCLASS

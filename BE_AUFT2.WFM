@@ -1,0 +1,205 @@
+*** be_auft2.wfm
+
+parameter Formularnummer
+
+
+** END HEADER -- Diese Zeile nicht lîschen*
+* Erstellt am 15.04.1996
+*
+
+* public  -> be_auft0.wfm
+Formular&Formularnummer = new PRUEFAUTRAG_AUSGABE()
+Formular&Formularnummer..open()
+
+CLASS PRUEFAUTRAG_AUSGABE OF BERICHTSAUSGABE from basis.cfm
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "PrÅfauftrag"
+   this.Text = "PrÅfauftrag"
+   this.OnOpen = class::FORMULAR_OnOpen
+
+   
+  Procedure FORMULAR_OnOpen
+         
+   sele bericht
+   go 1
+
+   local lcLogik, lcEmpfaenger, lcAbsender, lnZeile, lcIndexDatei
+   
+   lcLogik = rtrim(klassi)
+   lcEmpfaenger = rtrim(not_konv)
+   lcAbsender   = rtrim(prot_konv)
+   
+   lcIndexDatei = substr(dbf(),3,len(dbf())-6) + ".NDX"   && dbf() schreibt an den anfang das laufwerk
+   
+   index on ben+str(lfdnr,5)+spezinr to (lcIndexDatei)
+   set order to 1
+   
+   set printer off
+   set device to file (this.Berichtsdatei)  && set printer to... <-> lÑ·t nur 31 zeichen fÅr pfad und dateiname zu
+   
+   lnZeile = 1
+   
+   @ lnZeile  ,48 say left(lcAbsender,30)
+   @ lnZeile+1,49 say substr(lcAbsender,31,30)
+   @ lnZeile+2, 5 say left(lcEmpfaenger,30)
+   @ lnZeile+3, 6 say substr(lcEmpfaenger,31,30) + space(12) + substr(lcAbsender,61,30)
+   @ lnZeile+4,48 say substr(lcAbsender,91,30)
+   @ lnZeile+5, 5 say substr(lcEmpfaenger,61,30)
+   @ lnZeile+6, 5 say substr(lcEmpfaenger,91,30)
+   
+   lnZeile = lnZeile + 10   
+   
+   @ lnZeile,60 say dmy(date())
+   
+   if substr(lcLogik,6,1) = "0"
+    @ lnZeile+2,32 say "P R ö F A U T R A G"
+    @ lnZeile+3,20 say repl(chr(95),44) 
+   else
+    @ lnZeile+2,19 say "E R S T E L L U N G  eines Kostenvoranschlages"
+    @ lnZeile+3,14 say repl(chr(95),56)
+   endif
+
+   lnZeile = lnZeile + 6
+   
+   if substr(lcLogik,6,1) = "0"
+    @ lnZeile,10 say "Bitte prÅfen Sie folgende PrÅfmittel :"
+    lnZeile = lnZeile + 1
+   else
+    @ lnZeile  ,5 say " Wir mîchten Sie bitten, uns fÅr die PrÅfung folgender PrÅfmittel einen"
+    @ lnZeile+1,5 say "Kostenvoranschlag zu erarbeiten :"
+    lnZeile = lnZeile + 2
+   endif
+   
+   local lcZeile, lcAnzeige
+   
+   set order to 1
+   
+   scan all for recno() > 1
+
+    lcZeile = rtrim(ben)
+ 
+    if empty(merkmale)
+     lcZeile = lcZeile + " ( --- ) "
+    else 
+     lcZeile = lcZeile + " ( " + rtrim(merkmale) + " ) "
+    endif
+    
+    lcZeile = lcZeile + rtrim(codewort) + "/"
+    
+    if lfdnr > 0
+     lcZeile = lcZeile + ltrim(str(lfdnr))
+    else
+     lcZeile = lcZeile + spezinr
+    endif
+    
+    if len(lcZeile) > 80
+     local lcNummer
+     lcNummer = rtrim(codewort) + "/"
+     if lfdnr > 0
+      lcNummer = lcNummer + ltrim(str(lfdnr))
+     else
+      lcNummer = lcNummer + spezinr
+     endif
+     lcZeile = rtrim(ben) + " ( " + left(rtrim(merkmale),68-len(rtrim(ben)+lcNummer)) + ".. ) " + lcNummer
+    endif    
+ 
+    lnZeile = lnZeile + 1
+    @ lnZeile,5 say lcZeile
+  
+    if substr(lcLogik,1,1) = "1"
+     if empty(abw)
+      lcAnzeige = "?" + space(19)
+     else
+      lcAnzeige = abw
+     endif
+     lcZeile = "ZulÑssige Abweichung : " + lcAnzeige + space(3)
+    else
+     lcZeile = ""
+    endif 
+    
+    if substr(lcLogik,4,1) = "1"
+     if empty(erst_eins)
+      lcAnzeige = "ohne" + space(6)
+     else
+      lcAnzeige = dtoc(erst_eins)
+     endif
+     lcZeile = lcZeile + "Ersteinsatz : " + lcAnzeige + space(3)
+    endif 
+    
+    if substr(lcLogik,2,1) = "1"
+     lcAnzeige = "Hersteller : "
+     if empty(hst)
+      lcAnzeige = lcAnzeige + "?" + space(27)
+     else
+      lcAnzeige = lcAnzeige + hst + space(3)
+     endif
+     if len(lcZeile+lcAnzeige) > 72
+      lnZeile  = lnZeile + 1
+      @ lnZeile,6 say lcZeile
+      lcZeile = lcAnzeige
+     else
+      lcZeile = lcZeile + lcAnzeige
+     endif 
+    endif 
+      
+    if substr(lcLogik,3,1) = "1"
+     lcAnzeige = "GerÑte-Nr. : "
+     if empty(geraete_nr)
+      lcAnzeige = lcAnzeige + "?" + space(17)
+     else
+      lcAnzeige = lcAnzeige + geraete_nr + space(3)
+     endif
+     if len(lcZeile+lcAnzeige) > 72
+      lnZeile  = lnZeile + 1
+      @ lnZeile,6 say lcZeile
+      lcZeile = lcAnzeige
+     else
+      lcZeile = lcZeile + lcAnzeige
+     endif 
+    endif   
+
+    if substr(lcLogik,5,1) = "1"
+     lcAnzeige = "Anzahl EinsÑtze : " + left(ltrim(str(anz_eins))+space(4),4) + space(3)
+     if len(lcZeile+lcAnzeige) > 72
+      lnZeile  = lnZeile + 1
+      @ lnZeile,6 say lcZeile
+      lcZeile = lcAnzeige
+     else
+      lcZeile = lcZeile + lcAnzeige
+     endif 
+    endif   
+    
+    if .not. empty(lcZeile)
+     lnZeile = lnZeile + 1
+     @ lnZeile,6 say lcZeile
+    endif
+    
+    lnZeile = lnZeile + 1
+    
+   endscan
+   
+   lnZeile = lnZeile + 3
+   
+   @ lnZeile,9 say "Mit freundlichen GrÅ·en"
+   
+   lnZeile = lnZeile + 4
+
+   @ lnZeile,10 say "....................."
+   @ lnZeile,(40-len(rtrim(substr(lcAbsender,31,30))))/2 say substr(lcAbsender,31,30)
+
+   if substr(lcLogik,7,1) = "1"
+    do AufnFilt.prg with Filter&Formularnummer, lnZeile + 3   && -> archiv_p.prg
+   endif 
+    
+   set device to screen
+   
+   use   && lîscht mit nosave in be_list0.wfm angelegte datei  
+   dele file (lcIndexdatei)
+   
+   form.ausgabe.datalink = "file " + form.Berichtsdatei
+   
+
+
+ENDCLASS
+  
+  

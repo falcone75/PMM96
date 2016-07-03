@@ -1,0 +1,244 @@
+*** bo_bes.wfm
+
+create session
+
+use mandant index mandant
+
+sele 2
+use bes index bes
+
+
+
+
+** END HEADER -- Diese Zeile nicht lîschen*
+* Erstellt am 16.03.1996
+*
+
+local f
+f = new KATALOG_BES()
+f.ReadModal()
+
+CLASS KATALOG_BES OF KATALOGFORM From "BASIS.CFM"
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "EigentÅmer"
+   this.Text = "BOSS [ Katalog - EigentÅmer ]"
+   
+   this.OnOpen = {; if glTipsUndTricks; msgbox("Jeder EigentÅmer wird einem Mandanten zugeordnet, so da· beim Editieren von PrÅfmittelkarten im Katalog immer nur die EigentÅmer des aktuellen Mandanten angezeigt werden. Weitere Hilfe mit Taste F1...","Tips & Tricks",64); endif}
+      
+   this.schalter_loeschen.onclick    = class::schalter_loeschen_onclick
+   this.schalter_korrigieren.onclick = class::schalter_korrigieren_onclick
+   this.schalter_hinzufuegen.onclick = class::schalter_hinzufuegen_onclick
+
+
+   DEFINE TEXT TEXT1 OF THIS;
+       PROPERTY; 
+         Width 9,;
+         Text "Mandant",;
+         Left 5.333,;
+         Top 1.7051,;
+         Height 0.9414
+
+   DEFINE COMBOBOX MANDANT OF THIS;
+       PROPERTY; 
+         OnOpen {; this.value = ""; this.visible = .t.},;
+         Width 51.333,;
+         Style 2,;
+         OnChange class::MANDANT_OnChange,;
+         Visible .f.,;
+         Left 14.333,;
+         DataSource "FIELD MANDANT->MAND_BEZ",;
+         Top 1.4697,;
+         Height 1.1768
+   
+   DEFINE TEXT TEXT2 OF THIS;
+       PROPERTY; 
+         Width 13.1689,;
+         Text "EigentÅmer",;
+         Left 19.1641,;
+         Top 5.0586,;
+         Height 0.8809
+
+   DEFINE COMBOBOX BES OF THIS;
+       PROPERTY; 
+         Width 21.666,;
+         Style 1,;
+         Value "",; 
+         Enabled .f.,;
+         Left 30.5,;
+         Top 4.8232,;
+         Height 1.1768
+
+   DEFINE TEXT KORREKTUR_TEXT OF THIS;
+       PROPERTY; 
+         Width 23.333,;
+         Text "Korrigierter EigentÅmer",;
+         Left 15,;
+         Visible .f.,;
+         Top 7.3525,;
+         Height 0.9414
+
+   DEFINE ENTRYFIELD KORREKTUR_EINGABE OF THIS;
+       PROPERTY; 
+         Width 19,;
+         Valid CLASS::KORREKTUR_EINGABE_VALID,;
+         Left 37.333,;
+         MaxLength 15,;
+         Visible .f.,;
+         Top 7.2344,;
+         ValidRequired .T.,;
+         Height 1.1182
+
+   
+************************************************************************   
+
+   
+   Procedure MANDANT_OnChange
+   
+    sele mandant
+    set order to 1
+    set exact on
+    seek this.value
+    set exact off
+
+    form.bes.visible = .f.
+    sele bes
+    set order to 1
+    set key to mandant->mand_nr
+    form.bes.datasource = "field bes->bes"
+    form.bes.value = ""
+    form.bes.enabled = .t.
+    form.bes.visible = .t.
+    form.bes.setfocus()
+    
+   
+   
+   Procedure SCHALTER_LOESCHEN_OnClick
+         
+     if .not. empty(form.bes.value)
+      sele bes
+      * kein set order to... <-> set key to...
+      seek mandant->mand_nr + ltrim(form.bes.value)
+      if .not. found()
+       msgbox("  Fehler: Der EigentÅmer ist nicht vorhanden.","Achtung",48)
+      else
+       form.bes.value = bes   && wegen mîglicher verkÅrzter eingabe
+       if msgbox('Den EigentÅmer "' + form.bes.value + '" wirklich lîschen ?',"EigentÅmer lîschen ?",292) = 6
+        sele 5 
+        if alias() <> mandant->mandant
+         use (mandant->mandant)
+        endif           
+        local lcSuche
+        lcSuche = form.bes.value
+        loca all for bes == lcSuche
+        if found()
+         msgbox("Lîschen nicht mîglich, weil der EigentÅmer noch in der PrÅfmittelkartei vorhanden ist.","Hinweis",64)
+         return
+        else
+         sele bes 
+         dele
+         form.bes.visible = .f.
+         form.bes.datasource = "field bes->bes"
+         form.bes.value = ""
+         form.bes.visible = .t.
+        endif 
+       endif
+      endif
+     endif    
+    
+   
+   
+   Procedure SCHALTER_KORRIGIEREN_OnClick
+   
+     if .not. empty(form.bes.value)
+      sele bes
+      * kein set order to... <-> set key to...
+      seek mandant->mand_nr + ltrim(form.bes.value)
+      if .not. found()
+       msgbox("Fehler: Der EigentÅmer ist nicht vorhanden.","Achtung",48)
+      else
+       form.bes.value = bes   && wegen mîglicher verkÅrzter eingabe
+       form.korrektur_text.visible  = .t.
+       form.korrektur_eingabe.value   = form.bes.value
+       form.korrektur_eingabe.visible = .t.
+       form.korrektur_eingabe.setfocus()
+      endif
+     endif
+    
+   
+   
+    Procedure KORREKTUR_EINGABE_Valid
+   
+      do case
+       case empty(this.value)
+        this.value = form.bes.value
+        return .t.
+       case this.value == form.bes.value
+        this.visible = .f.
+        form.korrektur_text.visible = .f.
+        form.bes.setfocus()
+        return .t.
+       otherwise
+        sele bes
+        * kein set order to... <-> set key to...
+        local lcRettenSatznummer
+        lcRettenSatznummer = recno()
+        seek mandant->mand_nr + ltrim(this.value)
+        if found()
+         this.ValidErrorMsg = " Fehler: Der EigentÅmer ist schon vorhanden."
+         return .f.
+        else
+         local lnWeiter
+         lnWeiter = msgbox("Soll auch der EigentÅmer in der Kartei des zugehîrigen Mandanten korrigiert werden ?","PrÅfmittelkartei korrigieren ?",547)
+         if lnWeiter <> 2  && kein abbruch
+          go lcRettenSatznummer
+          if lnWeiter = 6  && ja
+           sele 5
+           if alias() <> mandant->mandant
+            use (mandant->mandant)
+           endif           
+           repl all bes with ltrim(this.value) for bes == bes->bes
+           use
+           sele bes
+          endif
+          repl bes with ltrim(this.value)
+          form.bes.visible = .f.
+          sele bes
+          * kein set order to... <-> set key to...
+          form.bes.datasource = "field bes->bes"
+          form.bes.value = form.korrektur_eingabe.value
+          form.bes.visible = .t.
+         endif 
+        endif 
+        form.korrektur_text.visible    = .f.
+        form.korrektur_eingabe.visible = .f.
+        form.bes.setfocus()         
+        return .t.
+      endcase
+      
+     
+    
+    Procedure SCHALTER_HINZUFUEGEN_OnClick
+   
+     if .not. empty(form.bes.value)
+      sele bes
+      * kein set order to... <-> set key to...
+      seek mandant->mand_nr + ltrim(form.bes.value)
+      if found()
+       form.bes.value = bes   && wegen mîglicher verkÅrzter eingabe
+       msgbox("  Fehler: Der EigentÅmer ist schon vorhanden.","Achtung",48)
+      else
+       set order to 0
+       append blank
+       repl mand_nr with mandant->mand_nr, bes with ltrim(form.bes.value)
+       form.bes.visible = .f.
+       set order to 1
+       set key to mandant->mand_nr
+       form.bes.datasource = "field bes->bes"
+       form.bes.value = ""
+       form.bes.visible = .t.
+      endif
+     endif
+    
+    
+    
+ENDCLASS

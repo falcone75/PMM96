@@ -1,0 +1,355 @@
+*** pb_edi.wfm
+
+* ACHTUNG : Valid-methode bei pb_datum wurde in OnChange-methode geÑndert, siehe auch pmk_neu.wfm
+
+
+** END HEADER -- Diese Zeile nicht lîschen*
+* Erstellt am 04.04.1996
+*
+
+local f
+f = new PB_EDIFORM()
+f.ReadModal()
+
+CLASS PB_EDIFORM OF FORM
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "PrÅfmittelbewegung"
+   this.Width = 100
+   this.Text = "PrÅfmittelbewegung bearbeiten"
+   this.MDI = .f.
+   this.Left = 2.333
+   this.Top = 9.2
+   this.Height = 8.5
+   
+   this.name = "PB_EDI"
+
+
+   DEFINE RECTANGLE RECHTECK1 OF THIS;
+       PROPERTY; 
+         Width 96.666,;
+         ColorNormal "GB/BtnFace",;
+         Text "  PrÅfmittelbewegung  ",;
+         Left 1.5,;
+         FontItalic .T.,;
+         Top 0.5879,;
+         Height 4.8232
+
+   DEFINE TEXT TEXT_ART OF THIS;
+       PROPERTY; 
+         Width 3.168,;
+         Text "Art",;
+         ColorNormal "N/W",;
+         Left 12.832,;
+         Top 2.0586,;
+         Height 0.9414
+
+   DEFINE TEXT TEXT_PB_DATUM OF THIS;
+       PROPERTY; 
+         Width 6.668,;
+         Text "Datum",;
+         ColorNormal "N/W",;
+         Left 39.832,;
+         Top 2.0586,;
+         Height 0.9414
+
+   DEFINE TEXT TEXT_PB_KOST OF THIS;
+       PROPERTY; 
+         Width 12.168,;
+         Text "Kosten [DM]",;
+         ColorNormal "N/W",;
+         Left 65.665,;
+         Top 2.0586,;
+         Height 1
+
+   DEFINE TEXT TEXT_PB_ORT OF THIS;
+       PROPERTY; 
+         Width 8.5,;
+         Text "Standort",;
+         ColorNormal "N/W",;
+         Left 3.5,;
+         Top 3.8232,;
+         Height 0.8818
+
+   DEFINE TEXT TEXT_PB_BEM OF THIS;
+       PROPERTY; 
+         Width 11.168,;
+         Text "Bemerkung",;
+         ColorNormal "N/W",;
+         Left 41.665,;
+         Top 3.8232,;
+         Height 1
+
+   DEFINE COMBOBOX PB_ART OF THIS;
+       PROPERTY; 
+         OnOpen {; this.value = kartei->pb_art; do SetOrt with form, "OnOpen"; this.visible=.t.},;
+         Width 19.666,;
+         Visible .f.,;
+         FontName "Arial",;
+         Left 16.5,;
+         OnChange {; do PbArtCh with form},;
+         Style 1,;
+         DataSource "FIELD pb_art->pb_art",;
+         Top 1.8232,;
+         Height 1.2354
+
+   DEFINE SPINBOX PB_DATUM OF THIS;
+       PROPERTY; 
+         Width 15,;
+         OnOpen {; this.visible = .t.},;
+         ValidRequired .t.,;
+         OnChange class::PB_DATUM_Valid,;
+         Visible .f.,;
+         Left 47,;
+         Value kartei->pb_datum,;
+         Top 1.8232,;
+         Height 1.2354
+
+   DEFINE SPINBOX PB_KOST OF THIS;
+       PROPERTY; 
+         Width 13.334,;
+         RangeRequired .t.,;
+         Picture "#####.##",;
+         Function "BZ",;
+         Left 78.332,;
+         Value kartei->pb_kost,;
+         Top 1.8232,;
+         Step 10,;
+         Rangemin 0,;
+         Rangemax 99999.99,;
+         Height 1.2354
+
+   DEFINE COMBOBOX PB_ORT OF THIS;
+       PROPERTY; 
+         Width 27.166,;
+         FontName "Arial",;
+         Left 12.5,;
+         Value "",;
+         Style 1,;
+         Top 3.6465,;
+         Height 1.2354
+         
+   DEFINE ENTRYFIELD PB_BEM OF THIS;
+       PROPERTY; 
+         Width 42.835,;
+         FontName "Arial",;
+         Left 53.165,;
+         Value kartei->pb_bem,;
+         MaxLength 30,;
+         Top 3.6465,;
+         Height 1.2354
+
+* folgende nichtsichtbare objekte werden in unterprogrammen im archiv_p.prg benîtigt
+
+*   DEFINE TEXT ERST_EINS OF THIS;
+       PROPERTY; 
+         Visible .F.,;
+         Text kartei->erst_eins
+
+   DEFINE ENTRYFIELD KFR OF THIS;
+       PROPERTY; 
+         OnOpen {; if kartei->kfr > 0; this.value = ltrim(str(kartei->kfr)); else; this.value=""; endif},;
+         Visible .F.
+
+*   DEFINE EDITOR HISTORIE OF THIS;
+       PROPERTY; 
+         Visible .F.,;
+         Value kartei->historie,;
+         Modify .F.
+
+   DEFINE PUSHBUTTON ABBRUCH OF THIS;
+       PROPERTY; 
+         OnOpen {; this.setfocus()},;
+         Width 15,;
+         Group .T.,;
+         Text "Abbruch",;
+         UpBitmap "RESOURCE #28",;
+         Left 28,;
+         OnClick {; form.close()},;
+         Top 6.666,;
+         Height 1.4
+
+   DEFINE PUSHBUTTON OK OF THIS;
+       PROPERTY; 
+         Width 15,;
+         Group .T.,;
+         Text "OK",;
+         UpBitmap "RESOURCE #20",;
+         Left 55,;
+         OnClick CLASS::OK_ONCLICK,;
+         Top 6.666,;
+         Height 1.4
+         
+
+************************************************************************
+
+
+   Procedure PB_DATUM_Valid
+
+    privat plValid
+    plValid = .t.
+
+    do PbDatVa with form
+    
+    llZeiger = plValid  && nur bei aufruf mit OnChange notwendig
+    
+    if .not. llZeiger
+     form.pb_datum.setfocus()  && nur bei aufruf mit OnChange notwendig
+    endif 
+    
+    return plValid
+
+
+
+   Procedure OK_OnClick
+   
+    llZeiger = .f.
+   
+    class::pb_datum_valid()
+ 
+    if .not. llZeiger
+     form.pb_datum.setfocus()
+     return
+    endif
+   
+    if empty(form.pb_art.value) .or. form.pb_art.value == "?"
+     msgbox("Fehler: Es besteht Eingabepflicht.","Achtung",48)  
+     form.pb_art.setfocus()
+     return
+    endif
+
+    sele kartei
+
+
+********* aufbau der historie *******************
+
+    local lcLetzteZeileHistorie
+    lcLetzteZeileHistorie = right(historie,90)
+
+    if .not. substr(lcLetzteZeileHistorie,13,12) == "Im Einsatz" .and. ( substr(lcLetzteZeileHistorie,13,12) <> ltrim(form.pb_art.value) .or. ctod(left(lcLetzteZeileHistorie,10)) <> form.pb_datum.value ) .OR. substr(lcLetzteZeileHistorie,13,12) == "Im Einsatz" .and. .not. proper(ltrim(rtrim(form.pb_art.value))) $ "Eichen Kalibrieren"  .OR.  substr(lcLetzteZeileHistorie,26,20) <> form.pb_ort.value .and. .not. empty(form.pb_ort.value) .and. .not. empty(substr(lcLetzteZeileHistorie,26,20))
+
+     * prÅfmittelbewegung ( Ñnderung Art  oder  Datum (nicht Im Einsatz)  oder  Ort (au·er war oder wird leer <-> s.u.) )
+    
+     local lcBewegungArt, ldBewegungDatum, lcBewegungKosten, lcNeueZeileHistorie   
+       
+     if proper(ltrim(rtrim(form.pb_art.value))) $ "Eichen Kalibrieren"
+      lcBewegungArt = "Im Einsatz  "
+      if substr(lcLetzteZeileHistorie,13,12) == "Im Einsatz"
+       ldBewegungDatum = ctod(left(lcLetzteZeileHistorie,10))
+      else 
+       ldBewegungDatum = date()
+      endif
+     else  
+      lcBewegungArt   = left(proper(ltrim(form.pb_art.value))+space(12),12)
+      ldBewegungDatum = form.pb_datum.value
+     endif 
+     
+     if form.pb_kost.value > 0
+      lcBewegungKosten = str(form.pb_kost.value,8,2) + " DM"
+     else 
+      lcBewegungKosten = space(11)
+     endif 
+     
+     set century on
+     lcNeueZeileHistorie = dtoc(ldBewegungDatum) + "  " + lcBewegungArt + " " + left(ltrim(form.pb_ort.value)+space(20),20) + " " + left(ltrim(form.pb_bem.value)+space(30),30) + " " + lcBewegungKosten + space(2)
+     
+     repl historie with lcNeueZeileHistorie additive
+     
+     do case 
+      case proper(ltrim(rtrim(form.pb_art.value))) $ "Eichen Kalibrieren"
+       repl anz_eins with anz_eins + 1
+      case proper(ltrim(form.pb_art.value)) == "Reparatur"
+       repl anz_rep with anz_rep + 1
+     endcase
+
+     if form.pb_kost.value > 0
+      do case
+       case proper(ltrim(form.pb_art.value)) == "Zum PrÅfen"
+        repl prÅf_kost with prÅf_kost + form.pb_kost.value
+       case proper(ltrim(form.pb_art.value)) == "éndern"
+        repl Ñnd_kost with Ñnd_kost + form.pb_kost.value
+       case proper(ltrim(form.pb_art.value)) == "Reparatur"
+        repl rep_kost with rep_kost + form.pb_kost.value
+      endcase
+     endif
+
+    else
+    
+     do case
+     
+      case val(substr(lcLetzteZeileHistorie,78,8)) <> form.pb_kost.value  .or.  substr(lcLetzteZeileHistorie,47,30) <> form.pb_bem.value
+
+       * keine prÅfmittelbewegung, sondern nur korrektur der letzten zeile in der historie
+       *  -> Ñnderung Kosten oder Bemerkung ( trotz Ñnderung des datums bei im einsatz befindlichen prÅfmitteln bleibt das Einsatzdatum gleich )
+                 
+       if pb_kost <> form.pb_kost.value
+        do case
+         case pb_art == "Zum PrÅfen"
+          repl prÅf_kost with prÅf_kost - val(substr(lcLetzteZeileHistorie,78,8)) + form.pb_kost.value
+         case pb_art == "éndern"
+          repl Ñnd_kost with Ñnd_kost   - val(substr(lcLetzteZeileHistorie,78,8)) + form.pb_kost.value
+         case pb_art == "Reparatur"
+          repl rep_kost with rep_kost   - val(substr(lcLetzteZeileHistorie,78,8)) + form.pb_kost.value
+        endcase
+       endif      
+
+       local lcBewegungKosten
+
+       if form.pb_kost.value > 0
+        lcBewegungKosten = str(form.pb_kost.value,8,2) + " DM"
+       else 
+        lcBewegungKosten = space(11)
+       endif 
+   
+       repl historie with left(historie,len(historie)-44) + left(ltrim(form.pb_bem.value)+space(30),30) + " " + lcBewegungKosten + space(2)
+   
+      case empty(form.pb_ort.value) .and. .not. empty(substr(lcLetzteZeileHistorie,26,20))  .OR.  .not. empty(form.pb_ort.value) .and. empty(substr(lcLetzteZeileHistorie,26,20))
+      
+       * keine prÅfmittelbewegung, sondern nur korrektur der letzten zeile in der historie
+       *  standort war oder wird leer
+       
+       repl historie with left(historie,len(historie)-65) + left(ltrim(form.pb_ort.value)+space(20),20) + right(historie,45)
+   
+     endcase
+     
+    endif
+    
+***********************************************************************
+
+
+    if empty(erst_eins) .and. lower(ltrim(rtrim(form.pb_art.value))) $ "eichen kalibrieren"
+     repl erst_eins with date()
+    endif
+   
+    if ltrim(form.pb_art.value) <> pb_art
+     repl pb_art with proper(ltrim(form.pb_art.value))
+    endif
+   
+    if pb_datum <> form.pb_datum.value
+     repl pb_datum with form.pb_datum.value
+    endif
+   
+    if pb_kost <> form.pb_kost.value
+     repl pb_kost with form.pb_kost.value
+    endif
+   
+    if ltrim(form.pb_ort.value) <> pb_ort
+     repl pb_ort with ltrim(form.pb_ort.value)
+    endif
+   
+    if ltrim(form.pb_bem.value) <> pb_bem
+     repl pb_bem with ltrim(form.pb_bem.value)
+    endif
+    
+    
+    if pb_art == "Schrott"
+     dele
+    endif 
+    
+       
+    * flg. zeile hebt die durch replace hervorgerufene datensatzsperre auf
+    go recno() 
+   
+    form.close()    
+      
+   
+ENDCLASS

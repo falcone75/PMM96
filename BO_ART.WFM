@@ -1,0 +1,107 @@
+*** bo_art.wfm
+
+create session
+
+use pb_art index pb_art
+set filter to .not. rtrim(pb_art) $ "Im Einsatz*Eichen*Kalibrieren*Lager*Reparatur*Žndern*Zum Prfen*Schrott" 
+
+
+
+
+
+** END HEADER -- Diese Zeile nicht l”schen*
+* Erstellt am 18.03.1996
+*
+local f
+f = new KATALOG_ART()
+f.ReadModal()
+
+CLASS KATALOG_ART OF KATALOGFORM From "BASIS.CFM"
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "Prfmittelbewegung"
+   this.Text = "BOSS [ Katalog - Art der Prfmittelbewegung ]"
+   
+   this.OnOpen = {; if glTipsUndTricks; msgbox("Die Angaben : Eichen, Kalibrieren, Lager, Reparatur, Žndern, Zum Prfen, Schrott, und Im Einsatz sind geschtzt. Insbesondere zum besseren Verst„ndnis von Kalibrieren, Eichen, Zum Prfen und Im Einsatz sollte die Hilfe ( F1-Taste ) aufmerksam gelesen werden.","Tips & Tricks",64); endif}
+   
+   this.schalter_loeschen.onclick    = class::schalter_loeschen_onclick
+   this.schalter_hinzufuegen.onclick = class::schalter_hinzufuegen_onclick
+   this.schalter_korrigieren.enabled = .f.
+
+
+   DEFINE TEXT TEXT1 OF THIS;
+       PROPERTY; 
+         Width 26,;
+         Text "Art der Prfmittelbewegung",;
+         Left 11,;
+         Top 3.5879,;
+         Height 0.8818
+
+   DEFINE COMBOBOX PB_ART OF THIS;
+       PROPERTY; 
+         Width 21.666,;
+         OnOpen {; this.value = ""; this.visible = .t.; this.setfocus()},;
+         Visible .f.,;
+         DataSource "field pb_art->pb_art",;
+         Left 37.3,;
+         Style 1,;
+         Top 3.4697,;
+         Height 1.1768
+
+*************************************************************************
+   
+   
+   Procedure SCHALTER_LOESCHEN_OnClick
+   
+     if .not. empty(form.pb_art.value)
+      if proper(ltrim(rtrim(form.pb_art.value))) $ "Im Einsatz*Eichen*Kalibrieren*Lager*Reparatur*Žndern*Zum Prfen*Schrott"
+       msgbox("Fehler: Diese Art der Bewegung kann nicht gel”scht werden.","Achtung",48)
+      else
+       sele pb_art
+       set order to 1
+       set exact on
+       seek ltrim(form.pb_art.value)
+       set exact off
+       if .not. found()
+        msgbox("Fehler: Die Art der Bewegung ist nicht vorhanden.","Achtung",48)
+       else
+        if msgbox('Die Art der Bewegung "' + form.pb_art.value + '" wirklich l”schen ?',"Art der Bewegung l”schen ?",292) = 6
+         dele
+         form.pb_art.visible = .f.
+         sele pb_art
+         set order to 1
+         form.pb_art.datasource = "field pb_art->pb_art"
+         form.pb_art.value = ""
+         form.pb_art.visible = .t.
+        endif
+       endif 
+      endif
+     endif    
+    
+   
+    
+    Procedure SCHALTER_HINZUFUEGEN_OnClick
+   
+     if .not. empty(form.pb_art.value)
+      sele pb_art
+      set order to 1
+      set exact on
+      seek ltrim(form.pb_art.value)
+      set exact off
+      if found() .or. proper(ltrim(rtrim(form.pb_art.value))) $ "Im Einsatz*Eichen*Kalibrieren*Lager*Reparatur*Žndern*Zum Prfen*Schrott*No Move"
+       msgbox("Fehler: Die Art der Bewegung ist schon vorhanden.","Achtung",48)
+      else
+       set order to 0
+       append blank
+       repl pb_art with ltrim(form.pb_art.value)
+       form.pb_art.visible = .f.
+       sele pb_art
+       set order to 1
+       form.pb_art.datasource = "field pb_art->pb_art"
+       form.pb_art.value = ""
+       form.pb_art.visible = .t.
+      endif
+     endif
+    
+    
+    
+ENDCLASS

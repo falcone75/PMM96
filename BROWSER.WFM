@@ -1,0 +1,447 @@
+*** browser.wfm
+
+** korrekte Åbergabe der formularnummer :
+parameter pcNummer
+privat pcAufrufendeSuchformularNummer
+pcAufrufendeSuchformularNummer = pcNummer
+rele pcNummer
+
+
+
+** END HEADER -- Diese Zeile nicht lîschen*
+* Erstellt am 13.11.1996
+*
+
+* variable: Browser&pcAufrufendeSuchformularNummer in pmk_su.wfm definiert
+* probleme, wenn objekt nicht immer wieder neu mit new() angelegt 
+
+Browser&pcAufrufendeSuchformularNummer = new BROWSERFORM()
+Browser&pcAufrufendeSuchformularNummer..open()
+
+if glTipsUndTricks
+ msgbox("Der Browser wird  i m m e r  im Vordergrund dargestellt. Um die Hilfe ( F1-Taste ) richtig sehen zu kînnen, mu· die Grî·e und Position des Browser-Fenster entsprechend verÑndert werden","Tips & Tricks",64)
+endif
+
+CLASS BROWSERFORM OF FORM
+   this.HelpFile = "PMM96.HLP"
+   this.HelpId = "Browser"
+   this.Width = 97.25
+   this.Text = "Browser"
+   this.Left = 3.9
+   this.MDI = .F.
+   this.Maximize = .F.
+   this.Minimize = .F.
+   this.SysMenu = .T.
+   this.Top = 4.4
+   this.TopMost = .T.
+   this.Height = 18.08
+   
+   this.OnOpen  = class::FORMULAR_OnOpen
+   this.OnSize  = class::BROWSERFORM_OnSize
+   this.OnClose = class::FORMULAR_OnClose
+   
+
+   DEFINE BROWSE BROWSER OF THIS;
+       PROPERTY; 
+         OnOpen CLASS::BROWSER_ONOPEN,;
+         Append .F.,;
+         Width 95.333,;
+         ShowRecNo .F.,;
+         ColorHighLight "N/W+",;
+         Visible .F.,;
+         Left 1,;
+         FontBold .T.,;
+         Delete .F.,;
+         Top 0.3496,;
+         CUATab .T.,;
+         ShowDeleted .F.,;
+         Height 14.5322
+   
+   DEFINE TEXT TEXT1 OF THIS;
+       PROPERTY; 
+         Width 14,;
+         Text "Sortierung :",;
+         FontSize 10,;
+         Left 49.333,;
+         Top 15.5293,;
+         Height 1.0586
+
+   DEFINE TEXT ANZEIGE OF THIS;
+       PROPERTY; 
+         OnOpen CLASS::ANZEIGE_TEXT,;
+         Width 25.5,;
+         ColorNormal "RB/BtnFace",;
+         Text "",;
+         Alignment 4,;
+         Left 43.333,;
+         Top 16.5879,;
+         Height 1
+
+   DEFINE PUSHBUTTON ANLEGEN OF THIS;
+       PROPERTY; 
+         Width 16,;
+         Text "Neu anlegen",;
+         Left 4.333,;
+         OnClick CLASS::ANLEGEN_ONCLICK,;
+         Top 15.8818,;
+         Group .T.,;
+         Height 1.3525
+
+   DEFINE PUSHBUTTON SORTIEREN OF THIS;
+       PROPERTY; 
+         Width 16,;
+         Text "Neu sortieren",;
+         Left 22.666,;
+         OnClick CLASS::SORTIEREN_ONCLICK,;
+         Top 15.8818,;
+         Group .T.,;
+         Height 1.3525
+
+   DEFINE PUSHBUTTON SCHLIESZEN OF THIS;
+       PROPERTY; 
+         Width 20,;
+         OnOpen {; this.setfocus()},;
+         Text "Schlie·en",;
+         UpBitmap "RESOURCE #1005",;
+         Left 73.333,;
+         OnClick {; form.close()},;
+         Top 15.5293,;
+         Group .T.,;
+         Height 2
+
+************************************************************************
+
+   Procedure FORMULAR_OnOpen
+
+    form.AufrufendeSuchformularNummer = pcAufrufendeSuchformularNummer
+    
+    if empty(Filter&pcAufrufendeSuchformularNummer..zeile1)  && kein filter eingestellt
+     form.anlegen.enabled   = .f.
+     form.sortieren.enabled = .f.
+    else
+     form.anlegen.enabled   = .t.
+     form.sortieren.enabled = .t.
+    endif  
+    
+    privat poRef
+    poRef = Formular&pcAufrufendeSuchformularNummer
+
+    poRef.schalter_filter.enabled            = .f.
+    poRef.schalter_browser.enabled           = .f.
+    poRef.schalter_schnellsuche.enabled      = .f.
+    poRef.schalter_pmk_neu.enabled           = .f.
+    poRef.schalter_fensterinfo.enabled       = .f.
+    poRef.schalter_erste_karte.enabled       = .f.
+    poRef.schalter_rueckwaertssuchen.enabled = .f.
+    poRef.schalter_karte_vorher.enabled      = .f.
+    poRef.schalter_karte_danach.enabled      = .f.
+    poRef.schalter_vorwaertssuchen.enabled   = .f.
+    poRef.schalter_letzte_karte.enabled      = .f.
+   
+  
+   
+   Procedure FORMULAR_Onclose
+   
+    privat poRef
+    poRef = form.AufrufendeSuchformularNummer
+    poRef = Formular&poRef
+    
+    poRef.schalter_filter.enabled       = .t.
+    poRef.schalter_browser.enabled      = .t.
+    poRef.schalter_schnellsuche.enabled = .t.
+
+    if substr(nutzer.logik,3,1) = "1"
+     poRef.schalter_pmk_neu.enabled = .t.
+    endif
+   
+    poRef.schalter_fensterinfo.enabled       = .t.
+    poRef.schalter_erste_karte.enabled       = .t.
+    poRef.schalter_rueckwaertssuchen.enabled = .t.
+    poRef.schalter_karte_vorher.enabled      = .t.
+    poRef.schalter_karte_danach.enabled      = .t.
+    poRef.schalter_vorwaertssuchen.enabled   = .t.
+    poRef.schalter_letzte_karte.enabled      = .t.
+      
+    
+    
+   Procedure BROWSER_OnOpen
+
+   privat Formularnummer
+    Formularnummer = form.AufrufendeSuchformularNummer
+    
+    if empty(Filter&Formularnummer..zeile1)  && kein filter eingestellt
+    
+     sele kartei
+          
+     this.alias  = "kartei"
+     this.fields = 'KARTEI->BEN\H="Benennung",KARTEI->CODEWORT\H="Codewort"\R\C="RG/W+",KARTEI->LFDNR\H="Laufende Nr."\R\C="RG/W+",KARTEI->SPEZINR\H="Spezielle Nr."\R\C="RG/W+",KARTEI->MERKMALE\H="Merkmale",KARTEI->ABW\H="Zul. Abweichung",KARTEI->HST\H="Hersteller",KARTEI->BES\H="EigentÅmer",KARTEI->KLASSI\H="Klassifikation",KARTEI->GERAETE_NR\H="GerÑte-Nr.",KARTEI->ERST_EINS\H="Ersteinsatz"\R\C="RG/W+",KARTEI->P_ZEIT\H="PrÅfzeit",KARTEI->KFR\H="PrÅffrist",KARTEI->SONSTIGES\H="Sonstiges",KARTEI->PB_ART\H="Art"\R\C="RG/W+",KARTEI->PB_DATUM\H="Datum"\R\C="RG/W+",KARTEI->PB_KOST\H="Kosten"\R\C="RG/W+",KARTEI->PB_ORT\H="Standort"\R\C="RG/W+",KARTEI->PB_BEM\H="Bemerkung"\R\C="RG/W+",KARTEI->MESSAGE\H="Message"'
+     
+     if substr(nutzer.logik,2,1) = "1"
+      this.colornormal = "N+/W+"
+      this.modify = .t.
+     else 
+      this.colornormal = "RG/W+"
+      this.modify = .f.
+     endif 
+     
+     this.OnNavigate = class::BROWSER_OnNavigate
+          
+    else 
+     
+     sele 15
+     
+     if alias() <> "BROWSER"
+       
+      local lcDateiname
+      lcDateiname = funique("$????")
+   
+      sele kartei
+      * feld "neuwert" zur aufnahme der datensatznummer
+      copy structure to (lcDateiname) fields KARTEI->NEUWERT, KARTEI->BEN, KARTEI->CODEWORT, KARTEI->LFDNR, KARTEI->SPEZINR, KARTEI->MERKMALE, KARTEI->ABW, KARTEI->HST, KARTEI->BES, KARTEI->KLASSI, KARTEI->GERAETE_NR ,KARTEI->ERST_EINS, KARTEI->P_ZEIT, KARTEI->KFR, KARTEI->SONSTIGES, KARTEI->PB_ART, KARTEI->PB_DATUM, KARTEI->PB_KOST, KARTEI->PB_ORT, KARTEI->PB_BEM, KARTEI->MESSAGE
+      sele 15
+      use (lcDateiname) nosave alias browser exclusive
+    
+      go top in kartei
+      do suchen with form, Formularnummer, "Gesamtsuche", "SuchArrayNein", "browser.prg"
+   
+     endif
+   
+     sele browser
+     go top
+   
+     go browser->neuwert in kartei   
+   
+     this.colornormal    = "RG/W+"
+     this.alias  = "browser"
+     this.fields = 'BROWSER->BEN\H="Benennung",BROWSER->CODEWORT\H="Codewort",BROWSER->LFDNR\H="Laufende Nr.",BROWSER->SPEZINR\H="Spezielle Nr.",BROWSER->MERKMALE\H="Merkmale",BROWSER->ABW\H="Zul. Abweichung",BROWSER->HST\H="Hersteller",BROWSER->BES\H="EigentÅmer",BROWSER->KLASSI\H="Klassifikation",BROWSER->GERAETE_NR\H="GerÑte-Nr.",BROWSER->ERST_EINS\H="Ersteinsatz",BROWSER->P_ZEIT\H="PrÅfzeit",BROWSER->KFR\H="PrÅffrist",BROWSER->SONSTIGES\H="Sonstiges",BROWSER->PB_ART\H="Art",BROWSER->PB_DATUM\H="Datum",BROWSER->PB_KOST\H="Kosten",BROWSER->PB_ORT\H="Standort",BROWSER->PB_BEM\H="Bemerkung",BROWSER->MESSAGE\H="Message"'
+     this.modify = .f.
+     
+     this.OnNavigate = {; go browser->neuwert in kartei; class::BROWSER_OnNavigate()}
+        
+    endif
+          
+    this.setfocus()
+    this.visible = .t.   
+    
+    
+    
+   Procedure ANLEGEN_OnClick
+   
+    if msgbox("Eine Browser-Liste mu·  n u r  neu angelegt werden, wenn PrÅfmittelkarten hinzugekommen sind oder aber au·erhalb des Browsers geÑndert wurden  o h n e  den Filter neu einzustellen.","Browser-Liste neu anlegen",273) = 1
+
+     sele browser
+     set safety off
+     zap
+     
+     sele kartei
+     go top
+     do suchen with form, form.AufrufendeSuchformularNummer, "Gesamtsuche", "SuchArrayNein", "browser.prg"
+   
+     sele browser
+     go top
+   
+    endif
+   
+   
+   
+   Procedure SORTIEREN_OnClick
+   
+    form.TopMost = .f.
+   
+    local f
+    f = new SORTIERENFORM()
+    f.mdi = .F. && ensure not MDI
+    f.ReadModal()
+    
+    form.TopMost = .t.
+    
+    class::Anzeige_Text()
+   
+    
+    
+   Procedure BROWSERFORM_OnSize
+   
+    form.text1.visible      = .f.
+    form.anzeige.visible    = .f.
+    form.anlegen.visible    = .f.
+    form.sortieren.visible  = .f.
+    form.schlieszen.visible = .f.
+   
+    form.browser.width  = this.width - 2
+    form.browser.height = this.height - 0.7
+   
+    
+      
+   Procedure Anzeige_Text
+   
+    if alias(15) <> "BROWSER"
+      
+     form.anzeige.text = "Codewort + Nummer"  
+      
+    else
+    
+     local lcIndexfeld
+     lcIndexfeld = lower(key())
+    
+     do case
+      case empty(lcIndexfeld)
+       form.anzeige.text = "Codewort + Nummer"
+      case lcIndexfeld = "ben"
+       form.anzeige.text = "Benennung"
+      case lcIndexfeld = "codewort"
+       form.anzeige.text = "Codewort"
+      case lcIndexfeld = "lfdnr"
+       form.anzeige.text = "Laufende Nummer"
+      case lcIndexfeld = "spezinr"
+       form.anzeige.text = "Spezielle Nummer"
+      case lcIndexfeld = "merkmale"
+       form.anzeige.text = "Merkmale"
+      case lcIndexfeld = "abw"
+       form.anzeige.text = "Zul. Abweichung"
+      case lcIndexfeld = "hst"
+       form.anzeige.text = "Hersteller"
+      case lcIndexfeld = "bes"
+       form.anzeige.text = "EigentÅmer"
+      case lcIndexfeld = "klassi"
+       form.anzeige.text = "Klassifikation"
+      case lcIndexfeld = "geraete_nr"
+       form.anzeige.text = "GerÑte-Nr."
+      case lcIndexfeld = "erst_eins"
+       form.anzeige.text = "Ersteinsatz"
+      case lcIndexfeld = "p_zeit"
+       form.anzeige.text = "PrÅfzeit"
+      case lcIndexfeld = "kfr"
+       form.anzeige.text = "PrÅffrist"
+      case lcIndexfeld = "sonstiges"
+       form.anzeige.text = "Sonstiges"
+      case lcIndexfeld = "pb_art"
+       form.anzeige.text = "Art"
+      case lcIndexfeld = "pb_datum"
+       form.anzeige.text = "Datum"
+      case lcIndexfeld = "pb_kost"
+       form.anzeige.text = "Kosten"
+      case lcIndexfeld = "pb_ort"
+       form.anzeige.text = "Standort"
+      case lcIndexfeld = "pb_bem"
+       form.anzeige.text = "Bemerkung"
+     endcase  
+        
+    endif
+   
+   
+
+   Procedure BROWSER_OnNavigate
+   
+    privat Formularnummer
+    Formularnummer = form.AufrufendeSuchformularNummer
+   
+    do pmk_set with Formular&Formularnummer  && archiv_p.prg
+      
+       
+       
+ENDCLASS
+
+
+
+CLASS SORTIERENFORM OF FORM
+   this.Width = 49.833
+   this.SysMenu = .F.
+   this.Text = "Browser-Liste neu sortieren"
+   this.Left = 26.666
+   this.Top = 9
+   this.Height = 7.5879
+
+
+   DEFINE COMBOBOX AUSWAHL OF THIS;
+       PROPERTY; 
+         Width 21.502,;
+         OnChange {; form.ok.setfocus()},;
+         Left 14.1641,;
+         Style 2,;
+         DataSource 'ARRAY {"Benennung","Codewort","Laufende Nr.","Spezielle Nr.","Merkmale","Zul. Abweichung","Hersteller","EigentÅmer","PrÅfzeit","Klassifikation","GerÑte-Nr.","Ersteinsatz","PrÅffrist","Sonstiges","Art","Kosten","Datum","Standort","Bemerkung"}',;
+         Top 1.4688,;
+         Height 1.1768
+
+   DEFINE PUSHBUTTON OK OF THIS;
+       PROPERTY; 
+         Width 15.002,;
+         OnClick class::OK_OnClick,;
+         Text "OK",;
+         UpBitmap "RESOURCE #20",;
+         Left 27.8311,;
+         Top 5,;
+         Group .T.,;
+         Height 1.3516
+         
+   DEFINE PUSHBUTTON ABBRUCH OF THIS;
+       PROPERTY; 
+         Width 15.002,;
+         OnOpen {; this.setfocus()},;
+         Text "Abbruch",;
+         UpBitmap "RESOURCE #28",;
+         Left 7.6641,;
+         OnClick {; form.close()},;
+         Top 5,;
+         Group .T.,;
+         Height 1.3516      
+
+
+  Procedure OK_OnClick
+  
+   local lcEingabe 
+   lcEingabe = form.auswahl.value
+  
+   sele browser
+   
+   lcDateiname = substr(dbf(),3,len(dbf())-6)
+  
+   set safety off
+  
+   do case
+    case lcEingabe = "Benennung"
+     index on ben tag Index of (lcDateiname)
+    case lcEingabe = "Codewort"
+     index on codewort tag Index of (lcDateiname)
+    case lcEingabe = "Laufende Nr."
+     index on lfdnr tag Index of (lcDateiname)
+    case lcEingabe = "Spezielle Nr."
+     index on spezinr tag Index of (lcDateiname)
+    case lcEingabe = "Merkmale"
+     index on merkmale tag Index of (lcDateiname)
+    case lcEingabe = "Zul. Abweichung"
+     index on abw tag Index of (lcDateiname)
+    case lcEingabe = "Hersteller"
+     index on hst tag Index of (lcDateiname)
+    case lcEingabe = "EigentÅmer"
+     index on bes tag Index of (lcDateiname)
+    case lcEingabe = "Klassifikation"
+     index on klassi tag Index of (lcDateiname)
+    case lcEingabe = "GerÑte-Nr."
+     index on geraete_nr tag Index of (lcDateiname)
+    case lcEingabe = "Ersteinsatz"
+     index on erst_eins tag Index of (lcDateiname)
+    case lcEingabe = "PrÅfzeit"
+     index on p_zeit tag Index of (lcDateiname)
+    case lcEingabe = "PrÅffrist"
+     index on kfr tag Index of (lcDateiname)
+    case lcEingabe = "Sonstiges"
+     index on sonstiges tag Index of (lcDateiname)
+    case lcEingabe = "Art"
+     index on pb_art tag Index of (lcDateiname)
+    case lcEingabe = "Datum"
+     index on pb_datum tag Index of (lcDateiname)
+    case lcEingabe = "Kosten"
+     index on pb_kost tag Index of (lcDateiname)
+    case lcEingabe = "Standort"
+     index on pb_ort tag Index of (lcDateiname)
+    case lcEingabe = "Bemerkung"
+     index on pb_bem tag Index of (lcDateiname)
+   endcase  
+     
+   form.close()
+
+
+
+ENDCLASS
+
+

@@ -1,0 +1,150 @@
+*** bo_merkm.wfm
+
+create session
+
+use merkmale index merkmale
+
+sele 2
+use os index os.ix1,os.ix2
+
+
+
+
+** END HEADER -- Diese Zeile nicht l”schen*
+* Erstellt am 18.03.1996
+*
+
+local f
+f = new KATALOG_MERKMALE()
+f.ReadModal()
+
+CLASS KATALOG_MERKMALE OF KATALOGFORM From "BASIS.CFM"
+   this.HelpFile = "PMM96.HLP"
+   this.HelpID = "Merkmale"
+   this.Text = "BOSS [ Katalog - Merkmale ]"
+   
+   this.schalter_loeschen.onclick    = class::schalter_loeschen_onclick
+   this.schalter_hinzufuegen.onclick = class::schalter_hinzufuegen_onclick
+   this.schalter_korrigieren.enabled = .f.
+   
+
+   DEFINE TEXT TEXT1 OF THIS;
+       PROPERTY; 
+         Width 12,;
+         Text "Prfmittelart",;
+         Left 11.333,;
+         Top 2.3516,;
+         Height 0.9404
+
+   DEFINE COMBOBOX PM_ART OF THIS;
+       PROPERTY; 
+         OnOpen CLASS::PM_ART_ONOPEN,;
+         Width 36,;
+         Visible .F.,;
+         DropDownHeight 10,;
+         Left 23.666,;
+         Style 2,;
+         OnChange CLASS::PM_ART_ONCHANGE,;
+         Top 2.1172,;
+         Height 1.1768
+
+   DEFINE TEXT TEXT2 OF THIS;
+       PROPERTY; 
+         Width 9.667,;
+         Text "Merkmale",;
+         Left 7.333,;
+         Top 5.7646,;
+         Height 0.8818
+
+   DEFINE COMBOBOX MERKMALE OF THIS;
+       PROPERTY; 
+         Width 46.167,;
+         Left 17.166,;
+         Style 1,;
+         Value "",;
+         Top 5.5879,;
+         Enabled .F.,;
+         Height 1.1768
+
+*************************************************************************
+
+   Procedure PM_ART_OnOpen
+    
+    sele os
+    set order to 2
+    set filter to log_pm_art
+    this.datasource = "field os->ben"
+    set filter to
+    this.value = ""
+    this.visible = .t.
+   
+   
+   
+   Procedure PM_ART_OnChange
+   
+    sele os
+    set order to 2
+    set exact on
+    seek this.value
+    set exact off
+   
+    form.merkmale.visible = .f.
+    sele merkmale
+    set order to 1
+    set key to os->codewort
+    form.merkmale.datasource = "field merkmale->merkmale"
+    form.merkmale.value = ""
+    form.merkmale.enabled = .t.
+    form.merkmale.visible = .t.
+    form.merkmale.setfocus()
+    
+   
+   
+   Procedure SCHALTER_LOESCHEN_OnClick
+   
+     if .not. empty(form.merkmale.value)
+      sele merkmale
+      * kein set order to... <-> set key to...
+      seek os->codewort + ltrim(form.merkmale.value)
+      if .not. found()
+       msgbox("   Fehler: Die Merkmale sind nicht vorhanden.","Achtung",48)
+      else
+       form.merkmale.value = merkmale   && wegen m”glicher verkrzter eingabe
+       if msgbox('Die Merkmale "' + form.merkmale.value + '" wirklich l”schen ?',"Merkmale l”schen ?",292) = 6
+        dele
+        form.merkmale.visible = .f.
+        sele merkmale
+        form.merkmale.datasource = "field merkmale->merkmale"
+        form.merkmale.value = ""
+        form.merkmale.visible = .t.
+       endif
+      endif
+     endif    
+    
+   
+    
+    Procedure SCHALTER_HINZUFUEGEN_OnClick
+   
+     if .not. empty(form.merkmale.value)
+      sele merkmale
+      * kein set order to... <-> set key to...
+      seek os->codewort + ltrim(form.merkmale.value)
+      if found()
+       form.merkmale.value = merkmale   && wegen m”glicher verkrzter eingabe
+       msgbox("  Fehler: Die Merkmale sind schon vorhanden.","Achtung",48)
+      else
+       set order to 0
+       append blank
+       repl codewort with os->codewort, merkmale with ltrim(form.merkmale.value)
+       form.merkmale.visible = .f.
+       set order to 1
+       set key to os->codewort
+       form.merkmale.datasource = "field merkmale->merkmale"
+       form.merkmale.value = ""
+       form.merkmale.visible = .t.
+      endif
+     endif
+    
+    
+    
+ENDCLASS
